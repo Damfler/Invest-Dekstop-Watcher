@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>T-Bank Invest</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{--bg:#1c1c1e;--bg2:#2c2c2e;--surface:#3a3a3c;--border:#48484a;--text:#f2f2f7;--muted:#8e8e93;--green:#30d158;--red:#ff453a;--pink:#ff2d55;--yellow:#ffd60a;--blue:#0a84ff;--teal:#30b0c7;--purple:#bf5af2;--radius:14px;--font:-apple-system,"Segoe UI",Roboto,sans-serif}
+body.light{--bg:#f2f2f7;--bg2:#fff;--surface:#e5e5ea;--border:#d1d1d6;--text:#1c1c1e;--muted:#636366}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;transition:background .2s,color .2s}
+.app{max-width:960px;margin:0 auto;padding:0 16px 32px}
+a{color:var(--blue);text-decoration:none}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px;position:sticky;top:0;z-index:10;background:var(--bg)}
+.header h1{font-size:20px;font-weight:700}
+.header-btns{display:flex;gap:8px}
+.icon-btn{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{background:var(--surface)}
+.acc-tabs{display:flex;gap:0;background:var(--bg2);border-radius:10px;padding:3px;margin:12px 0}
+.acc-tab{flex:1;padding:8px 0;text-align:center;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .15s;user-select:none}
+.acc-tab.active{background:var(--surface);color:var(--text);font-weight:600}
+.big-value{font-size:32px;font-weight:800;letter-spacing:-1px;padding:8px 0 2px}
+.big-delta{font-size:15px;font-weight:600;padding-bottom:12px}
+.up{color:var(--green)}.dn{color:var(--red)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
+.card{background:var(--bg2);border-radius:var(--radius);padding:14px 16px;cursor:default}
+.card-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.card-value{font-size:18px;font-weight:700;margin-top:2px}
+.card-span2{grid-column:span 2}
+.section{margin-bottom:20px}
+.section-title{font-size:16px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.pos-item{display:flex;align-items:center;padding:12px 14px;background:var(--bg2);border-radius:12px;margin-bottom:6px;cursor:pointer;transition:background .1s}
+.pos-item:hover{background:var(--surface)}
+.pos-icon{width:36px;height:36px;border-radius:50%;margin-right:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.pos-icon img{width:100%;height:100%;object-fit:contain}
+.pos-icon.bond{background:#1a3a5c;color:var(--blue)}
+.pos-icon.share{background:#1a3c1a;color:var(--green)}
+.pos-icon.etf{background:#3a1a3c;color:var(--purple)}
+.pos-icon.currency{background:#3c3a1a;color:var(--yellow)}
+.pos-icon.other{background:var(--surface);color:var(--muted)}
+.pos-info{flex:1;min-width:0}
+.pos-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-sub{font-size:12px;color:var(--muted)}
+.pos-right{text-align:right;flex-shrink:0}
+.pos-price{font-weight:600;font-size:14px}
+.pos-delta{font-size:12px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tab{padding:10px 18px;cursor:pointer;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;user-select:none}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--text);border-bottom-color:var(--pink)}
+.tab-content{display:none}.tab-content.active{display:block}
+.chart-wrap{background:var(--bg2);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.chart-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
+.chart-container{position:relative;height:240px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{padding:5px 14px;border-radius:16px;font-size:12px;font-weight:500;cursor:pointer;background:var(--bg2);color:var(--muted);border:1px solid var(--border);transition:all .15s;user-select:none}
+.chip.active{background:var(--pink);color:#fff;border-color:var(--pink)}
+.pill{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600}
+.pill-coupon{background:rgba(10,132,255,.15);color:var(--blue)}
+.pill-offer{background:rgba(255,45,85,.15);color:var(--pink)}
+.pill-maturity{background:rgba(191,90,242,.15);color:var(--purple)}
+.pill-today{background:rgba(255,69,58,.2);color:var(--red)}
+.bond-card{background:var(--bg2);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:background .1s}
+.bond-card:hover{background:var(--surface)}
+.bond-name{font-weight:600;font-size:14px}
+.bond-isin{font-size:12px;color:var(--muted);font-family:monospace}
+.bond-events{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.empty{text-align:center;padding:40px;color:var(--muted)}
+/* Risk banner */
+.risk-banner{padding:10px 14px;border-radius:var(--radius);margin-bottom:10px;background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.3);font-size:13px;display:flex;align-items:center;gap:8px;color:var(--yellow)}
+/* Upcoming events */
+.upcoming-item{display:flex;align-items:center;padding:10px 14px;background:var(--bg2);border-radius:10px;margin-bottom:6px;cursor:pointer;transition:background .1s}
+.upcoming-item:hover{background:var(--surface)}
+.upcoming-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0}
+.upcoming-info{flex:1;min-width:0}
+.upcoming-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upcoming-date{font-size:12px;color:var(--muted)}
+.upcoming-right{text-align:right;font-size:12px;color:var(--muted);flex-shrink:0}
+.upcoming-amount{font-weight:600;color:var(--text);font-size:13px}
+/* Calendar */
+.cal{background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav-btns{display:flex;gap:4px}
+.cal-nav button{background:var(--pink);border:none;color:#fff;cursor:pointer;width:26px;height:26px;border-radius:6px;font-size:12px;display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+.cal-nav button:hover{opacity:.85}
+.cal-month{font-weight:700;font-size:14px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.cal-dow{font-size:10px;color:var(--muted);padding:4px 0;font-weight:600}
+.cal-day{background:var(--surface);border-radius:6px;font-size:12px;cursor:default;padding:6px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .12s;position:relative;font-weight:500;min-height:32px}
+.cal-day.has-events{cursor:pointer;font-weight:700}
+.cal-day.has-events:hover{background:var(--border)}
+.cal-day.today{background:var(--pink);color:#fff;font-weight:700}
+.cal-day.today.has-events:hover{opacity:.85}
+.cal-day.selected{outline:2px solid var(--blue);outline-offset:-2px}
+.cal-day.other{background:transparent;color:var(--border)}
+.cal-dots{display:flex;gap:2px;position:absolute;top:3px;right:3px}
+.cal-dot{width:5px;height:5px;border-radius:50%}
+.cal-day.today .cal-dot{background:#fff!important}
+.cal-popup{background:var(--surface);border-radius:var(--radius);padding:16px;margin-top:14px;display:none;border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.cal-popup.show{display:block}
+.cal-popup-title{font-weight:700;margin-bottom:10px;font-size:14px;display:flex;align-items:center;gap:6px}
+.cal-popup-event{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(72,72,74,.2)}
+.cal-popup-event:last-child{border-bottom:none}
+/* Skeleton */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.sk{border-radius:8px;background:var(--bg2);background-image:linear-gradient(90deg,var(--bg2) 0%,var(--surface) 40%,var(--bg2) 80%);background-size:800px 100%;animation:shimmer 1.5s infinite linear}
+.sk-title{height:32px;width:220px;margin-bottom:6px}
+.sk-subtitle{height:16px;width:160px;margin-bottom:16px}
+.sk-card{height:72px;border-radius:var(--radius)}
+.sk-tabs{height:40px;border-radius:10px;margin:12px 0}
+.sk-pos{height:64px;border-radius:12px;margin-bottom:6px}
+#skeleton .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
+#skeleton{transition:opacity .3s}
+#skeleton.hidden{opacity:0;pointer-events:none;position:absolute}
+#mainContent{transition:opacity .3s}
+#mainContent.loading{opacity:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1 id="appTitle">TBank Watcher</h1>
+    <div class="header-btns">
+      <button class="icon-btn" id="btnTheme" title="Тема"><i data-lucide="moon" style="width:18px;height:18px"></i></button>
+      <button class="icon-btn" id="btnSettings" title="Настройки"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+      <button class="icon-btn" id="btnRefresh" title="Обновить"><i data-lucide="refresh-cw" style="width:18px;height:18px"></i></button>
+    </div>
+  </div>
+  <!-- Skeleton -->
+  <div id="skeleton">
+    <div class="sk sk-tabs"></div>
+    <div class="sk sk-title"></div>
+    <div class="sk sk-subtitle"></div>
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <div class="sk" style="width:70px;height:14px;margin:10px 18px;border-radius:4px"></div>
+      <div class="sk" style="width:60px;height:14px;margin:10px 18px;border-radius:4px"></div>
+      <div class="sk" style="width:80px;height:14px;margin:10px 18px;border-radius:4px"></div>
+      <div class="sk" style="width:70px;height:14px;margin:10px 18px;border-radius:4px"></div>
+    </div>
+    <div class="cards"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
+    <div class="sk sk-pos"></div><div class="sk sk-pos"></div><div class="sk sk-pos"></div><div class="sk sk-pos"></div>
+  </div>
+  <!-- Main content -->
+  <div id="mainContent" class="loading">
+  <div class="acc-tabs" id="accTabs"></div>
+  <div id="bigBlock"></div>
+  <div class="tabs" id="mainTabs">
+    <div class="tab active" data-tab="overview"><i data-lucide="layout-dashboard" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Обзор</div>
+    <div class="tab" data-tab="positions"><i data-lucide="list" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Позиции</div>
+    <div class="tab" data-tab="bonds"><i data-lucide="landmark" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Облигации</div>
+    <div class="tab" data-tab="analytics"><i data-lucide="chart-pie" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Аналитика</div>
+  </div>
+  <!-- TAB: Overview -->
+  <div class="tab-content active" id="tab-overview">
+    <!-- График истории скрыт — данные копятся в history.json для будущего -->
+    <div id="historyWrap" class="chart-wrap" style="display:none!important">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="chart-title" style="margin:0" id="historyTitle">Стоимость портфеля</div>
+        <div class="chips" style="margin:0" id="historyChips">
+          <div class="chip" data-range="1d">1Д</div>
+          <div class="chip" data-range="1w">1Н</div>
+          <div class="chip active" data-range="1m">1М</div>
+          <div class="chip" data-range="3m">3М</div>
+          <div class="chip" data-range="all">Все</div>
+        </div>
+      </div>
+      <div class="chart-container"><canvas id="historyChart"></canvas></div>
+    </div>
+    <div class="cards" id="statCards"></div>
+    <div id="riskBanner"></div>
+    <div id="upcomingWrap" class="section" style="display:none">
+      <div class="section-title"><i data-lucide="calendar-clock" style="width:16px;height:16px"></i> Ближайшие события</div>
+      <div id="upcomingList"></div>
+    </div>
+    <div class="section"><div class="section-title"><i data-lucide="briefcase" style="width:16px;height:16px"></i> Топ позиции</div><div id="topPositions"></div></div>
+  </div>
+  <!-- TAB: Positions -->
+  <div class="tab-content" id="tab-positions">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <div class="chips" id="posChips" style="margin-bottom:0;flex:1"></div>
+      <select id="posSort" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer">
+        <option value="value">По стоимости</option>
+        <option value="price">По цене бумаги</option>
+        <option value="pnl">По P&L</option>
+        <option value="qty">По количеству</option>
+        <option value="name">По названию</option>
+        <option value="pct">По доле %</option>
+      </select>
+    </div>
+    <div id="positionsList"></div>
+  </div>
+  <!-- TAB: Bonds -->
+  <div class="tab-content" id="tab-bonds">
+    <div class="cal" id="calendarWrap">
+      <div class="cal-nav">
+        <span class="cal-month" id="calTitle"></span>
+        <div class="cal-nav-btns">
+          <button id="calPrev"><i data-lucide="chevron-left" style="width:16px;height:16px"></i></button>
+          <button id="calNext"><i data-lucide="chevron-right" style="width:16px;height:16px"></i></button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-popup" id="calPopup"></div>
+    </div>
+    <div class="chips" id="bondChips"></div>
+    <div id="bondsList"></div>
+  </div>
+  <!-- TAB: Analytics -->
+  <div class="tab-content" id="tab-analytics">
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title"><i data-lucide="chart-pie" style="width:14px;height:14px;vertical-align:middle"></i> Аллокация</div>
+        <div class="chips" id="allocChips">
+          <div class="chip active" data-mode="types">По типам</div>
+          <div class="chip" data-mode="positions">По бумагам</div>
+        </div>
+        <div class="chart-container"><canvas id="allocChart"></canvas></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title" id="couponChartTitle"><i data-lucide="coins" style="width:14px;height:14px;vertical-align:middle"></i> Купоны за 12 мес.</div>
+        <div class="chart-container"><canvas id="couponChart"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title"><i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle"></i> Сравнение счетов</div>
+        <div class="chart-container"><canvas id="accountChart"></canvas></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title"><i data-lucide="globe" style="width:14px;height:14px;vertical-align:middle"></i> Валютная экспозиция</div>
+        <div class="chart-container"><canvas id="currencyChart"></canvas></div>
+      </div>
+    </div>
+    <div class="cards" id="analyticsCards"></div>
+    <div class="section"><div class="section-title"><i data-lucide="arrow-up-down" style="width:16px;height:16px"></i> Лучшие / худшие за день</div><div id="moversBlock"></div></div>
+  </div>
+  <!-- TAB: Settings -->
+  <div class="tab-content" id="tab-settings">
+    <div class="section-title"><i data-lucide="settings" style="width:16px;height:16px"></i> Настройки</div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-weight:600;margin-bottom:6px">Название приложения</div>
+      <input type="text" id="inputAppName" placeholder="TBank Watcher" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font)">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Оставьте пустым для названия по умолчанию</div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="chkLogos" style="width:18px;height:18px;accent-color:var(--pink);cursor:pointer">
+        <div>
+          <div style="font-weight:600">Логотипы инструментов</div>
+          <div style="font-size:12px;color:var(--muted)">Показывать изображения бумаг вместо иконок</div>
+        </div>
+      </label>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <div style="font-weight:600;flex:1">Тема оформления</div>
+        <select id="selTheme" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer">
+          <option value="system">Системная</option>
+          <option value="dark">Тёмная</option>
+          <option value="light">Светлая</option>
+        </select>
+      </label>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <div style="font-weight:600;flex:1">Горизонт событий облигаций</div>
+        <select id="selHorizon" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer">
+          <option value="30">30 дней</option>
+          <option value="60">60 дней</option>
+          <option value="90">90 дней</option>
+          <option value="180">180 дней</option>
+          <option value="365">365 дней</option>
+        </select>
+      </label>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="chkCustomIcons" style="width:18px;height:18px;accent-color:var(--pink);cursor:pointer">
+        <div>
+          <div style="font-weight:600">Свои иконки в трее</div>
+          <div style="font-size:12px;color:var(--muted)">Использовать PNG-файлы из папки icons/ вместо сгенерированных</div>
+        </div>
+      </label>
+      <details style="margin-top:10px;font-size:12px;color:var(--muted)">
+        <summary style="cursor:pointer;color:var(--blue);font-weight:500">Как создать свои иконки</summary>
+        <div style="margin-top:8px;line-height:1.7">
+          <p>Создайте PNG-файлы размером <b>64&times;64 px</b> с прозрачным фоном и положите в папку <code>icons/</code> рядом с приложением:</p>
+          <ul style="margin:6px 0 6px 18px">
+            <li><code>positive.png</code> &mdash; портфель в плюсе (зелёный)</li>
+            <li><code>negative.png</code> &mdash; портфель в минусе (красный)</li>
+            <li><code>warn.png</code> &mdash; оферта скоро (опционально)</li>
+            <li><code>crit.png</code> &mdash; оферта сегодня (опционально)</li>
+          </ul>
+          <p>Если файл отсутствует &mdash; будет использована сгенерированная иконка.</p>
+          <p><b>Совет:</b> используйте простые контрастные символы, иконка в трее очень мелкая (16&ndash;24 px на экране).</p>
+        </div>
+      </details>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-weight:600;margin-bottom:4px">Информация</div>
+      <div style="font-size:12px;color:var(--muted)">Данные обновляются каждые 60 сек.</div>
+      <div style="font-size:12px;color:var(--muted)" id="settingsInfo"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px;text-align:center">
+      <div style="font-size:12px;color:var(--muted)">Разработчик</div>
+      <div style="font-weight:600;margin-top:4px">Гашук Дмитрий</div>
+      <div style="font-size:11px;color:var(--border);margin-top:8px">TBank Watcher v2.1</div>
+    </div>
+  </div>
+  </div><!-- /mainContent -->
+</div>
+<script>
+var TM={bond:'Облигации',share:'Акции',etf:'Фонды',currency:'Валюта',futures:'Фьючерсы',sp:'СП',option:'Опционы'};
+var TL={coupon:'Купон',offer:'Оферта',call:'Call',maturity:'Погашение'};
+var PC=['#0a84ff','#ffd60a','#30d158','#ff453a','#bf5af2','#30b0c7','#ff9f0a','#ff6482'];
+var LI={bond:'landmark',share:'trending-up',etf:'layers',currency:'circle-dollar-sign',futures:'zap',sp:'box',option:'target'};
+var allocChart=null,couponChart=null,historyChart=null,accountChart=null,currencyChart=null;
+var D=null,allocMode='types',selAcc='all',historyRange='1m';
+var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calSelectedDay=null;
+var posTypeFilter='all',bondTypeFilter='all';
+var posSortBy='value'; // value|price|pnl|qty|name|pct
+var activeTab='overview';
+var useLogos=false;
+var plMode='alltime'; // 'alltime' | 'day'
+var MONTHS_RU=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+function fmt(v,d){if(v==null)return'\u2014';d=d||0;return v.toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d})+' \u20bd';}
+function fmtD(s){if(!s)return'\u2014';return new Date(s).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function dU(s){if(!s)return null;var d=new Date(s),n=new Date();return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(n.getFullYear(),n.getMonth(),n.getDate()))/864e5);}
+function dL(n){if(n==null)return'';if(n===0)return'сегодня';if(n===1)return'завтра';if(n<0)return'прошло';return n+' дн.';}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+function cs(){return getComputedStyle(document.body)}
+function ic(name,sz){sz=sz||16;return '<i data-lucide="'+name+'" style="width:'+sz+'px;height:'+sz+'px;vertical-align:middle"></i>';}
+function openUrl(url){pywebview.api.open_url(url)}
+function updateTitle(name){
+  var el=document.getElementById('appTitle');
+  if(name){el.innerHTML=esc(name)+' <span style="font-size:11px;font-weight:400;color:var(--muted);opacity:.5;margin-left:6px">TBank Watcher</span>'}
+  else{el.textContent='TBank Watcher'}
+}
+function openInstr(ticker,type,figi){
+  var b='https://www.tbank.ru/invest/';
+  var id=ticker||figi;
+  if(!id){openUrl(b+'portfolio/');return}
+  if(type==='share')openUrl(b+'stocks/'+id+'/');
+  else if(type==='etf')openUrl(b+'etfs/'+id+'/');
+  else if(type==='currency')openUrl(b+'currencies/'+id+'/');
+  else openUrl(b+'bonds/'+id+'/');
+}
+
+// Theme
+(function(){if(localStorage.getItem('tbank_theme')==='light')document.body.classList.add('light')})();
+function togTheme(){document.body.classList.toggle('light');var l=document.body.classList.contains('light');try{pywebview.api.set_theme(l?'light':'dark')}catch(e){}localStorage.setItem('tbank_theme',l?'light':'dark');updThemeBtn();if(D)reCharts();}
+function updThemeBtn(){var b=document.getElementById('btnTheme');if(b){b.innerHTML=ic(document.body.classList.contains('light')?'sun':'moon',18);lucide.createIcons({nameAttr:'data-lucide',attrs:{style:b.querySelector('i').getAttribute('style')}});}}
+document.getElementById('btnTheme').addEventListener('click',togTheme);
+document.getElementById('btnSettings').addEventListener('click',function(){activeTab='settings';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.remove('active')})});
+document.getElementById('btnRefresh').addEventListener('click',function(){try{pywebview.api.refresh()}catch(e){}});
+
+// Tabs
+document.getElementById('mainTabs').addEventListener('click',function(e){var t=e.target.closest('.tab');if(!t)return;activeTab=t.getAttribute('data-tab');setActiveTab(activeTab)});
+function setActiveTab(tab){document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')===tab)});document.querySelectorAll('.tab-content').forEach(function(x){x.classList.toggle('active',x.id==='tab-'+tab)})}
+document.getElementById('allocChips').addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;allocMode=c.getAttribute('data-mode');document.querySelectorAll('#allocChips .chip').forEach(function(x){x.classList.remove('active')});c.classList.add('active');renderAllocChart()});
+document.getElementById('historyChips').addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;historyRange=c.getAttribute('data-range');document.querySelectorAll('#historyChips .chip').forEach(function(x){x.classList.remove('active')});c.classList.add('active');renderHistoryChart()});
+document.getElementById('calPrev').addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}calSelectedDay=null;renderCalendar()});
+document.getElementById('calNext').addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}calSelectedDay=null;renderCalendar()});
+
+// Settings
+document.getElementById('selHorizon').addEventListener('change',function(){
+  var v=parseInt(this.value);
+  try{pywebview.api.set_horizon(v)}catch(e){}
+});
+document.getElementById('chkLogos').addEventListener('change',function(){
+  useLogos=this.checked;
+  try{pywebview.api.set_use_logos(useLogos)}catch(e){}
+  // Мгновенно перерисовать только списки позиций, без полного render
+  if(D){
+    var pos=D.positions_extra||[];
+    var fPos=selAcc==='all'?pos:pos.filter(function(p){return p.account_id===selAcc});
+    var totAll=(D.portfolios||[]).reduce(function(s,p){return s+p.total},0);
+    document.getElementById('topPositions').innerHTML=renderPosList(fPos.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0)}).slice(0,8),totAll,selAcc==='all');
+    document.getElementById('positionsList').innerHTML=renderPosList(fPos.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0)}),totAll,selAcc==='all');
+    lucide.createIcons();
+  }
+});
+document.getElementById('chkCustomIcons').addEventListener('change',function(){
+  try{pywebview.api.set_custom_icons(this.checked)}catch(e){}
+});
+var appNameTimer=null;
+document.getElementById('inputAppName').addEventListener('input',function(){
+  var v=this.value;
+  updateTitle(v);
+  clearTimeout(appNameTimer);
+  appNameTimer=setTimeout(function(){try{pywebview.api.set_app_name(v)}catch(e){}},500);
+});
+document.getElementById('selTheme').addEventListener('change',function(){
+  var v=this.value;
+  document.body.classList.remove('light');
+  if(v==='light')document.body.classList.add('light');
+  else if(v==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:light)').matches)document.body.classList.add('light');
+  try{pywebview.api.set_theme(v)}catch(e){}
+  localStorage.setItem('tbank_theme',v);
+  updThemeBtn();if(D)reCharts();
+});
+
+function hideSkeleton(){var s=document.getElementById('skeleton'),m=document.getElementById('mainContent');if(s)s.classList.add('hidden');if(m)m.classList.remove('loading');}
+
+function render(data){
+  hideSkeleton();D=data;
+  useLogos=!!data.use_logos;
+  var mode=data.show_mode||'day',ports=data.portfolios||[],pos=data.positions_extra||[],evts=data.bond_events||[],nkd=data.bond_nkd||{},ba=data.bond_analytics||[];
+  if(!document.body.dataset.themed){(function(t){if(t==='light')document.body.classList.add('light');else if(t==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:light)').matches)document.body.classList.add('light');updThemeBtn()})(data.theme);document.body.dataset.themed='1';}
+
+  // Account tabs
+  var ah='<div class="acc-tab'+(selAcc==='all'?' active':'')+'" data-acc="all">Все счета</div>';
+  ports.forEach(function(p){ah+='<div class="acc-tab'+(selAcc===p.account_id?' active':'')+'" data-acc="'+p.account_id+'">'+esc(p.name)+'</div>'});
+  var at=document.getElementById('accTabs');at.innerHTML=ah;
+  at.onclick=function(e){var t=e.target.closest('.acc-tab');if(!t)return;selAcc=t.getAttribute('data-acc');calSelectedDay=null;render(data)};
+
+  var fPos=selAcc==='all'?pos:pos.filter(function(p){return p.account_id===selAcc});
+  var fPorts=selAcc==='all'?ports:ports.filter(function(p){return p.account_id===selAcc});
+
+  var totAll=fPorts.reduce(function(s,p){return s+p.total},0);
+  var dayDelta=fPorts.reduce(function(s,p){return s+p.day_delta},0);
+  var atDelta=fPorts.reduce(function(s,p){return s+p.alltime_delta},0);
+  var invested=totAll-atDelta;
+  var returnPct=invested>0?(atDelta/invested*100).toFixed(2):'0.00';
+
+  var priD=plMode==='day'?dayDelta:atDelta, priL=plMode==='day'?'Сегодня':'Всё время';
+  var secD=plMode==='day'?atDelta:dayDelta, secL=plMode==='day'?'Всё время':'Сегодня';
+  document.getElementById('bigBlock').innerHTML='<div class="big-value">'+fmt(totAll)+'</div>'+
+    '<div style="display:flex;align-items:baseline;gap:12px;padding-bottom:12px">'+
+    '<div class="big-delta '+(priD>=0?'up':'dn')+'">'+(priD>=0?'+':'')+fmt(priD)+' &middot; '+priL+'</div>'+
+    '<div style="font-size:13px;color:var(--muted);cursor:pointer" id="plToggle" title="Нажмите для переключения">'+(secD>=0?'+':'')+fmt(secD)+' &middot; '+secL+'</div>'+
+    '</div>';
+  document.getElementById('plToggle').onclick=function(){plMode=plMode==='day'?'alltime':'day';render(D)};
+
+  // Stat cards with total return
+  var tNkd=0;Object.keys(nkd).forEach(function(k){tNkd+=nkd[k].nkd_total||0});
+  var ytm=calcYTM(ba);
+  var dayPct=invested>0?(dayDelta/totAll*100).toFixed(2):'0.00';
+  document.getElementById('statCards').innerHTML=
+    '<div class="card"><div class="card-label">'+ic('trending-up',14)+' Доходность за всё время</div><div class="card-value '+(atDelta>=0?'up':'dn')+'">'+(atDelta>=0?'+':'')+returnPct+'%</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('calendar',14)+' Доходность за сегодня</div><div class="card-value '+(dayDelta>=0?'up':'dn')+'">'+(dayDelta>=0?'+':'')+dayPct+'%</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('coins',14)+' НКД</div><div class="card-value">'+(tNkd>0?fmt(tNkd,2):'\u2014')+'</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('percent',14)+' YTM</div><div class="card-value">'+(ytm!=null?ytm.toFixed(2)+'%':'\u2014')+'</div></div>';
+
+  // Risk concentration
+  var rh='';var totPos=fPos.reduce(function(s,p){return s+(p.current_value||0)},0);
+  if(totPos>0)fPos.forEach(function(p){var pct=(p.current_value||0)/totPos*100;if(pct>20)rh+='<div class="risk-banner">'+ic('alert-triangle',16)+' Высокая концентрация: '+esc(p.name)+' \u2014 '+pct.toFixed(1)+'% портфеля</div>'});
+  document.getElementById('riskBanner').innerHTML=rh;
+
+  // Upcoming events
+  var futEvts=evts.filter(function(e){var d=dU(e.date);return d!=null&&d>=0}).slice(0,5);
+  var uw=document.getElementById('upcomingWrap'),ul=document.getElementById('upcomingList');
+  if(futEvts.length){uw.style.display='';var uh='';
+    futEvts.forEach(function(e){var d=dU(e.date),dl=dL(d);
+      var iconBg=e.type==='coupon'?'rgba(10,132,255,.15)':e.type==='maturity'?'rgba(191,90,242,.15)':'rgba(255,45,85,.15)';
+      var iconColor=e.type==='coupon'?'var(--blue)':e.type==='maturity'?'var(--purple)':'var(--pink)';
+      var iconName=e.type==='coupon'?'coins':e.type==='maturity'?'circle-check':'alert-triangle';
+      var amt=e.amount||e.amount_est||0;var total=amt*(e.qty||1);
+      uh+='<div class="upcoming-item" onclick="openInstr(\''+esc(e.isin)+'\',\'bond\',\''+esc(e.figi||'')+'\')">'+
+        '<div class="upcoming-icon" style="background:'+iconBg+';color:'+iconColor+'">'+ic(iconName,16)+'</div>'+
+        '<div class="upcoming-info"><div class="upcoming-name">'+esc(e.name)+'</div><div class="upcoming-date">'+fmtD(e.date)+(dl?' \u2014 '+dl:'')+'</div></div>'+
+        '<div class="upcoming-right">'+(total>0?'<div class="upcoming-amount">'+fmt(total,2)+'</div>':'')+'<span class="pill pill-'+(e.type==='coupon'?'coupon':e.type==='maturity'?'maturity':'offer')+'">'+(TL[e.type]||e.type)+'</span></div></div>'});
+    ul.innerHTML=uh;
+  }else{uw.style.display='none'}
+
+  // Top positions
+  var sorted=fPos.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});
+  document.getElementById('topPositions').innerHTML=renderPosList(sorted.slice(0,8),totAll,selAcc==='all');
+
+  renderPosTab(fPos,totAll,selAcc==='all');
+  // Фильтруем события облигаций по FIGI позиций выбранного счёта
+  var fEvts=evts;
+  if(selAcc!=='all'){
+    var accFigis={};fPos.forEach(function(p){if(p.figi)accFigis[p.figi]=true});
+    fEvts=evts.filter(function(e){return accFigis[e.figi]});
+  }
+  renderBondsTab(fEvts,nkd);
+  renderCalendar(fEvts);
+  setActiveTab(activeTab); // восстанавливаем активную вкладку
+  reCharts();
+  renderAnalyticsCards(fPos,ytm,tNkd);
+  renderMovers(fPos);
+  // Sync settings UI
+  var cl=document.getElementById('chkLogos');if(cl)cl.checked=useLogos;
+  var ci=document.getElementById('chkCustomIcons');if(ci)ci.checked=!!(data.use_custom_icons);
+  var st=document.getElementById('selTheme');if(st)st.value=data.theme||'system';
+  var sh=document.getElementById('selHorizon');if(sh)sh.value=String(data.bond_horizon_days||60);
+  var an=document.getElementById('inputAppName');if(an&&!an.matches(':focus'))an.value=data.app_name||'';
+  updateTitle(data.app_name||'');
+  var si=document.getElementById('settingsInfo');if(si)si.textContent='Последнее обновление: '+(data.last_update||'\u2014');
+  lucide.createIcons();
+}
+
+function reCharts(){renderAllocChart();renderCouponChart();renderAccountChart();renderCurrencyChart();}
+
+function mergePositions(positions){
+  var byKey={};
+  positions.forEach(function(p){
+    var key=p.isin||p.figi||p.name;
+    if(!byKey[key]){
+      byKey[key]={instrumentType:p.instrumentType,name:p.name,isin:p.isin,figi:p.figi,ticker:p.ticker,logo_url:p.logo_url,qty:0,current_price:p.current_price,current_value:0,day_delta:0,alltime_delta:0,accounts:[]};
+    }
+    byKey[key].qty+=p.qty||0;
+    byKey[key].current_value+=(p.current_value||0);
+    byKey[key].day_delta+=(p.day_delta||0);
+    byKey[key].alltime_delta+=(p.alltime_delta||0);
+    if(p.account_name&&byKey[key].accounts.indexOf(p.account_name)<0)byKey[key].accounts.push(p.account_name);
+  });
+  return Object.values(byKey);
+}
+
+function renderPosList(positions,totAll,showAcc){
+  if(!positions.length)return'<div class="empty">Нет позиций</div>';
+  var list=showAcc?mergePositions(positions):positions;
+  list.sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});
+  var h='';list.forEach(function(p){
+    var d=plMode==='day'?(p.day_delta||0):(p.alltime_delta||p.day_delta||0),cl=d>=0?'up':'dn',si=d>=0?'+':'',it=p.instrumentType||'other';
+    var icCls={bond:'bond',share:'share',etf:'etf',currency:'currency'}[it]||'other';
+    var isin=p.isin||'';
+    var accStr='';
+    if(showAcc&&p.accounts&&p.accounts.length>0){accStr=' \u00b7 '+p.accounts.join(' \u2022 ');}
+    var figi=p.figi||'',logo=p.logo_url||'',ticker=p.ticker||isin;
+    h+='<div class="pos-item" onclick="openInstr(\''+ticker+'\',\''+it+'\',\''+figi+'\')">';
+    if(useLogos&&logo){h+='<div class="pos-icon"><img src="'+esc(logo)+'" onerror="this.parentElement.className=\'pos-icon '+icCls+'\';this.parentElement.innerHTML=ic(\''+(LI[it]||'circle')+'\',20);lucide.createIcons()"></div>'}
+    else{h+='<div class="pos-icon '+icCls+'">'+ic(LI[it]||'circle',20)+'</div>'}
+    h+='<div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div><div class="pos-sub">'+(ticker?ticker+' \u00b7 ':'')+p.qty+' шт.'+accStr+'</div></div>'+
+      '<div class="pos-right"><div class="pos-price">'+fmt(p.current_value)+'</div><div class="pos-delta '+cl+'">'+si+fmt(d)+'</div></div></div>'});
+  return h;
+}
+
+function sortPositions(list,totAll){
+  var s=posSortBy;
+  return list.slice().sort(function(a,b){
+    if(s==='price')return(b.current_price||0)-(a.current_price||0);
+    if(s==='pnl'){var da=plMode==='day'?(a.day_delta||0):(a.alltime_delta||0);var db=plMode==='day'?(b.day_delta||0):(b.alltime_delta||0);return db-da;}
+    if(s==='qty')return(b.qty||0)-(a.qty||0);
+    if(s==='name')return(a.name||'').localeCompare(b.name||'');
+    if(s==='pct')return(b.current_value||0)-(a.current_value||0);
+    return(b.current_value||0)-(a.current_value||0); // default: value
+  });
+}
+
+function renderPosTab(positions,totAll,showAcc){
+  var types=[];positions.forEach(function(p){var t=p.instrumentType||'other';if(types.indexOf(t)<0)types.push(t)});
+  var ch='<div class="chip active" data-type="all">Все</div>';types.forEach(function(t){ch+='<div class="chip" data-type="'+t+'">'+(TM[t]||t)+'</div>'});
+  var ce=document.getElementById('posChips');ce.innerHTML=ch;
+  ce.onclick=function(e){var c=e.target.closest('.chip');if(!c)return;posTypeFilter=c.getAttribute('data-type');ce.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-type')===posTypeFilter)});applyPosFilter(positions,totAll,showAcc);lucide.createIcons()};
+  ce.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-type')===posTypeFilter)});
+  // Восстанавливаем сортировку
+  var ss=document.getElementById('posSort');if(ss){ss.value=posSortBy;ss.onchange=function(){posSortBy=this.value;applyPosFilter(positions,totAll,showAcc);lucide.createIcons()}}
+  applyPosFilter(positions,totAll,showAcc);
+}
+function applyPosFilter(positions,totAll,showAcc){
+  var f=posTypeFilter==='all'?positions:positions.filter(function(p){return p.instrumentType===posTypeFilter});
+  document.getElementById('positionsList').innerHTML=renderPosList(sortPositions(f,totAll),totAll,showAcc);
+}
+
+function renderBondsTab(events,nkd){
+  var chipH='<div class="chip active" data-btype="all">Все</div><div class="chip" data-btype="coupon">'+ic('coins',12)+' Купоны</div><div class="chip" data-btype="offer">'+ic('alert-triangle',12)+' Оферты</div><div class="chip" data-btype="maturity">'+ic('circle-check',12)+' Погашения</div>';
+  var bce=document.getElementById('bondChips');bce.innerHTML=chipH;
+  bce.onclick=function(e){var c=e.target.closest('.chip');if(!c)return;bondTypeFilter=c.getAttribute('data-btype');bce.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-btype')===bondTypeFilter)});fillBonds(events,bondTypeFilter);lucide.createIcons()};
+  // Восстанавливаем активный фильтр
+  bce.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-btype')===bondTypeFilter)});
+  fillBonds(events,bondTypeFilter);
+}
+
+function fillBonds(events,typeFilter){
+  var filtered=typeFilter==='all'?events:events.filter(function(e){return e.type===typeFilter});
+  if(!filtered.length){document.getElementById('bondsList').innerHTML='<div class="empty">Нет событий</div>';return}
+  var byKey={};filtered.forEach(function(e){var k=e.isin||e.figi||e.name;if(!byKey[k])byKey[k]={name:e.name,isin:e.isin,qty:e.qty,events:[]};byKey[k].events.push(e)});
+  var h='';Object.values(byKey).forEach(function(b){
+    h+='<div class="bond-card" onclick="openInstr(\''+esc(b.isin)+'\',\'bond\',\''+esc(b.figi||'')+'\')">';
+    h+='<div class="bond-name">'+esc(b.name)+'</div><div class="bond-isin">'+(b.isin||'\u2014')+' \u00b7 '+b.qty+' шт.</div>';
+    h+='<div class="bond-events">';
+    b.events.forEach(function(e){var d=dU(e.date),dl=dL(d);var pc='pill-coupon';if(e.type==='offer'||e.type==='call')pc='pill-offer';if(e.type==='maturity')pc='pill-maturity';if(d===0)pc='pill-today';var amt=e.amount||e.amount_est||0;var total=amt*(e.qty||1);h+='<span class="pill '+pc+'">'+(TL[e.type]||e.type)+' '+fmtD(e.date)+(dl?' ('+dl+')':'')+(total>0?' = '+(e.amount_est?'~':'')+fmt(total,2):'')+'</span>'});
+    h+='</div></div>'});
+  document.getElementById('bondsList').innerHTML=h;
+}
+
+// Calendar
+function renderCalendar(evts){
+  if(!D)return;evts=evts||(D._filteredEvts||D.bond_events||[]);D._filteredEvts=evts;
+  document.getElementById('calTitle').textContent=MONTHS_RU[calMonth]+' '+calYear;
+  var first=new Date(calYear,calMonth,1),last=new Date(calYear,calMonth+1,0);
+  var startDay=(first.getDay()+6)%7;var days=last.getDate();
+  var today=new Date();var todayKey=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+
+  var evByDay={};evts.forEach(function(e){if(!e.date)return;var d=new Date(e.date);var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(!evByDay[k])evByDay[k]=[];evByDay[k].push(e)});
+
+  var g='';['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(function(d){g+='<div class="cal-dow">'+d+'</div>'});
+  for(var i=0;i<startDay;i++)g+='<div class="cal-day other"></div>';
+  for(var d=1;d<=days;d++){
+    var key=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var dayEvts=evByDay[key]||[];var isToday=key===todayKey;
+    var cls='cal-day'+(dayEvts.length?' has-events':'')+(isToday?' today':'');
+    g+='<div class="'+cls+'" data-day="'+key+'">'+d;
+    if(dayEvts.length){g+='<div class="cal-dots">';dayEvts.forEach(function(e){var c=e.type==='coupon'?'var(--blue)':e.type==='maturity'?'var(--purple)':'var(--pink)';g+='<div class="cal-dot" style="background:'+c+'"></div>'});g+='</div>'}
+    g+='</div>';
+  }
+  document.getElementById('calGrid').innerHTML=g;
+  document.getElementById('calPopup').className='cal-popup';document.getElementById('calPopup').innerHTML='';
+
+  // Восстанавливаем выделение
+  if(calSelectedDay){var sel=document.querySelector('.cal-day[data-day="'+calSelectedDay+'"]');if(sel)sel.classList.add('selected')}
+
+  document.getElementById('calGrid').onclick=function(ev){
+    var day=ev.target.closest('.cal-day.has-events');if(!day)return;
+    var key=day.getAttribute('data-day');var dayEvts=evByDay[key]||[];
+    // Снимаем старое выделение, ставим новое
+    document.querySelectorAll('.cal-day.selected').forEach(function(x){x.classList.remove('selected')});
+    day.classList.add('selected');
+    calSelectedDay=key;
+    var ph='<div class="cal-popup-title">'+fmtD(key)+'</div>';
+    dayEvts.forEach(function(e){var amt=e.amount||e.amount_est||0;var total=amt*(e.qty||1);
+      ph+='<div class="cal-popup-event"><div>'+esc(e.name)+' <span class="pill pill-'+(e.type==='coupon'?'coupon':e.type==='maturity'?'maturity':'offer')+'">'+(TL[e.type]||e.type)+'</span></div>'+(total>0?'<div style="font-weight:600">'+fmt(total,2)+'</div>':'')+'</div>'});
+    var pp=document.getElementById('calPopup');pp.innerHTML=ph;pp.className='cal-popup show';
+  };
+}
+
+// Charts
+function renderHistoryChart(){
+  if(!D)return;var pts=D.portfolio_history||[];
+  var wrap=document.getElementById('historyWrap');
+  if(pts.length<2){wrap.style.display='none';return}
+  wrap.style.display='';
+  var now=Date.now();var ranges={
+    '1d':864e5,'1w':7*864e5,'1m':30*864e5,'3m':90*864e5,'all':Infinity
+  };var cutoff=now-(ranges[historyRange]||30*864e5);
+  var filtered=pts.filter(function(p){return new Date(p.ts).getTime()>=cutoff});
+  if(filtered.length<2)filtered=pts.slice(-10);
+  var labels=filtered.map(function(p){var d=new Date(p.ts);return historyRange==='1d'?d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})});
+  var values=filtered.map(function(p){return p.value});
+  var isUp=values[values.length-1]>=values[0];
+  var lineColor=isUp?'rgba(48,209,88,.8)':'rgba(255,69,58,.8)';
+  var ctx=document.getElementById('historyChart');
+  if(historyChart)historyChart.destroy();
+  historyChart=new Chart(ctx,{type:'line',
+    data:{labels:labels,datasets:[{data:values,borderColor:lineColor,borderWidth:2,pointRadius:0,tension:.3,fill:true,backgroundColor:function(context){var c=context.chart.ctx;var g=c.createLinearGradient(0,0,0,context.chart.height);g.addColorStop(0,isUp?'rgba(48,209,88,.2)':'rgba(255,69,58,.2)');g.addColorStop(1,'rgba(0,0,0,0)');return g}}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fmt(c.parsed.y)}}}},
+      scales:{x:{ticks:{color:cs().getPropertyValue('--muted').trim(),maxTicksLimit:8,font:{size:10}},grid:{display:false}},y:{ticks:{color:cs().getPropertyValue('--muted').trim(),callback:function(v){return fmt(v)}},grid:{color:'rgba(72,72,74,.2)'}}}
+    }
+  });
+  var ch=((values[values.length-1]-values[0])/values[0]*100).toFixed(2);
+  document.getElementById('historyTitle').innerHTML=ic('chart-line',14)+' Портфель <span class="'+(isUp?'up':'dn')+'" style="font-size:12px;margin-left:6px">'+(isUp?'+':'')+ch+'%</span>';
+}
+
+function renderAllocChart(){
+  if(!D)return;var pos=D.positions_extra||[];var fPos=selAcc==='all'?pos:pos.filter(function(p){return p.account_id===selAcc});
+  var labels=[],values=[],colors=[];
+  if(allocMode==='types'){var t={};fPos.forEach(function(p){var l=TM[p.instrumentType]||p.instrumentType||'?';t[l]=(t[l]||0)+(p.current_value||0)});var en=Object.entries(t).filter(function(e){return e[1]>0}).sort(function(a,b){return b[1]-a[1]});labels=en.map(function(e){return e[0]});values=en.map(function(e){return e[1]})}
+  else{var s=fPos.slice().filter(function(p){return(p.current_value||0)>0}).sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});labels=s.map(function(p){return p.name||'?'});values=s.map(function(p){return p.current_value||0})}
+  colors=values.map(function(_,i){return PC[i%PC.length]});
+  var ctx=document.getElementById('allocChart');if(allocChart)allocChart.destroy();
+  allocChart=new Chart(ctx,{type:'doughnut',data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right',labels:{color:cs().getPropertyValue('--muted').trim(),font:{size:11},padding:6,boxWidth:10}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(s,v){return s+v},0);return c.label+': '+fmt(c.parsed)+' ('+(t>0?(c.parsed/t*100).toFixed(1):0)+'%)';}}}}}});
+}
+
+function renderCouponChart(){
+  if(!D)return;var evts=(D.bond_events||[]).filter(function(e){return e.type==='coupon'});var months={};var totalYear=0;
+  evts.forEach(function(e){if(!e.date)return;var d=new Date(e.date);var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');var l=d.toLocaleDateString('ru-RU',{month:'short',year:'2-digit'});if(!months[k])months[k]={label:l,sum:0};var a=(e.amount||e.amount_est||0)*(e.qty||1);months[k].sum+=a;totalYear+=a});
+  var sorted=Object.entries(months).sort(function(a,b){return a[0].localeCompare(b[0])});var labels=sorted.map(function(e){return e[1].label});var vals=sorted.map(function(e){return e[1].sum});var mx=Math.max.apply(null,vals.concat([0]));
+  document.getElementById('couponChartTitle').innerHTML=ic('coins',14)+' Купоны за 12 мес. ('+fmt(totalYear,0)+')';
+  var ctx=document.getElementById('couponChart');if(couponChart)couponChart.destroy();
+  couponChart=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:vals.map(function(v){return v===mx&&mx>0?'rgba(255,214,10,.8)':'rgba(10,132,255,.6)'}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fmt(c.parsed.y,2)}}}},scales:{x:{ticks:{color:cs().getPropertyValue('--muted').trim(),font:{size:10}},grid:{display:false}},y:{ticks:{color:cs().getPropertyValue('--muted').trim(),callback:function(v){return fmt(v)}},grid:{color:'rgba(72,72,74,.3)'}}}}});
+}
+
+function renderAccountChart(){
+  if(!D)return;var ports=(D.portfolios||[]).filter(function(p){return p.total>0});
+  var wrap=document.getElementById('accountChart');
+  if(!wrap)return;
+  var container=wrap.parentElement.parentElement;
+  if(accountChart){accountChart.destroy();accountChart=null;}
+  if(ports.length<2){container.style.display='none';return}
+  container.style.display='';
+  var labels=ports.map(function(p){return p.name});var values=ports.map(function(p){return p.total});var colors=values.map(function(_,i){return PC[i%PC.length]});
+  accountChart=new Chart(wrap,{type:'bar',data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fmt(c.parsed.x)}}}},scales:{x:{ticks:{color:cs().getPropertyValue('--muted').trim(),callback:function(v){return fmt(v)}},grid:{color:'rgba(72,72,74,.2)'}},y:{ticks:{color:cs().getPropertyValue('--muted').trim()},grid:{display:false}}}}});
+}
+
+function renderCurrencyChart(){
+  if(!D)return;var pos=D.positions_extra||[];var fPos=selAcc==='all'?pos:pos.filter(function(p){return p.account_id===selAcc});
+  var buckets={};fPos.forEach(function(p){var cur='RUB';if(p.instrumentType==='currency'&&p.name){var m=p.name.match(/^([A-Z]{3})/);if(m)cur=m[1]}buckets[cur]=(buckets[cur]||0)+(p.current_value||0)});
+  var entries=Object.entries(buckets).filter(function(e){return e[1]>0}).sort(function(a,b){return b[1]-a[1]});
+  if(entries.length<1)return;
+  var labels=entries.map(function(e){return e[0]});var values=entries.map(function(e){return e[1]});var colors=values.map(function(_,i){return PC[i%PC.length]});
+  var ctx=document.getElementById('currencyChart');if(currencyChart)currencyChart.destroy();
+  currencyChart=new Chart(ctx,{type:'doughnut',data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right',labels:{color:cs().getPropertyValue('--muted').trim(),font:{size:11},padding:6,boxWidth:10}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(s,v){return s+v},0);return c.label+': '+fmt(c.parsed)+' ('+(t>0?(c.parsed/t*100).toFixed(1):0)+'%)';}}}}}});
+}
+
+function renderAnalyticsCards(positions,ytm,tNkd){
+  document.getElementById('analyticsCards').innerHTML=
+    '<div class="card"><div class="card-label">'+ic('coins',14)+' НКД</div><div class="card-value">'+(tNkd>0?fmt(tNkd,2):'\u2014')+'</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('percent',14)+' YTM</div><div class="card-value">'+(ytm!=null?ytm.toFixed(2)+'%':'\u2014')+'</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('briefcase',14)+' Позиций</div><div class="card-value">'+positions.length+'</div></div>';
+}
+
+function renderMovers(positions){
+  var wd=positions.filter(function(p){return p.day_delta!=null&&p.day_delta!==0}).sort(function(a,b){return b.day_delta-a.day_delta});
+  var g=wd.filter(function(p){return p.day_delta>0}).slice(0,3);var l=wd.filter(function(p){return p.day_delta<0}).slice(-3).reverse();
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div>';
+  g.forEach(function(p){h+='<div class="pos-item" onclick="openInstr(\''+esc(p.isin)+'\',\''+p.instrumentType+'\',\''+esc(p.figi||'')+'\')"><div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div></div><div class="pos-right"><div class="pos-delta up">+'+fmt(p.day_delta)+'</div></div></div>'});
+  if(!g.length)h+='<div class="empty" style="padding:16px">\u2014</div>';
+  h+='</div><div>';
+  l.forEach(function(p){h+='<div class="pos-item" onclick="openInstr(\''+esc(p.isin)+'\',\''+p.instrumentType+'\',\''+esc(p.figi||'')+'\')"><div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div></div><div class="pos-right"><div class="pos-delta dn">'+fmt(p.day_delta)+'</div></div></div>'});
+  if(!l.length)h+='<div class="empty" style="padding:16px">\u2014</div>';
+  h+='</div></div>';document.getElementById('moversBlock').innerHTML=h;
+}
+
+function calcYTM(ba){var wS=0,wY=0;ba.forEach(function(b){if(!b.maturity_date||!b.face_value)return;var y=(new Date(b.maturity_date)-Date.now())/(365.25*864e5);if(y<=0)return;var v=(b.annual_coupon+(b.face_value-b.current_price)/y)/((b.face_value+b.current_price)/2)*100;var w=b.qty*b.current_price;wS+=w;wY+=v*w});return wS>0?wY/wS:null}
+
+function loadData(){pywebview.api.get_data().then(function(raw){render(JSON.parse(raw))}).catch(function(err){document.querySelector('.app').innerHTML='<div class="empty">Ошибка: '+err+'</div>'})}
+window.addEventListener('pywebviewready',function(){loadData();setInterval(loadData,30000)});
+document.addEventListener('DOMContentLoaded',function(){if(typeof lucide!=='undefined')lucide.createIcons()});
+</script>
+</body>
+</html>

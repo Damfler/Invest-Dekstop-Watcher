@@ -1,0 +1,19 @@
+{
+  "token": "t.VGejDLCOoTKspJHAwAf3iuylKkBWA74GyVgoLmoxe0YU38v-P1hum4M2CIufXzzn1XfZiEDxKkE25bawBJ9SUA",
+  "use_sandbox": false,
+  "use_custom_icons": false,
+  "bond_horizon_days": 30,
+  "bond_sort": "date",
+  "max_bond_events": 50,
+  "notifications": {
+    "offer_warn": true,
+    "offer_crit": true,
+    "coupon_tomorrow": true,
+    "portfolio_move": true
+  },
+  "notify_move_pct": 1.0,
+  "notify_offer_days": 2,
+  "theme": "dark",
+  "use_logos": true,
+  "app_name": ""
+}

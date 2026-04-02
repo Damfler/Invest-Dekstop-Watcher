@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>T-Bank Invest</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:      #1c1c1e;
+  --bg2:     #2c2c2e;
+  --surface: #3a3a3c;
+  --border:  #48484a;
+  --text:    #f2f2f7;
+  --muted:   #8e8e93;
+  --green:   #30d158;
+  --red:     #ff453a;
+  --pink:    #ff2d55;
+  --yellow:  #ffd60a;
+  --blue:    #0a84ff;
+  --teal:    #30b0c7;
+  --radius:  14px;
+  --font:    -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+body.light {
+  --bg:      #f2f2f7;
+  --bg2:     #ffffff;
+  --surface: #e5e5ea;
+  --border:  #d1d1d6;
+  --text:    #1c1c1e;
+  --muted:   #636366;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font);
+  font-size: 14px; line-height: 1.5; transition: background .2s, color .2s;
+}
+.app { max-width: 960px; margin: 0 auto; padding: 0 16px 32px; }
+a { color: var(--blue); text-decoration: none; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0 8px; position: sticky; top: 0; z-index: 10;
+  background: var(--bg);
+}
+.header h1 { font-size: 20px; font-weight: 700; }
+.header-btns { display: flex; gap: 8px; }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: var(--bg2); color: var(--text); font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.icon-btn:hover { background: var(--surface); }
+
+/* ── Account tabs ── */
+.acc-tabs {
+  display: flex; gap: 0; background: var(--bg2); border-radius: 10px;
+  padding: 3px; margin: 12px 0;
+}
+.acc-tab {
+  flex: 1; padding: 8px 0; text-align: center; border-radius: 8px;
+  font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted);
+  transition: all .15s; user-select: none;
+}
+.acc-tab.active { background: var(--surface); color: var(--text); font-weight: 600; }
+
+/* ── Big value ── */
+.big-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; padding: 8px 0 2px; }
+.big-delta { font-size: 15px; font-weight: 600; padding-bottom: 12px; }
+.up { color: var(--green); }
+.dn { color: var(--red); }
+
+/* ── Period selector ── */
+.periods {
+  display: flex; gap: 0; background: var(--bg2); border-radius: 8px;
+  padding: 3px; margin-bottom: 16px;
+}
+.period {
+  flex: 1; padding: 6px 0; text-align: center; border-radius: 6px;
+  font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted);
+  transition: all .15s; user-select: none;
+}
+.period.active { background: var(--pink); color: #fff; }
+
+/* ── Cards ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.card {
+  background: var(--bg2); border-radius: var(--radius); padding: 14px 16px;
+  cursor: pointer; transition: transform .1s;
+}
+.card:hover { transform: translateY(-1px); }
+.card-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.card-value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+.card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── Sections ── */
+.section { margin-bottom: 20px; }
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.section-title { font-size: 16px; font-weight: 700; }
+
+/* ── Position list ── */
+.pos-item {
+  display: flex; align-items: center; padding: 12px 14px;
+  background: var(--bg2); border-radius: 12px; margin-bottom: 6px;
+  cursor: pointer; transition: background .1s;
+}
+.pos-item:hover { background: var(--surface); }
+.pos-icon {
+  width: 40px; height: 40px; border-radius: 50%; margin-right: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; flex-shrink: 0;
+}
+.pos-icon.bond { background: #1a3a5c; color: var(--blue); }
+.pos-icon.share { background: #1a3c1a; color: var(--green); }
+.pos-icon.etf { background: #3a1a3c; color: #bf5af2; }
+.pos-icon.currency { background: #3c3a1a; color: var(--yellow); }
+.pos-icon.other { background: var(--surface); color: var(--muted); }
+.pos-info { flex: 1; min-width: 0; }
+.pos-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pos-sub { font-size: 12px; color: var(--muted); }
+.pos-right { text-align: right; flex-shrink: 0; }
+.pos-price { font-weight: 600; font-size: 14px; }
+.pos-delta { font-size: 12px; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.tab {
+  padding: 10px 18px; cursor: pointer; font-size: 14px; font-weight: 500;
+  color: var(--muted); border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all .15s; user-select: none;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-bottom-color: var(--pink); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── Charts ── */
+.chart-wrap { background: var(--bg2); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
+.chart-container { position: relative; height: 240px; }
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ── Bond table ── */
+.bond-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--bg2); border-radius: 10px;
+  margin-bottom: 6px; cursor: pointer; transition: background .1s;
+}
+.bond-row:hover { background: var(--surface); }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+.pill-coupon { background: rgba(10,132,255,.15); color: var(--blue); }
+.pill-offer { background: rgba(255,45,85,.15); color: var(--pink); }
+.pill-maturity { background: rgba(191,90,242,.15); color: #bf5af2; }
+.pill-today { background: rgba(255,69,58,.2); color: var(--red); }
+
+/* ── Filter chips ── */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip {
+  padding: 5px 14px; border-radius: 16px; font-size: 12px; font-weight: 500;
+  cursor: pointer; background: var(--bg2); color: var(--muted); border: 1px solid var(--border);
+  transition: all .15s; user-select: none;
+}
+.chip.active { background: var(--pink); color: #fff; border-color: var(--pink); }
+
+.empty { text-align: center; padding: 40px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1>T-Bank Invest</h1>
+    <div class="header-btns">
+      <button class="icon-btn" id="btnTheme" title="Тема">&#x1f319;</button>
+      <button class="icon-btn" id="btnRefresh" title="Обновить">&#x1f504;</button>
+    </div>
+  </div>
+
+  <!-- Account tabs (Все счета / individual) -->
+  <div class="acc-tabs" id="accTabs"></div>
+
+  <!-- Big portfolio value -->
+  <div id="bigBlock"></div>
+
+  <!-- Main tabs -->
+  <div class="tabs" id="mainTabs">
+    <div class="tab active" data-tab="overview">Обзор</div>
+    <div class="tab" data-tab="positions">Позиции</div>
+    <div class="tab" data-tab="bonds">Облигации</div>
+    <div class="tab" data-tab="analytics">Аналитика</div>
+  </div>
+
+  <div class="tab-content active" id="tab-overview">
+    <div class="cards" id="statCards"></div>
+    <div class="section">
+      <div class="section-title">Позиции</div>
+      <div id="topPositions"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-positions">
+    <div class="chips" id="posChips"></div>
+    <div id="positionsList"></div>
+  </div>
+
+  <div class="tab-content" id="tab-bonds">
+    <div id="bondsList"></div>
+  </div>
+
+  <div class="tab-content" id="tab-analytics">
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title">Аллокация</div>
+        <div class="chips" id="allocChips">
+          <div class="chip active" data-mode="types">По типам</div>
+          <div class="chip" data-mode="positions">По бумагам</div>
+        </div>
+        <div class="chart-container"><canvas id="allocChart"></canvas></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Купоны за 12 месяцев</div>
+        <div class="chart-container"><canvas id="couponChart"></canvas></div>
+      </div>
+    </div>
+    <div class="cards" id="analyticsCards"></div>
+    <div class="section">
+      <div class="section-title">Лучшие / худшие за день</div>
+      <div id="moversBlock"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TYPE_MAP = {bond:'Облигации',share:'Акции',etf:'Фонды',currency:'Валюта',futures:'Фьючерсы',sp:'СП',option:'Опционы'};
+const TYPE_LABEL = {coupon:'Купон',offer:'Оферта',call:'Call',maturity:'Погашение'};
+const PIE_COLORS = ['#0a84ff','#ffd60a','#30d158','#ff453a','#bf5af2','#30b0c7','#ff9f0a','#ff6482'];
+const ICON_MAP = {bond:'B',share:'S',etf:'F',currency:'$',futures:'Fu',sp:'SP',option:'Op'};
+
+let allocChart = null, couponChart = null, currentData = null, allocMode = 'types';
+let selectedAccount = 'all';
+
+// ── Helpers ──
+function fmt(v, d=0) {
+  if (v == null) return '\u2014';
+  return v.toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d})+' \u20bd';
+}
+function fmtDate(s) {
+  if (!s) return '\u2014';
+  return new Date(s).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function daysUntil(s) {
+  if (!s) return null;
+  const d = new Date(s), now = new Date();
+  const ed = new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const td = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  return Math.round((ed-td)/86400000);
+}
+function daysLbl(n) {
+  if (n==null) return '';
+  if (n===0) return 'сегодня';
+  if (n===1) return 'завтра';
+  if (n<0) return 'прошло';
+  return n+' дн.';
+}
+function esc(s) { return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }
+function css() { return getComputedStyle(document.body); }
+
+// ── Theme ──
+(function(){
+  if (localStorage.getItem('tbank_theme')==='light') document.body.classList.add('light');
+})();
+function toggleTheme() {
+  document.body.classList.toggle('light');
+  localStorage.setItem('tbank_theme', document.body.classList.contains('light')?'light':'dark');
+  document.getElementById('btnTheme').textContent = document.body.classList.contains('light')?'\u2600\ufe0f':'\ud83c\udf19';
+  if (currentData) { renderAllocChart(currentData); renderCouponChart(currentData); }
+}
+
+// ── Events ──
+document.getElementById('btnTheme').addEventListener('click', toggleTheme);
+document.getElementById('btnRefresh').addEventListener('click', function(){ pywebview.api.refresh(); });
+
+document.getElementById('mainTabs').addEventListener('click', function(e){
+  var tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('#mainTabs .tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active');});
+  tab.classList.add('active');
+  document.getElementById('tab-'+tab.getAttribute('data-tab')).classList.add('active');
+});
+
+document.getElementById('allocChips').addEventListener('click', function(e){
+  var chip = e.target.closest('.chip');
+  if (!chip) return;
+  allocMode = chip.getAttribute('data-mode');
+  document.querySelectorAll('#allocChips .chip').forEach(function(c){c.classList.remove('active');});
+  chip.classList.add('active');
+  if (currentData) renderAllocChart(currentData);
+});
+
+// ── Render ──
+function render(data) {
+  currentData = data;
+  var mode = data.show_mode || 'day';
+  var portfolios = data.portfolios || [];
+  var posExtra = data.positions_extra || [];
+  var events = data.bond_events || [];
+  var bondNkd = data.bond_nkd || {};
+  var bondAn = data.bond_analytics || [];
+
+  // Account tabs
+  var accHtml = '<div class="acc-tab'+(selectedAccount==='all'?' active':'')+'" data-acc="all">Все счета</div>';
+  portfolios.forEach(function(p){
+    accHtml += '<div class="acc-tab'+(selectedAccount===p.account_id?' active':'')+'" data-acc="'+p.account_id+'">'+esc(p.name)+'</div>';
+  });
+  document.getElementById('accTabs').innerHTML = accHtml;
+  document.getElementById('accTabs').onclick = function(e){
+    var t = e.target.closest('.acc-tab');
+    if (!t) return;
+    selectedAccount = t.getAttribute('data-acc');
+    render(data);
+  };
+
+  // Filter by account
+  var filteredPos = posExtra;
+  var filteredPortfolios = portfolios;
+  // (account filtering would need account_id on positions — use all for now)
+
+  var totalAll = filteredPortfolios.reduce(function(s,p){return s+p.total;},0);
+  var deltaAll = filteredPortfolios.reduce(function(s,p){return s+(mode==='day'?p.day_delta:p.alltime_delta);},0);
+  var modeStr = mode==='day'?'Сегодня':'За всё время';
+  var sign = deltaAll>=0?'+':'';
+  var cls = deltaAll>=0?'up':'dn';
+
+  document.getElementById('bigBlock').innerHTML =
+    '<div class="big-value">'+fmt(totalAll)+'</div>'+
+    '<div class="big-delta '+cls+'">'+sign+fmt(deltaAll)+' &middot; '+modeStr+'</div>';
+
+  // Stats
+  var totalNkd = 0;
+  Object.keys(bondNkd).forEach(function(k){ totalNkd += bondNkd[k].nkd_total||0; });
+  var ytm = calcYTM(bondAn);
+
+  document.getElementById('statCards').innerHTML =
+    '<div class="card"><div class="card-label">НКД накоплено</div><div class="card-value">'+(totalNkd>0?fmt(totalNkd,2):'\u2014')+'</div></div>'+
+    '<div class="card"><div class="card-label">Средний YTM</div><div class="card-value">'+(ytm!=null?ytm.toFixed(2)+'%':'\u2014')+'</div></div>'+
+    '<div class="card"><div class="card-label">Позиций</div><div class="card-value">'+filteredPos.length+'</div></div>'+
+    '<div class="card"><div class="card-label">Счетов</div><div class="card-value">'+portfolios.length+'</div></div>';
+
+  // Overview: top positions
+  var sorted = filteredPos.slice().sort(function(a,b){return (b.current_value||0)-(a.current_value||0);});
+  document.getElementById('topPositions').innerHTML = renderPosList(sorted.slice(0,8), totalAll);
+
+  // Positions tab
+  renderPositionsTab(filteredPos, totalAll);
+
+  // Bonds tab
+  renderBondsTab(events);
+
+  // Analytics
+  renderAllocChart(data);
+  renderCouponChart(data);
+  renderAnalyticsCards(filteredPos, ytm, totalNkd);
+  renderMovers(filteredPos);
+}
+
+function renderPosList(positions, totalAll) {
+  var html = '';
+  positions.forEach(function(p){
+    var d = p.day_delta||0;
+    var cls = d>=0?'up':'dn';
+    var sign = d>=0?'+':'';
+    var itype = p.instrumentType||'other';
+    var iconCls = {bond:'bond',share:'share',etf:'etf',currency:'currency'}[itype]||'other';
+    var letter = ICON_MAP[itype]||'?';
+    var isin = p.isin||'';
+    html += '<div class="pos-item" '+(isin?'onclick="openBond(\''+isin+'\')"':'')+'>'+
+      '<div class="pos-icon '+iconCls+'">'+letter+'</div>'+
+      '<div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div>'+
+      '<div class="pos-sub">'+(TYPE_MAP[itype]||itype)+' &middot; '+p.qty+' шт.</div></div>'+
+      '<div class="pos-right"><div class="pos-price">'+fmt(p.current_value)+'</div>'+
+      '<div class="pos-delta '+cls+'">'+sign+fmt(d)+'</div></div></div>';
+  });
+  return html || '<div class="empty">Нет позиций</div>';
+}
+
+function renderPositionsTab(positions, totalAll) {
+  var types = [];
+  positions.forEach(function(p){
+    var t = p.instrumentType||'other';
+    if (types.indexOf(t)<0) types.push(t);
+  });
+  var chipsHtml = '<div class="chip active" data-type="all">Все</div>';
+  types.forEach(function(t){
+    chipsHtml += '<div class="chip" data-type="'+t+'">'+(TYPE_MAP[t]||t)+'</div>';
+  });
+  var chipsEl = document.getElementById('posChips');
+  chipsEl.innerHTML = chipsHtml;
+  chipsEl.onclick = function(e){
+    var c = e.target.closest('.chip');
+    if (!c) return;
+    chipsEl.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active');
+    var type = c.getAttribute('data-type');
+    var filtered = type==='all'?positions:positions.filter(function(p){return p.instrumentType===type;});
+    var sorted = filtered.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0);});
+    document.getElementById('positionsList').innerHTML = renderPosList(sorted, totalAll);
+  };
+  var sorted = positions.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0);});
+  document.getElementById('positionsList').innerHTML = renderPosList(sorted, totalAll);
+}
+
+function renderBondsTab(events) {
+  var html = '';
+  events.forEach(function(e){
+    var d = daysUntil(e.date);
+    var dl = daysLbl(d);
+    var amt = e.amount||e.amount_est||0;
+    var total = amt*(e.qty||1);
+    var prefix = e.amount_est?'~':'';
+    var isin = e.isin||'';
+    var pillCls = 'pill-coupon';
+    if (e.type==='offer'||e.type==='call') pillCls='pill-offer';
+    if (e.type==='maturity') pillCls='pill-maturity';
+    if (d===0) pillCls='pill-today';
+    html += '<div class="bond-row" onclick="openBond(\''+isin+'\')">'+
+      '<div><div style="font-weight:600">'+esc(e.name)+'</div>'+
+      '<div style="font-size:12px;color:var(--muted)">'+esc(isin)+' &middot; '+fmtDate(e.date)+(dl?' &middot; '+dl:'')+'</div></div>'+
+      '<div style="text-align:right"><span class="pill '+pillCls+'">'+(TYPE_LABEL[e.type]||e.type)+'</span>'+
+      (total>0?'<div style="font-size:13px;margin-top:2px">'+prefix+fmt(total,2)+'</div>':'')+'</div></div>';
+  });
+  document.getElementById('bondsList').innerHTML = html||'<div class="empty">Нет событий</div>';
+}
+
+function renderAllocChart(data) {
+  var positions = data.positions_extra||[];
+  var labels=[], values=[], colors=[];
+  if (allocMode==='types') {
+    var totals={};
+    positions.forEach(function(p){
+      var lbl=TYPE_MAP[p.instrumentType]||p.instrumentType||'?';
+      totals[lbl]=(totals[lbl]||0)+(p.current_value||0);
+    });
+    var entries=Object.entries(totals).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
+    labels=entries.map(function(e){return e[0];});
+    values=entries.map(function(e){return e[1];});
+  } else {
+    var sorted=positions.slice().filter(function(p){return(p.current_value||0)>0;}).sort(function(a,b){return(b.current_value||0)-(a.current_value||0);});
+    labels=sorted.map(function(p){return p.name||'?';});
+    values=sorted.map(function(p){return p.current_value||0;});
+  }
+  colors=values.map(function(_,i){return PIE_COLORS[i%PIE_COLORS.length];});
+  var ctx=document.getElementById('allocChart');
+  if (allocChart) allocChart.destroy();
+  allocChart=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{
+        legend:{position:'right',labels:{color:css().getPropertyValue('--muted').trim(),font:{size:11},padding:6,boxWidth:10}},
+        tooltip:{callbacks:{label:function(ctx){
+          var total=ctx.dataset.data.reduce(function(s,v){return s+v;},0);
+          var pct=total>0?(ctx.parsed/total*100).toFixed(1):0;
+          return ctx.label+': '+fmt(ctx.parsed)+' ('+pct+'%)';
+        }}}
+      }
+    }
+  });
+}
+
+function renderCouponChart(data) {
+  var events=(data.bond_events||[]).filter(function(e){return e.type==='coupon';});
+  var months={};
+  events.forEach(function(e){
+    if(!e.date)return;
+    var d=new Date(e.date);
+    var key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var lbl=d.toLocaleDateString('ru-RU',{month:'short',year:'2-digit'});
+    if(!months[key])months[key]={label:lbl,sum:0};
+    months[key].sum+=(e.amount||e.amount_est||0)*(e.qty||1);
+  });
+  var sorted=Object.entries(months).sort(function(a,b){return a[0].localeCompare(b[0]);});
+  var labels=sorted.map(function(e){return e[1].label;});
+  var vals=sorted.map(function(e){return e[1].sum;});
+  var maxV=Math.max.apply(null,vals.concat([0]));
+  var ctx=document.getElementById('couponChart');
+  if(couponChart)couponChart.destroy();
+  couponChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:vals,backgroundColor:vals.map(function(v){return v===maxV&&maxV>0?'rgba(255,214,10,.8)':'rgba(10,132,255,.6)';}),borderRadius:4}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return fmt(ctx.parsed.y,2);}}}},
+      scales:{
+        x:{ticks:{color:css().getPropertyValue('--muted').trim(),font:{size:10}},grid:{display:false}},
+        y:{ticks:{color:css().getPropertyValue('--muted').trim(),callback:function(v){return fmt(v);}},grid:{color:'rgba(72,72,74,.3)'}}
+      }
+    }
+  });
+}
+
+function renderAnalyticsCards(positions, ytm, totalNkd) {
+  document.getElementById('analyticsCards').innerHTML =
+    '<div class="card"><div class="card-label">НКД накоплено</div><div class="card-value">'+(totalNkd>0?fmt(totalNkd,2):'\u2014')+'</div></div>'+
+    '<div class="card"><div class="card-label">Средний YTM</div><div class="card-value">'+(ytm!=null?ytm.toFixed(2)+'%':'\u2014')+'</div></div>'+
+    '<div class="card"><div class="card-label">Позиций</div><div class="card-value">'+positions.length+'</div></div>';
+}
+
+function renderMovers(positions) {
+  var wd=positions.filter(function(p){return p.day_delta!=null&&p.day_delta!==0;});
+  var sorted=wd.slice().sort(function(a,b){return b.day_delta-a.day_delta;});
+  var gainers=sorted.filter(function(p){return p.day_delta>0;}).slice(0,3);
+  var losers=sorted.filter(function(p){return p.day_delta<0;}).slice(-3).reverse();
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  html+='<div>';
+  gainers.forEach(function(p){html+='<div class="pos-item"><div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div></div><div class="pos-right"><div class="pos-delta up">+'+fmt(p.day_delta)+'</div></div></div>';});
+  if(!gainers.length) html+='<div class="empty" style="padding:16px">\u2014</div>';
+  html+='</div><div>';
+  losers.forEach(function(p){html+='<div class="pos-item"><div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div></div><div class="pos-right"><div class="pos-delta dn">'+fmt(p.day_delta)+'</div></div></div>';});
+  if(!losers.length) html+='<div class="empty" style="padding:16px">\u2014</div>';
+  html+='</div></div>';
+  document.getElementById('moversBlock').innerHTML=html;
+}
+
+function calcYTM(bondAn) {
+  var wSum=0,wYtm=0;
+  bondAn.forEach(function(b){
+    if(!b.maturity_date||!b.face_value)return;
+    var years=(new Date(b.maturity_date)-Date.now())/(365.25*86400000);
+    if(years<=0)return;
+    var y=(b.annual_coupon+(b.face_value-b.current_price)/years)/((b.face_value+b.current_price)/2)*100;
+    var w=b.qty*b.current_price;
+    wSum+=w; wYtm+=y*w;
+  });
+  return wSum>0?wYtm/wSum:null;
+}
+
+function openBond(isin) {
+  if(isin) pywebview.api.open_url('https://www.tbank.ru/invest/bonds/'+isin+'/');
+}
+
+// ── Load ──
+function loadData() {
+  pywebview.api.get_data().then(function(raw){
+    render(JSON.parse(raw));
+  }).catch(function(err){
+    document.querySelector('.app').innerHTML='<div class="empty">Ошибка: '+err+'</div>';
+  });
+}
+
+window.addEventListener('pywebviewready', function(){
+  loadData();
+  setInterval(loadData, 30000);
+});
+</script>
+</body>
+</html>
