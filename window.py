@@ -37,6 +37,11 @@ class _DashboardAPI:
         s["bond_horizon_days"] = self._cfg.get("bond_horizon_days", 60)
         s["app_name"] = self._cfg.get("app_name", "")
         s["use_custom_icons"] = self._cfg.get("use_custom_icons", True)
+        s["show_hints"] = self._cfg.get("show_hints", False)
+        s["auto_update"] = self._cfg.get("auto_update", True)
+        from version import APP_VERSION, APP_NAME
+        s["app_version"] = APP_VERSION
+        s["app_brand"]   = APP_NAME
         def _serial(obj):
             if isinstance(obj, datetime):
                 return obj.isoformat()
@@ -62,6 +67,11 @@ class _DashboardAPI:
         self._cfg["use_logos"] = val
         save_config(self._cfg)
 
+    def set_show_hints(self, val: bool):
+        from config import save_config
+        self._cfg["show_hints"] = val
+        save_config(self._cfg)
+
     def set_custom_icons(self, val: bool):
         from config import save_config
         self._cfg["use_custom_icons"] = val
@@ -70,6 +80,25 @@ class _DashboardAPI:
     def set_app_name(self, name: str):
         from config import save_config
         self._cfg["app_name"] = name
+        save_config(self._cfg)
+
+    def apply_update(self):
+        """Скачать и применить обновление."""
+        from updater import download_update, apply_update
+        info = self._store.update_info
+        if not info or not info.get("url"):
+            return "no_update"
+        exe_path = download_update(info["url"], info.get("asset_name", "tbank_invest.exe"))
+        if not exe_path:
+            return "download_failed"
+        apply_update(exe_path)
+        # Закрываем приложение
+        import sys
+        sys.exit(0)
+
+    def set_auto_update(self, val: bool):
+        from config import save_config
+        self._cfg["auto_update"] = val
         save_config(self._cfg)
 
     def set_horizon(self, days: int):

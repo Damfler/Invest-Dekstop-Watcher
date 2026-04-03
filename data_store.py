@@ -58,6 +58,9 @@ class DataStore:
         # ── Кэш данных инструментов (figi → {isin, name, ticker, logo_url})
         self._instrument_cache: dict = {}
 
+        # ── Информация об обновлении
+        self.update_info: dict = {}
+
         # Загружаем кэш при старте для мгновенного отображения
         self._load_from_cache()
 
@@ -105,6 +108,7 @@ class DataStore:
                 "alert_level":     self.alert_level,
                 "dismissed":       set(self.dismissed),
                 "portfolio_history": list(self.portfolio_history),
+                "update_info":       dict(self.update_info) if self.update_info else {},
             }
 
     # ──────────────────────────────────────────
@@ -135,11 +139,13 @@ class DataStore:
                     isin  = pos.get("isin", "")
                     name  = pos.get("name") or isin or figi
                     ticker = pos.get("ticker", "")
-                    qty   = int(float((pos.get("quantity") or {}).get("units", 0)))
-                    cur_p = money_value(pos.get("currentPrice"))
-                    nkd   = money_value(pos.get("currentNkd"))
-                    pos_pnl  = money_value(pos.get("expectedYield"))   # P&L за всё время (руб)
-                    pos_day  = money_value(pos.get("dailyYield"))      # P&L за сегодня (руб)
+                    # quantity: для валют дробное (0.95 USD), для остальных целое
+                    qty_raw = money_value(pos.get("quantity"))
+                    qty     = qty_raw if itype == "currency" else int(qty_raw)
+                    cur_p   = money_value(pos.get("currentPrice"))
+                    nkd     = money_value(pos.get("currentNkd"))
+                    pos_pnl = money_value(pos.get("expectedYield"))   # P&L за всё время (руб)
+                    pos_day = money_value(pos.get("dailyYield"))      # P&L за сегодня (руб)
 
                     # текущая стоимость позиции = цена × кол-во
                     pos_value = cur_p * qty if cur_p else 0
@@ -288,11 +294,15 @@ class DataStore:
         events: list[dict] = []
         analytics: list[dict] = []
 
-        for figi, info in bond_pos.items():
+        for i, (figi, info) in enumerate(bond_pos.items()):
             name = info["name"]
             qty  = info["qty"]
             isin = info.get("isin", "")
             nkd_per = bond_nkd.get(figi, {}).get("nkd_per", 0)
+
+            # Пауза между запросами (rate limit)
+            if i > 0:
+                _time.sleep(0.3)
 
             bond = self._api.get_bond_by_figi(figi)
             if bond:
@@ -333,6 +343,7 @@ class DataStore:
                         })
 
             # Купоны
+            _time.sleep(0.2)
             for c in self._api.get_bond_coupons(figi, now, horizon_dt):
                 dt     = parse_ts(c.get("couponDate"))
                 amount = money_value(c.get("payOneBond"))

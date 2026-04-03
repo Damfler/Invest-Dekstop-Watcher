@@ -248,8 +248,22 @@ class TBankTrayApp:
         # Refresh loop в отдельном потоке
         threading.Thread(target=self._refresh_loop, daemon=True).start()
 
+        # Проверка обновлений в фоне
+        if self._cfg.get("auto_update", True):
+            threading.Thread(target=self._check_update, daemon=True).start()
+
         # pystray в своём потоке (run_detached), главный = webview
         self._icon.run_detached()
+
+    def _check_update(self):
+        """Проверяет обновления через GitHub Releases."""
+        try:
+            from updater import check_for_update
+            info = check_for_update()
+            if info.get("available"):
+                self._store.update_info = info
+        except Exception as e:
+            log.debug("Ошибка проверки обновлений: %s", e)
 
     def _on_left_click(self):
         self._dashboard.toggle()

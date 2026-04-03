@@ -18,11 +18,11 @@ a{color:var(--blue);text-decoration:none}
 .icon-btn{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .icon-btn:hover{background:var(--surface)}
 .acc-tabs{display:flex;gap:0;background:var(--bg2);border-radius:10px;padding:3px;margin:12px 0}
-.acc-tab{flex:1;padding:8px 0;text-align:center;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .15s;user-select:none}
+.acc-tab{flex:1;padding:8px 4px;text-align:center;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .15s;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
 .acc-tab.active{background:var(--surface);color:var(--text);font-weight:600}
 .big-value{font-size:32px;font-weight:800;letter-spacing:-1px;padding:8px 0 2px}
 .big-delta{font-size:15px;font-weight:600;padding-bottom:12px}
-.up{color:var(--green)}.dn{color:var(--red)}
+.up{color:var(--green)}.dn{color:var(--red)}.zero{color:var(--muted)}.zero{color:var(--muted)}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
 .card{background:var(--bg2);border-radius:var(--radius);padding:14px 16px;cursor:default}
 .card-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
@@ -69,7 +69,20 @@ a{color:var(--blue);text-decoration:none}
 .bond-events{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .empty{text-align:center;padding:40px;color:var(--muted)}
 /* Risk banner */
+.update-banner{padding:12px 14px;border-radius:var(--radius);margin-bottom:10px;background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.3);display:flex;align-items:center;gap:10px;font-size:13px;color:var(--green)}
+.update-banner button{background:var(--green);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
+.update-banner button:hover{opacity:.85}
 .risk-banner{padding:10px 14px;border-radius:var(--radius);margin-bottom:10px;background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.3);font-size:13px;display:flex;align-items:center;gap:8px;color:var(--yellow)}
+.event-alert{padding:12px 14px;border-radius:var(--radius);margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;transition:opacity .15s}
+.event-alert:hover{opacity:.85}
+.event-alert-crit{background:rgba(255,69,58,.12);border:1px solid rgba(255,69,58,.3);color:var(--red)}
+.event-alert-warn{background:rgba(255,171,0,.1);border:1px solid rgba(255,171,0,.25);color:#ffab00}
+.event-alert-info{background:rgba(10,132,255,.1);border:1px solid rgba(10,132,255,.25);color:var(--blue)}
+.event-alert-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.event-alert-body{flex:1;min-width:0}
+.event-alert-title{font-weight:600;font-size:13px}
+.event-alert-sub{font-size:11px;opacity:.7;margin-top:1px}
+.event-alert-amount{font-weight:700;font-size:14px;flex-shrink:0}
 /* Upcoming events */
 .upcoming-item{display:flex;align-items:center;padding:10px 14px;background:var(--bg2);border-radius:10px;margin-bottom:6px;cursor:pointer;transition:background .1s}
 .upcoming-item:hover{background:var(--surface)}
@@ -116,6 +129,8 @@ a{color:var(--blue);text-decoration:none}
 #skeleton.hidden{opacity:0;pointer-events:none;position:absolute}
 #mainContent{transition:opacity .3s}
 #mainContent.loading{opacity:0}
+/* Streamer mode */
+.streamer .big-value,.streamer .acc-total,.streamer .pos-price{filter:blur(12px);user-select:none}
 </style>
 </head>
 <body>
@@ -169,6 +184,7 @@ a{color:var(--blue);text-decoration:none}
       <div class="chart-container"><canvas id="historyChart"></canvas></div>
     </div>
     <div class="cards" id="statCards"></div>
+    <div id="updateBanner"></div>
     <div id="riskBanner"></div>
     <div id="upcomingWrap" class="section" style="display:none">
       <div class="section-title"><i data-lucide="calendar-clock" style="width:16px;height:16px"></i> Ближайшие события</div>
@@ -178,6 +194,9 @@ a{color:var(--blue);text-decoration:none}
   </div>
   <!-- TAB: Positions -->
   <div class="tab-content" id="tab-positions">
+    <div style="margin-bottom:10px">
+      <input type="text" id="posSearch" placeholder="Поиск по названию, тикеру, ISIN..." style="width:100%;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font)">
+    </div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
       <div class="chips" id="posChips" style="margin-bottom:0;flex:1"></div>
       <select id="posSort" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer">
@@ -188,8 +207,10 @@ a{color:var(--blue);text-decoration:none}
         <option value="name">По названию</option>
         <option value="pct">По доле %</option>
       </select>
+      <button id="btnExport" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px" title="Экспорт CSV"><i data-lucide="download" style="width:14px;height:14px"></i>CSV</button>
     </div>
     <div id="positionsList"></div>
+    <div id="posTotals" style="margin-top:10px;padding:10px 14px;background:var(--bg2);border-radius:10px;font-size:13px;display:none"></div>
   </div>
   <!-- TAB: Bonds -->
   <div class="tab-content" id="tab-bonds">
@@ -299,6 +320,33 @@ a{color:var(--blue);text-decoration:none}
       </details>
     </div>
     <div class="card" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="chkHints" style="width:18px;height:18px;accent-color:var(--pink);cursor:pointer">
+        <div>
+          <div style="font-weight:600">Подсказки</div>
+          <div style="font-size:12px;color:var(--muted)">Показывать предупреждения о концентрации и другие советы</div>
+        </div>
+      </label>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="chkAutoUpdate" checked style="width:18px;height:18px;accent-color:var(--pink);cursor:pointer">
+        <div>
+          <div style="font-weight:600">Автообновление</div>
+          <div style="font-size:12px;color:var(--muted)">Проверять обновления при запуске</div>
+        </div>
+      </label>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="chkStreamer" style="width:18px;height:18px;accent-color:var(--pink);cursor:pointer">
+        <div>
+          <div style="font-weight:600">Режим стримера</div>
+          <div style="font-size:12px;color:var(--muted)">Скрывает балансы и стоимости (размытие)</div>
+        </div>
+      </label>
+    </div>
+    <div class="card" style="margin-bottom:12px">
       <div style="font-weight:600;margin-bottom:4px">Информация</div>
       <div style="font-size:12px;color:var(--muted)">Данные обновляются каждые 60 сек.</div>
       <div style="font-size:12px;color:var(--muted)" id="settingsInfo"></div>
@@ -306,7 +354,7 @@ a{color:var(--blue);text-decoration:none}
     <div class="card" style="margin-bottom:12px;text-align:center">
       <div style="font-size:12px;color:var(--muted)">Разработчик</div>
       <div style="font-weight:600;margin-top:4px">Гашук Дмитрий</div>
-      <div style="font-size:11px;color:var(--border);margin-top:8px">TBank Watcher v2.1</div>
+      <div style="font-size:11px;color:var(--border);margin-top:8px" id="appVersion">TBank Watcher</div>
     </div>
   </div>
   </div><!-- /mainContent -->
@@ -324,6 +372,9 @@ var posSortBy='value'; // value|price|pnl|qty|name|pct
 var activeTab='overview';
 var useLogos=false;
 var plMode='alltime'; // 'alltime' | 'day'
+var showHints=false;
+var streamerMode=false;
+var posSearchQuery='';
 var MONTHS_RU=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
 function fmt(v,d){if(v==null)return'\u2014';d=d||0;return v.toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d})+' \u20bd';}
@@ -331,9 +382,17 @@ function fmtD(s){if(!s)return'\u2014';return new Date(s).toLocaleDateString('ru-
 function dU(s){if(!s)return null;var d=new Date(s),n=new Date();return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(n.getFullYear(),n.getMonth(),n.getDate()))/864e5);}
 function dL(n){if(n==null)return'';if(n===0)return'сегодня';if(n===1)return'завтра';if(n<0)return'прошло';return n+' дн.';}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+function fmtQty(v){if(v==null)return'0';return v%1===0?String(v):v.toFixed(2)}
 function cs(){return getComputedStyle(document.body)}
 function ic(name,sz){sz=sz||16;return '<i data-lucide="'+name+'" style="width:'+sz+'px;height:'+sz+'px;vertical-align:middle"></i>';}
 function openUrl(url){pywebview.api.open_url(url)}
+function applyUpdate(){
+  var btn=document.querySelector('.update-banner button');
+  if(btn){btn.textContent='Скачивание...';btn.disabled=true}
+  pywebview.api.apply_update().then(function(r){
+    if(r==='download_failed'&&btn){btn.textContent='Ошибка';btn.disabled=false}
+  }).catch(function(){if(btn){btn.textContent='Ошибка';btn.disabled=false}});
+}
 function updateTitle(name){
   var el=document.getElementById('appTitle');
   if(name){el.innerHTML=esc(name)+' <span style="font-size:11px;font-weight:400;color:var(--muted);opacity:.5;margin-left:6px">TBank Watcher</span>'}
@@ -356,6 +415,23 @@ function updThemeBtn(){var b=document.getElementById('btnTheme');if(b){b.innerHT
 document.getElementById('btnTheme').addEventListener('click',togTheme);
 document.getElementById('btnSettings').addEventListener('click',function(){activeTab='settings';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.remove('active')})});
 document.getElementById('btnRefresh').addEventListener('click',function(){try{pywebview.api.refresh()}catch(e){}});
+
+// Hotkeys
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')return;
+  if(e.ctrlKey&&e.key==='r'){e.preventDefault();try{pywebview.api.refresh()}catch(ex){}}
+  if(e.key==='Escape'){try{window.close()}catch(ex){}}
+  if(e.key==='1')setActiveTab(activeTab='overview');
+  if(e.key==='2')setActiveTab(activeTab='positions');
+  if(e.key==='3')setActiveTab(activeTab='bonds');
+  if(e.key==='4')setActiveTab(activeTab='analytics');
+});
+
+// Search
+document.getElementById('posSearch').addEventListener('input',function(){
+  posSearchQuery=this.value.toLowerCase();
+  if(D)applyPosFilter(D._lastPosData||[],D._lastTotAll||0,D._lastShowAcc);lucide.createIcons();
+});
 
 // Tabs
 document.getElementById('mainTabs').addEventListener('click',function(e){var t=e.target.closest('.tab');if(!t)return;activeTab=t.getAttribute('data-tab');setActiveTab(activeTab)});
@@ -382,6 +458,18 @@ document.getElementById('chkLogos').addEventListener('change',function(){
     document.getElementById('positionsList').innerHTML=renderPosList(fPos.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0)}),totAll,selAcc==='all');
     lucide.createIcons();
   }
+});
+document.getElementById('chkAutoUpdate').addEventListener('change',function(){
+  try{pywebview.api.set_auto_update(this.checked)}catch(e){}
+});
+document.getElementById('chkHints').addEventListener('change',function(){
+  showHints=this.checked;
+  try{pywebview.api.set_show_hints(this.checked)}catch(e){}
+  if(D)render(D);
+});
+document.getElementById('chkStreamer').addEventListener('change',function(){
+  streamerMode=this.checked;
+  document.body.classList.toggle('streamer',streamerMode);
 });
 document.getElementById('chkCustomIcons').addEventListener('change',function(){
   try{pywebview.api.set_custom_icons(this.checked)}catch(e){}
@@ -412,8 +500,8 @@ function render(data){
   if(!document.body.dataset.themed){(function(t){if(t==='light')document.body.classList.add('light');else if(t==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:light)').matches)document.body.classList.add('light');updThemeBtn()})(data.theme);document.body.dataset.themed='1';}
 
   // Account tabs
-  var ah='<div class="acc-tab'+(selAcc==='all'?' active':'')+'" data-acc="all">Все счета</div>';
-  ports.forEach(function(p){ah+='<div class="acc-tab'+(selAcc===p.account_id?' active':'')+'" data-acc="'+p.account_id+'">'+esc(p.name)+'</div>'});
+  var ah='<div class="acc-tab'+(selAcc==='all'?' active':'')+'" data-acc="all" title="Все счета">Все счета</div>';
+  ports.forEach(function(p){ah+='<div class="acc-tab'+(selAcc===p.account_id?' active':'')+'" data-acc="'+p.account_id+'" title="'+esc(p.name)+'">'+esc(p.name)+'</div>'});
   var at=document.getElementById('accTabs');at.innerHTML=ah;
   at.onclick=function(e){var t=e.target.closest('.acc-tab');if(!t)return;selAcc=t.getAttribute('data-acc');calSelectedDay=null;render(data)};
 
@@ -430,8 +518,8 @@ function render(data){
   var secD=plMode==='day'?atDelta:dayDelta, secL=plMode==='day'?'Всё время':'Сегодня';
   document.getElementById('bigBlock').innerHTML='<div class="big-value">'+fmt(totAll)+'</div>'+
     '<div style="display:flex;align-items:baseline;gap:12px;padding-bottom:12px">'+
-    '<div class="big-delta '+(priD>=0?'up':'dn')+'">'+(priD>=0?'+':'')+fmt(priD)+' &middot; '+priL+'</div>'+
-    '<div style="font-size:13px;color:var(--muted);cursor:pointer" id="plToggle" title="Нажмите для переключения">'+(secD>=0?'+':'')+fmt(secD)+' &middot; '+secL+'</div>'+
+    '<div class="big-delta '+(priD>0?'up':priD<0?'dn':'zero')+'">'+(priD>0?'+':'')+fmt(priD)+' &middot; '+priL+'</div>'+
+    '<div style="font-size:13px;color:var(--muted);cursor:pointer" id="plToggle" title="Нажмите для переключения">'+(secD>0?'+':'')+fmt(secD)+' &middot; '+secL+'</div>'+
     '</div>';
   document.getElementById('plToggle').onclick=function(){plMode=plMode==='day'?'alltime':'day';render(D)};
 
@@ -440,14 +528,24 @@ function render(data){
   var ytm=calcYTM(ba);
   var dayPct=invested>0?(dayDelta/totAll*100).toFixed(2):'0.00';
   document.getElementById('statCards').innerHTML=
-    '<div class="card"><div class="card-label">'+ic('trending-up',14)+' Доходность за всё время</div><div class="card-value '+(atDelta>=0?'up':'dn')+'">'+(atDelta>=0?'+':'')+returnPct+'%</div></div>'+
-    '<div class="card"><div class="card-label">'+ic('calendar',14)+' Доходность за сегодня</div><div class="card-value '+(dayDelta>=0?'up':'dn')+'">'+(dayDelta>=0?'+':'')+dayPct+'%</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('trending-up',14)+' Доходность за всё время</div><div class="card-value '+(atDelta>0?'up':atDelta<0?'dn':'zero')+'">'+(atDelta>0?'+':'')+returnPct+'%</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('calendar',14)+' Доходность за сегодня</div><div class="card-value '+(dayDelta>0?'up':dayDelta<0?'dn':'zero')+'">'+(dayDelta>0?'+':'')+dayPct+'%</div></div>'+
     '<div class="card"><div class="card-label">'+ic('coins',14)+' НКД</div><div class="card-value">'+(tNkd>0?fmt(tNkd,2):'\u2014')+'</div></div>'+
     '<div class="card"><div class="card-label">'+ic('percent',14)+' YTM</div><div class="card-value">'+(ytm!=null?ytm.toFixed(2)+'%':'\u2014')+'</div></div>';
 
-  // Risk concentration
-  var rh='';var totPos=fPos.reduce(function(s,p){return s+(p.current_value||0)},0);
-  if(totPos>0)fPos.forEach(function(p){var pct=(p.current_value||0)/totPos*100;if(pct>20)rh+='<div class="risk-banner">'+ic('alert-triangle',16)+' Высокая концентрация: '+esc(p.name)+' \u2014 '+pct.toFixed(1)+'% портфеля</div>'});
+  // Update banner
+  var ubEl=document.getElementById('updateBanner');
+  var uInfo=data.update_info||{};
+  if(uInfo.available){
+    ubEl.innerHTML='<div class="update-banner">'+ic('download',16)+
+      '<div style="flex:1"><b>Доступно обновление v'+esc(uInfo.version)+'</b>'+(uInfo.changelog?'<div style="font-size:11px;opacity:.7;margin-top:2px">'+esc(uInfo.changelog.substring(0,100))+'</div>':'')+'</div>'+
+      '<button onclick="applyUpdate()">Обновить</button></div>';
+  }else{ubEl.innerHTML=''}
+
+  // Risk concentration (only if hints enabled)
+  var rh='';
+  if(showHints){var totPos=fPos.reduce(function(s,p){return s+(p.current_value||0)},0);
+  if(totPos>0)fPos.forEach(function(p){var pct=(p.current_value||0)/totPos*100;if(pct>20)rh+='<div class="risk-banner">'+ic('alert-triangle',16)+' Высокая концентрация: '+esc(p.name)+' \u2014 '+pct.toFixed(1)+'% портфеля</div>'})}
   document.getElementById('riskBanner').innerHTML=rh;
 
   // Upcoming events
@@ -470,6 +568,7 @@ function render(data){
   var sorted=fPos.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});
   document.getElementById('topPositions').innerHTML=renderPosList(sorted.slice(0,8),totAll,selAcc==='all');
 
+  D._lastPosArgs=[fPos,totAll,selAcc==='all'];
   renderPosTab(fPos,totAll,selAcc==='all');
   // Фильтруем события облигаций по FIGI позиций выбранного счёта
   var fEvts=evts;
@@ -486,11 +585,18 @@ function render(data){
   // Sync settings UI
   var cl=document.getElementById('chkLogos');if(cl)cl.checked=useLogos;
   var ci=document.getElementById('chkCustomIcons');if(ci)ci.checked=!!(data.use_custom_icons);
+  var cau=document.getElementById('chkAutoUpdate');if(cau)cau.checked=!!(data.auto_update!==false);
+  var ch2=document.getElementById('chkHints');if(ch2){showHints=!!(data.show_hints);ch2.checked=showHints}
+  var cs2=document.getElementById('chkStreamer');if(cs2)cs2.checked=streamerMode;
   var st=document.getElementById('selTheme');if(st)st.value=data.theme||'system';
   var sh=document.getElementById('selHorizon');if(sh)sh.value=String(data.bond_horizon_days||60);
   var an=document.getElementById('inputAppName');if(an&&!an.matches(':focus'))an.value=data.app_name||'';
   updateTitle(data.app_name||'');
+  var av=document.getElementById('appVersion');if(av)av.textContent=(data.app_brand||'TBank Watcher')+' v'+(data.app_version||'?');
   var si=document.getElementById('settingsInfo');if(si)si.textContent='Последнее обновление: '+(data.last_update||'\u2014');
+  // Relative time
+  _lastUpdateTs=Date.now();_origUpdateTitle=data.last_update||'';
+  var luEl=document.getElementById('lastUpdate');if(luEl)luEl.textContent='только что';
   lucide.createIcons();
 }
 
@@ -517,7 +623,7 @@ function renderPosList(positions,totAll,showAcc){
   var list=showAcc?mergePositions(positions):positions;
   list.sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});
   var h='';list.forEach(function(p){
-    var d=plMode==='day'?(p.day_delta||0):(p.alltime_delta||p.day_delta||0),cl=d>=0?'up':'dn',si=d>=0?'+':'',it=p.instrumentType||'other';
+    var d=plMode==='day'?(p.day_delta||0):(p.alltime_delta||p.day_delta||0),cl=d>0?'up':d<0?'dn':'zero',si=d>0?'+':'',it=p.instrumentType||'other';
     var icCls={bond:'bond',share:'share',etf:'etf',currency:'currency'}[it]||'other';
     var isin=p.isin||'';
     var accStr='';
@@ -526,8 +632,8 @@ function renderPosList(positions,totAll,showAcc){
     h+='<div class="pos-item" onclick="openInstr(\''+ticker+'\',\''+it+'\',\''+figi+'\')">';
     if(useLogos&&logo){h+='<div class="pos-icon"><img src="'+esc(logo)+'" onerror="this.parentElement.className=\'pos-icon '+icCls+'\';this.parentElement.innerHTML=ic(\''+(LI[it]||'circle')+'\',20);lucide.createIcons()"></div>'}
     else{h+='<div class="pos-icon '+icCls+'">'+ic(LI[it]||'circle',20)+'</div>'}
-    h+='<div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div><div class="pos-sub">'+(ticker?ticker+' \u00b7 ':'')+p.qty+' шт.'+accStr+'</div></div>'+
-      '<div class="pos-right"><div class="pos-price">'+fmt(p.current_value)+'</div><div class="pos-delta '+cl+'">'+si+fmt(d)+'</div></div></div>'});
+    h+='<div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div><div class="pos-sub">'+(ticker?ticker+' \u00b7 ':'')+fmtQty(p.qty)+' шт.'+accStr+'</div></div>'+
+      '<div class="pos-right"><div class="pos-price">'+fmt(p.current_value)+'</div>'+(d!==0?'<div class="pos-delta '+cl+'">'+si+fmt(d)+'</div>':'')+'</div></div>'});
   return h;
 }
 
@@ -544,18 +650,33 @@ function sortPositions(list,totAll){
 }
 
 function renderPosTab(positions,totAll,showAcc){
+  // Сохраняем для поиска
+  if(D){D._lastPosData=positions;D._lastTotAll=totAll;D._lastShowAcc=showAcc}
   var types=[];positions.forEach(function(p){var t=p.instrumentType||'other';if(types.indexOf(t)<0)types.push(t)});
   var ch='<div class="chip active" data-type="all">Все</div>';types.forEach(function(t){ch+='<div class="chip" data-type="'+t+'">'+(TM[t]||t)+'</div>'});
   var ce=document.getElementById('posChips');ce.innerHTML=ch;
   ce.onclick=function(e){var c=e.target.closest('.chip');if(!c)return;posTypeFilter=c.getAttribute('data-type');ce.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-type')===posTypeFilter)});applyPosFilter(positions,totAll,showAcc);lucide.createIcons()};
   ce.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-type')===posTypeFilter)});
-  // Восстанавливаем сортировку
   var ss=document.getElementById('posSort');if(ss){ss.value=posSortBy;ss.onchange=function(){posSortBy=this.value;applyPosFilter(positions,totAll,showAcc);lucide.createIcons()}}
+  // Восстанавливаем поиск
+  var se=document.getElementById('posSearch');if(se&&!se.matches(':focus'))se.value=posSearchQuery;
   applyPosFilter(positions,totAll,showAcc);
 }
 function applyPosFilter(positions,totAll,showAcc){
   var f=posTypeFilter==='all'?positions:positions.filter(function(p){return p.instrumentType===posTypeFilter});
-  document.getElementById('positionsList').innerHTML=renderPosList(sortPositions(f,totAll),totAll,showAcc);
+  // Поиск
+  if(posSearchQuery){var q=posSearchQuery;f=f.filter(function(p){return(p.name||'').toLowerCase().indexOf(q)>=0||(p.ticker||'').toLowerCase().indexOf(q)>=0||(p.isin||'').toLowerCase().indexOf(q)>=0||(p.figi||'').toLowerCase().indexOf(q)>=0})}
+  var sorted=sortPositions(f,totAll);
+  document.getElementById('positionsList').innerHTML=renderPosList(sorted,totAll,showAcc);
+  // Итого
+  var tEl=document.getElementById('posTotals');
+  if(tEl&&sorted.length>0){
+    var tVal=sorted.reduce(function(s,p){return s+(p.current_value||0)},0);
+    var tPnl=sorted.reduce(function(s,p){return s+(plMode==='day'?(p.day_delta||0):(p.alltime_delta||0))},0);
+    var pCl=tPnl>0?'up':tPnl<0?'dn':'zero';
+    tEl.style.display='';
+    tEl.innerHTML='<div style="display:flex;justify-content:space-between"><span>'+ic('sigma',14)+' Итого: <b>'+fmt(tVal)+'</b> ('+sorted.length+' шт.)</span><span class="'+pCl+'">P&L: '+(tPnl>0?'+':'')+fmt(tPnl)+'</span></div>';
+  }else if(tEl){tEl.style.display='none'}
 }
 
 function renderBondsTab(events,nkd){
@@ -573,7 +694,7 @@ function fillBonds(events,typeFilter){
   var byKey={};filtered.forEach(function(e){var k=e.isin||e.figi||e.name;if(!byKey[k])byKey[k]={name:e.name,isin:e.isin,qty:e.qty,events:[]};byKey[k].events.push(e)});
   var h='';Object.values(byKey).forEach(function(b){
     h+='<div class="bond-card" onclick="openInstr(\''+esc(b.isin)+'\',\'bond\',\''+esc(b.figi||'')+'\')">';
-    h+='<div class="bond-name">'+esc(b.name)+'</div><div class="bond-isin">'+(b.isin||'\u2014')+' \u00b7 '+b.qty+' шт.</div>';
+    h+='<div class="bond-name">'+esc(b.name)+'</div><div class="bond-isin">'+(b.isin||'\u2014')+' \u00b7 '+fmtQty(b.qty)+' шт.</div>';
     h+='<div class="bond-events">';
     b.events.forEach(function(e){var d=dU(e.date),dl=dL(d);var pc='pill-coupon';if(e.type==='offer'||e.type==='call')pc='pill-offer';if(e.type==='maturity')pc='pill-maturity';if(d===0)pc='pill-today';var amt=e.amount||e.amount_est||0;var total=amt*(e.qty||1);h+='<span class="pill '+pc+'">'+(TL[e.type]||e.type)+' '+fmtD(e.date)+(dl?' ('+dl+')':'')+(total>0?' = '+(e.amount_est?'~':'')+fmt(total,2):'')+'</span>'});
     h+='</div></div>'});
@@ -710,8 +831,84 @@ function renderMovers(positions){
 function calcYTM(ba){var wS=0,wY=0;ba.forEach(function(b){if(!b.maturity_date||!b.face_value)return;var y=(new Date(b.maturity_date)-Date.now())/(365.25*864e5);if(y<=0)return;var v=(b.annual_coupon+(b.face_value-b.current_price)/y)/((b.face_value+b.current_price)/2)*100;var w=b.qty*b.current_price;wS+=w;wY+=v*w});return wS>0?wY/wS:null}
 
 function loadData(){pywebview.api.get_data().then(function(raw){render(JSON.parse(raw))}).catch(function(err){document.querySelector('.app').innerHTML='<div class="empty">Ошибка: '+err+'</div>'})}
-window.addEventListener('pywebviewready',function(){loadData();setInterval(loadData,30000)});
-document.addEventListener('DOMContentLoaded',function(){if(typeof lucide!=='undefined')lucide.createIcons()});
+var _dataLoaded=false;
+function startLoading(){
+  if(_dataLoaded)return;
+  _dataLoaded=true;
+  loadData();
+  setInterval(loadData,30000);
+}
+window.addEventListener('pywebviewready',startLoading);
+// Fallback: если pywebviewready не сработал за 2 сек — пробуем загрузить
+document.addEventListener('DOMContentLoaded',function(){
+  if(typeof lucide!=='undefined')lucide.createIcons();
+  setTimeout(function(){if(!_dataLoaded)startLoading()},2000);
+});
+
+// ── Search ──
+var posSearchQuery='';
+document.getElementById('posSearch').addEventListener('input',function(){
+  posSearchQuery=this.value.toLowerCase();
+  if(D)applyPosFilter(D._lastPosArgs?D._lastPosArgs[0]:(D.positions_extra||[]),
+    D._lastPosArgs?D._lastPosArgs[1]:0,
+    D._lastPosArgs?D._lastPosArgs[2]:true);
+  lucide.createIcons();
+});
+
+// ── Totals ──
+function updatePosTotals(positions){
+  var el=document.getElementById('posTotals');if(!el)return;
+  if(!positions.length){el.style.display='none';return}
+  el.style.display='flex';
+  var totVal=0,totPnl=0;
+  positions.forEach(function(p){totVal+=(p.current_value||0);totPnl+=(plMode==='day'?(p.day_delta||0):(p.alltime_delta||0))});
+  var cl=totPnl>0?'up':totPnl<0?'dn':'zero';
+  el.innerHTML='<span>Итого: '+fmt(totVal)+'</span><span class="'+cl+'">'+(totPnl>0?'+':'')+fmt(totPnl)+'</span>';
+}
+
+// ── Export CSV ──
+document.getElementById('btnExport').addEventListener('click',function(){
+  if(!D)return;
+  var pos=D.positions_extra||[];
+  var lines=['Название;Тикер;ISIN;Тип;Кол-во;Цена;Стоимость;P&L день;P&L всё время;Счёт'];
+  pos.forEach(function(p){
+    lines.push([p.name,p.ticker,p.isin,p.instrumentType,p.qty,
+      (p.current_price||0).toFixed(2),(p.current_value||0).toFixed(2),
+      (p.day_delta||0).toFixed(2),(p.alltime_delta||0).toFixed(2),
+      p.account_name||''].join(';'));
+  });
+  var blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='tbank_positions_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(a.href);
+});
+
+// ── Hotkeys ──
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')return;
+  if((e.ctrlKey||e.metaKey)&&e.key==='r'){e.preventDefault();try{pywebview.api.refresh()}catch(ex){}}
+  if(e.key==='Escape'){try{window.close()}catch(ex){}}
+  if(e.key==='1'){activeTab='overview';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')==='overview')})}
+  if(e.key==='2'){activeTab='positions';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')==='positions')})}
+  if(e.key==='3'){activeTab='bonds';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')==='bonds')})}
+  if(e.key==='4'){activeTab='analytics';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')==='analytics')})}
+});
+
+// ── Relative time ──
+var _lastUpdateTs=null;
+var _origUpdateTitle=null;
+function updateRelativeTime(){
+  if(!_lastUpdateTs)return;
+  var diff=Math.floor((Date.now()-_lastUpdateTs)/1000);
+  var el=document.getElementById('lastUpdate');if(!el)return;
+  var txt;
+  if(diff<5)txt='только что';
+  else if(diff<60)txt=diff+' сек назад';
+  else if(diff<3600)txt=Math.floor(diff/60)+' мин назад';
+  else txt=_origUpdateTitle||'';
+  el.textContent=txt;
+}
+setInterval(updateRelativeTime,5000);
 </script>
 </body>
 </html>

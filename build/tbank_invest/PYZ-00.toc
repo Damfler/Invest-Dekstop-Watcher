@@ -1973,6 +1973,7 @@
   ('unittest.util',
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\util.py',
    'PYMODULE'),
+  ('updater', 'C:\\Users\\user\\Desktop\\tbank_v6\\updater.py', 'PYMODULE'),
   ('urllib',
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\urllib\\__init__.py',
    'PYMODULE'),

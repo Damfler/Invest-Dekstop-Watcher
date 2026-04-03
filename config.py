@@ -39,6 +39,12 @@ DEFAULT_CONFIG: dict = {
     # Пользовательское название приложения
     "app_name": "",
 
+    # Показывать подсказки (концентрация и т.д.)
+    "show_hints": False,
+
+    # Автообновление через GitHub Releases
+    "auto_update": True,
+
     "notifications": {
         "offer_warn":       True,
         "offer_crit":       True,
