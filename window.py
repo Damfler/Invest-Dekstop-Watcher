@@ -57,6 +57,253 @@ class _DashboardAPI:
         import webbrowser
         webbrowser.open(url)
 
+    def export_csv(self):
+        """Экспорт портфеля в CSV."""
+        s = self._store.snapshot()
+        positions = s.get("positions_extra", [])
+        if not positions:
+            return "no_data"
+        import time as _t
+        # Разделитель табуляция — Excel не путает с датами
+        sep = "\t"
+        lines = [sep.join(["Название", "Тикер", "ISIN", "Тип", "Кол-во", "Цена", "Стоимость", "P&L день", "P&L всё время", "Счёт"])]
+        for p in positions:
+            qty = p.get("qty", 0)
+            qty_s = str(qty) if isinstance(qty, int) or qty == int(qty) else f"{qty:.2f}"
+            lines.append(sep.join([
+                str(p.get("name", "")),
+                str(p.get("ticker", "")),
+                str(p.get("isin", "")),
+                str(p.get("instrumentType", "")),
+                qty_s,
+                f"{p.get('current_price', 0):.2f}".replace(".", ","),
+                f"{p.get('current_value', 0):.2f}".replace(".", ","),
+                f"{p.get('day_delta', 0):.2f}".replace(".", ","),
+                f"{p.get('alltime_delta', 0):.2f}".replace(".", ","),
+                str(p.get("account_name", "")),
+            ]))
+        fname = f"tbank_positions_{_t.strftime('%Y%m%d_%H%M%S')}.csv"
+        if getattr(_sys, 'frozen', False):
+            desktop = os.path.join(os.environ.get("USERPROFILE", ""), "Desktop")
+        else:
+            desktop = os.path.dirname(os.path.abspath(__file__))
+        fpath = os.path.join(desktop, fname)
+        with open(fpath, "w", encoding="utf-8-sig") as f:
+            f.write("\n".join(lines))
+        return fpath
+
+    def export_xlsx(self):
+        """Экспорт портфеля в настоящий Excel .xlsx с формулами."""
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, numbers
+        import time as _t
+
+        s = self._store.snapshot()
+        positions = s.get("positions_extra", [])
+        if not positions:
+            return "no_data"
+
+        wb = Workbook()
+
+        # ── Лист "Позиции" ───────────────────────
+        ws = wb.active
+        ws.title = "Позиции"
+
+        header_font = Font(bold=True, color="FFFFFF", name="Segoe UI", size=10)
+        header_fill = PatternFill(start_color="1C1C1E", end_color="1C1C1E", fill_type="solid")
+        money_fmt = '#,##0.00 "₽"'
+
+        headers = ["Название", "Тикер", "ISIN", "Тип", "Кол-во", "Цена", "Стоимость", "P&L день", "P&L всё время", "Счёт"]
+        widths = [30, 15, 15, 12, 10, 12, 15, 12, 15, 20]
+        for i, (h, w) in enumerate(zip(headers, widths), 1):
+            cell = ws.cell(row=1, column=i, value=h)
+            cell.font = header_font
+            cell.fill = header_fill
+            ws.column_dimensions[cell.column_letter].width = w
+
+        for r, p in enumerate(positions, 2):
+            ws.cell(row=r, column=1, value=p.get("name", ""))
+            ws.cell(row=r, column=2, value=p.get("ticker", ""))
+            ws.cell(row=r, column=3, value=p.get("isin", ""))
+            ws.cell(row=r, column=4, value=p.get("instrumentType", ""))
+            ws.cell(row=r, column=5, value=p.get("qty", 0))
+            c = ws.cell(row=r, column=6, value=p.get("current_price", 0))
+            c.number_format = money_fmt
+            # Стоимость = формула E*F
+            c = ws.cell(row=r, column=7)
+            c.value = f"=E{r}*F{r}"
+            c.number_format = money_fmt
+            c = ws.cell(row=r, column=8, value=p.get("day_delta", 0))
+            c.number_format = money_fmt
+            c = ws.cell(row=r, column=9, value=p.get("alltime_delta", 0))
+            c.number_format = money_fmt
+            ws.cell(row=r, column=10, value=p.get("account_name", ""))
+
+        # Строка итого
+        tr = len(positions) + 2
+        ws.cell(row=tr, column=1, value="ИТОГО").font = Font(bold=True)
+        for col in [5, 7, 8, 9]:
+            letter = ws.cell(row=1, column=col).column_letter
+            c = ws.cell(row=tr, column=col)
+            c.value = f"=SUM({letter}2:{letter}{tr-1})"
+            c.font = Font(bold=True)
+            if col != 5:
+                c.number_format = money_fmt
+
+        # ── Лист "Счета" ─────────────────────────
+        ws2 = wb.create_sheet("Счета")
+        portfolios = s.get("portfolios", [])
+        headers2 = ["Счёт", "Итого", "P&L день", "P&L всё время"]
+        for i, h in enumerate(headers2, 1):
+            cell = ws2.cell(row=1, column=i, value=h)
+            cell.font = header_font
+            cell.fill = header_fill
+        ws2.column_dimensions["A"].width = 25
+        for col in "BCD":
+            ws2.column_dimensions[col].width = 18
+
+        for r, p in enumerate(portfolios, 2):
+            ws2.cell(row=r, column=1, value=p.get("name", ""))
+            c = ws2.cell(row=r, column=2, value=p.get("total", 0))
+            c.number_format = money_fmt
+            c = ws2.cell(row=r, column=3, value=p.get("day_delta", 0))
+            c.number_format = money_fmt
+            c = ws2.cell(row=r, column=4, value=p.get("alltime_delta", 0))
+            c.number_format = money_fmt
+
+        tr2 = len(portfolios) + 2
+        ws2.cell(row=tr2, column=1, value="ИТОГО").font = Font(bold=True)
+        for col_i, col_l in [(2, "B"), (3, "C"), (4, "D")]:
+            c = ws2.cell(row=tr2, column=col_i)
+            c.value = f"=SUM({col_l}2:{col_l}{tr2-1})"
+            c.font = Font(bold=True)
+            c.number_format = money_fmt
+
+        # Сохранение
+        fname = f"tbank_portfolio_{_t.strftime('%Y%m%d_%H%M%S')}.xlsx"
+        if getattr(_sys, 'frozen', False):
+            desktop = os.path.join(os.environ.get("USERPROFILE", ""), "Desktop")
+        else:
+            desktop = os.path.dirname(os.path.abspath(__file__))
+        fpath = os.path.join(desktop, fname)
+        wb.save(fpath)
+        return fpath
+
+    def export_excel(self):
+        """Экспорт портфеля в Excel XML с формулами."""
+        s = self._store.snapshot()
+        positions = s.get("positions_extra", [])
+        if not positions:
+            return "no_data"
+
+        xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        xml += '<?mso-application progid="Excel.Sheet"?>\n'
+        xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n'
+        xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n'
+
+        # Styles
+        xml += '<Styles>\n'
+        xml += '<Style ss:ID="Default"><Font ss:FontName="Segoe UI" ss:Size="10"/></Style>\n'
+        xml += '<Style ss:ID="Header"><Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1C1C1E" ss:Pattern="Solid"/></Style>\n'
+        xml += '<Style ss:ID="Money"><NumberFormat ss:Format="#,##0.00"/></Style>\n'
+        xml += '</Styles>\n'
+
+        # Sheet: Positions
+        xml += '<Worksheet ss:Name="Позиции">\n<Table>\n'
+        # Column widths
+        for w in [200, 80, 80, 60, 80, 100, 80, 80, 60, 120]:
+            xml += f'<Column ss:Width="{w}"/>\n'
+
+        # Header
+        headers = ['Название', 'Тикер', 'ISIN', 'Тип', 'Кол-во', 'Цена', 'Стоимость', 'PnL день', 'PnL всё время', 'Счёт']
+        xml += '<Row ss:StyleID="Header">\n'
+        for h in headers:
+            xml += f'<Cell><Data ss:Type="String">{h}</Data></Cell>\n'
+        xml += '</Row>\n'
+
+        # Data rows
+        for i, p in enumerate(positions):
+            row_num = i + 2  # 1-based, header is row 1
+            xml += '<Row>\n'
+            xml += f'<Cell><Data ss:Type="String">{_xml_esc(p.get("name", ""))}</Data></Cell>\n'
+            xml += f'<Cell><Data ss:Type="String">{_xml_esc(p.get("ticker", ""))}</Data></Cell>\n'
+            xml += f'<Cell><Data ss:Type="String">{_xml_esc(p.get("isin", ""))}</Data></Cell>\n'
+            xml += f'<Cell><Data ss:Type="String">{_xml_esc(p.get("instrumentType", ""))}</Data></Cell>\n'
+            xml += f'<Cell><Data ss:Type="Number">{p.get("qty", 0)}</Data></Cell>\n'
+            xml += f'<Cell ss:StyleID="Money"><Data ss:Type="Number">{p.get("current_price", 0):.2f}</Data></Cell>\n'
+            # Стоимость = формула: Кол-во × Цена (E × F)
+            xml += f'<Cell ss:StyleID="Money" ss:Formula="=RC[-2]*RC[-1]"><Data ss:Type="Number">{p.get("current_value", 0):.2f}</Data></Cell>\n'
+            xml += f'<Cell ss:StyleID="Money"><Data ss:Type="Number">{p.get("day_delta", 0):.2f}</Data></Cell>\n'
+            xml += f'<Cell ss:StyleID="Money"><Data ss:Type="Number">{p.get("alltime_delta", 0):.2f}</Data></Cell>\n'
+            xml += f'<Cell><Data ss:Type="String">{_xml_esc(p.get("account_name", ""))}</Data></Cell>\n'
+            xml += '</Row>\n'
+
+        # Totals row with formulas
+        n = len(positions)
+        xml += '<Row>\n'
+        xml += '<Cell><Data ss:Type="String">ИТОГО</Data></Cell>\n'
+        xml += '<Cell/><Cell/><Cell/>\n'
+        # SUM qty
+        xml += f'<Cell ss:Formula="=SUM(R2C:R{n+1}C)"><Data ss:Type="Number">0</Data></Cell>\n'
+        xml += '<Cell/>\n'
+        # SUM value
+        xml += f'<Cell ss:StyleID="Money" ss:Formula="=SUM(R2C:R{n+1}C)"><Data ss:Type="Number">0</Data></Cell>\n'
+        # SUM P&L day
+        xml += f'<Cell ss:StyleID="Money" ss:Formula="=SUM(R2C:R{n+1}C)"><Data ss:Type="Number">0</Data></Cell>\n'
+        # SUM P&L alltime
+        xml += f'<Cell ss:StyleID="Money" ss:Formula="=SUM(R2C:R{n+1}C)"><Data ss:Type="Number">0</Data></Cell>\n'
+        xml += '<Cell/>\n'
+        xml += '</Row>\n'
+
+        xml += '</Table>\n</Worksheet>\n'
+
+        # Sheet: Summary
+        portfolios = s.get("portfolios", [])
+        xml += '<Worksheet ss:Name="Счета">\n<Table>\n'
+        xml += '<Column ss:Width="200"/><Column ss:Width="120"/><Column ss:Width="120"/><Column ss:Width="120"/>\n'
+        xml += '<Row ss:StyleID="Header">'
+        for h in ['Счёт', 'Итого', 'PnL день', 'PnL всё время']:
+            xml += f'<Cell><Data ss:Type="String">{h}</Data></Cell>'
+        xml += '</Row>\n'
+        for p in portfolios:
+            xml += '<Row>'
+            xml += f'<Cell><Data ss:Type="String">{_xml_esc(p.get("name", ""))}</Data></Cell>'
+            xml += f'<Cell ss:StyleID="Money"><Data ss:Type="Number">{p.get("total", 0):.2f}</Data></Cell>'
+            xml += f'<Cell ss:StyleID="Money"><Data ss:Type="Number">{p.get("day_delta", 0):.2f}</Data></Cell>'
+            xml += f'<Cell ss:StyleID="Money"><Data ss:Type="Number">{p.get("alltime_delta", 0):.2f}</Data></Cell>'
+            xml += '</Row>\n'
+        # Totals
+        n2 = len(portfolios)
+        xml += '<Row><Cell><Data ss:Type="String">ИТОГО</Data></Cell>'
+        for col in range(3):
+            xml += f'<Cell ss:StyleID="Money" ss:Formula="=SUM(R2C:R{n2+1}C)"><Data ss:Type="Number">0</Data></Cell>'
+        xml += '</Row>\n'
+        xml += '</Table>\n</Worksheet>\n'
+
+        xml += '</Workbook>'
+
+        # Save
+        import time as _t
+        fname = f"tbank_portfolio_{_t.strftime('%Y%m%d_%H%M%S')}.xml"
+        if getattr(_sys, 'frozen', False):
+            # .exe — сохраняем на рабочий стол
+            desktop = os.path.join(os.environ.get("USERPROFILE", ""), "Desktop")
+        else:
+            desktop = os.path.dirname(os.path.abspath(__file__))
+        fpath = os.path.join(desktop, fname)
+
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(xml)
+
+        return fpath
+
+
+def _xml_esc(s):
+    """Escape XML special chars."""
+    if not s:
+        return ""
+    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
     def set_theme(self, theme: str):
         from config import save_config
         self._cfg["theme"] = theme

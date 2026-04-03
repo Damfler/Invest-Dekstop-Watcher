@@ -1030,3 +1030,49 @@ webview.errors.WebViewException: You must create a window first before calling t
 2026-04-03 11:01:53 [INFO] tbank.cache: Загружен кэш (возраст 0.1 ч)
 2026-04-03 11:01:53 [INFO] tbank.data: Данные загружены из кэша
 2026-04-03 11:01:53 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 11:14:49 [INFO] tbank.cache: Загружен кэш (возраст 0.4 ч)
+2026-04-03 11:14:49 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 11:14:49 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:24:17 [INFO] tbank.cache: Загружен кэш (возраст 3.5 ч)
+2026-04-03 14:24:17 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:24:17 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:24:46 [INFO] tbank.app: Выход...
+2026-04-03 14:27:14 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:27:14 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:27:14 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:31:21 [INFO] tbank.app: Выход...
+2026-04-03 14:31:25 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:31:25 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:31:25 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:33:38 [INFO] tbank.app: Выход...
+2026-04-03 14:34:38 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:34:38 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:34:38 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:37:20 [INFO] tbank.app: Выход...
+2026-04-03 14:38:36 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:38:36 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:38:36 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:38:57 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:38:57 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:38:57 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:45:24 [INFO] tbank.app: Выход...
+2026-04-03 14:45:26 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:45:26 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:45:26 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:47:14 [INFO] tbank.app: Выход...
+2026-04-03 14:48:25 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:48:25 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:48:25 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:49:15 [INFO] tbank.app: Выход...
+2026-04-03 14:50:26 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:50:26 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:50:26 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:50:50 [INFO] tbank.app: Выход...
+2026-04-03 14:53:23 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:53:23 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:53:23 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:53:48 [INFO] tbank.app: Выход...
+2026-04-03 14:55:40 [INFO] tbank.cache: Загружен кэш (возраст 0.0 ч)
+2026-04-03 14:55:40 [INFO] tbank.data: Данные загружены из кэша
+2026-04-03 14:55:40 [INFO] tbank.app: Запуск T-Bank Invest Tray
+2026-04-03 14:55:53 [INFO] tbank.app: Выход...

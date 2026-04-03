@@ -7,6 +7,7 @@ import threading
 from datetime import datetime, timezone, timedelta
 
 from api import TBankAPI, TBankAPIError
+from api_endpoints import LOGO_CDN
 from utils import money_value, parse_ts, days_until, alert_key
 import time as _time
 from cache import save_cache, load_cache, save_history, load_history
@@ -240,7 +241,7 @@ class DataStore:
                 logo = brand.get("logoName", "") if brand else ""
                 if logo:
                     logo_id = logo.replace(".png", "").replace(".jpg", "")
-                    logo_url = f"https://invest-brands.cdn-tinkoff.ru/{logo_id}x160.png"
+                    logo_url = LOGO_CDN.format(logo_id=logo_id)
                     pos["logo_url"] = logo_url
 
                 # Сохраняем в кэш
@@ -289,7 +290,9 @@ class DataStore:
         if not bond_pos:
             return
 
-        now     = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc)
+        # Начало текущего дня (чтобы не пропустить сегодняшние купоны)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         horizon_dt = now + timedelta(days=horizon)
         events: list[dict] = []
         analytics: list[dict] = []
@@ -344,7 +347,7 @@ class DataStore:
 
             # Купоны
             _time.sleep(0.2)
-            for c in self._api.get_bond_coupons(figi, now, horizon_dt):
+            for c in self._api.get_bond_coupons(figi, today_start, horizon_dt):
                 dt     = parse_ts(c.get("couponDate"))
                 amount = money_value(c.get("payOneBond"))
                 if dt and dt.date() >= now.date():

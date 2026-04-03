@@ -1,8 +1,9 @@
-# T-Bank Invest Tray — Техническое задание
+# TBank Watcher — Техническое задание
 
-> Версия проекта: v12 (TBank Watcher)
-> Язык: Python 3.10+, Windows
+> Версия: v2.3.1
+> Язык: Python 3.13+, Windows
 > Точка входа: `main.py`
+> Репозиторий: https://github.com/Damfler/TBank-Watcher
 
 ---
 
@@ -22,30 +23,39 @@
 ```
 tbank_v6/
 ├── main.py            # Точка входа. Логирование, wizard, запуск app.
-├── config.py          # Загрузка/сохранение config.json. Мягкое слияние дефолтов.
-├── api.py             # T-Bank Invest REST API. Retry 2→4→8 сек.
-├── cache.py           # Дисковый кэш (cache.json). Макс. возраст 24 ч.
+├── version.py         # Единый источник версии (APP_VERSION, APP_NAME).
+├── config.py          # Загрузка/сохранение config.json. Поддержка .env.
+├── api.py             # T-Bank Invest REST API. Retry + rate limit 429.
+├── cache.py           # Дисковый кэш (cache.json 24ч + history.json бессрочно).
 ├── utils.py           # Форматирование чисел/дат, parse_ts, days_until.
-├── icons_gen.py       # Генерация иконок трея (PIL). Поддержка custom-файлов.
+├── icons_gen.py       # Генерация иконок трея (PIL). Стрелки вверх/вниз.
 ├── autostart.py       # Автозапуск через реестр Windows (winreg).
 ├── notifications.py   # Toast-уведомления через plyer.
 ├── analytics.py       # YTM, аллокация, топ-муверы, денежный поток по месяцам.
-├── data_store.py      # Хранилище данных. Потокобезопасный DataStore.
-├── menu.py            # Построитель меню pystray (callable-подход).
-├── app.py             # Главный класс TBankTrayApp. Координатор.
-├── window.py          # Менеджер окна pywebview (DashboardWindow, JS API).
-├── dashboard.html     # HTML-дашборд (Chart.js, табы, тёмная/светлая тема).
-├── wizard.py          # Мастер первого запуска (ввод токена).
+├── data_store.py      # Хранилище данных. Потокобезопасный DataStore + кэш инструментов.
+├── menu.py            # Построитель меню pystray (callable, подменю).
+├── app.py             # Главный класс TBankTrayApp. pywebview main + pystray detached.
+├── window.py          # Менеджер окна pywebview + JS API + Excel XML экспорт.
+├── dashboard.html     # HTML-дашборд (Chart.js, Lucide Icons, 5 табов).
+├── wizard.py          # Мастер первого запуска (ввод токена, стиль T-Bank).
+├── updater.py         # Автообновление через GitHub Releases.
+├── .env               # Токен для разработки (в .gitignore).
 ├── tbank_invest.spec  # PyInstaller spec для сборки .exe.
 ├── build.bat          # Сборка .exe одной командой.
-├── config.json        # Конфиг пользователя (токен, настройки).
 ├── requirements.txt   # Зависимости pip.
+├── .github/workflows/
+│   └── build.yml      # GitHub Actions: сборка по тегу + ручной запуск.
 └── icons/
-    ├── positive.png   # Иконка трея: портфель в плюсе (зелёный)
-    ├── negative.png   # Иконка трея: портфель в минусе (красный)
-    ├── warn.png       # Иконка трея: оферта через 1-2 дня (опционально)
-    └── crit.png       # Иконка трея: оферта сегодня (опционально)
+    ├── positive.png   # Иконка трея: портфель в плюсе
+    ├── negative.png   # Иконка трея: портфель в минусе
+    ├── warn.png       # Оферта скоро (опционально)
+    └── crit.png       # Оферта сегодня (опционально)
 ```
+
+**При сборке .exe:**
+- Пользовательские данные: `%APPDATA%\TBankWatcher\` (config, cache, logs)
+- dashboard.html + icons упакованы внутрь .exe
+- Пользователь видит только `tbank_invest.exe`
 
 **Автоматически создаваемые файлы (в gitignore):**
 ```
@@ -79,13 +89,19 @@ config.json.bak    # Бэкап при повреждении конфига
 
 | Поле | Тип | Описание |
 |---|---|---|
-| `token` | str | API-токен T-Bank (только чтение) |
+| `token` | str | API-токен T-Bank (только чтение). Перезаписывается из `.env` |
 | `use_sandbox` | bool | Sandbox-режим API |
 | `use_custom_icons` | bool | Использовать файлы из `icons/` или рисовать кодом |
-| `bond_horizon_days` | int | Горизонт событий облигаций (30/60/90). Меняется из меню. |
+| `bond_horizon_days` | int | Горизонт событий облигаций (30-365). Меняется в настройках |
 | `bond_sort` | str | Сортировка событий: `"date"` или `"amount"` |
 | `notify_move_pct` | float | Порог движения портфеля для уведомления (%) |
 | `notify_offer_days` | int | За сколько дней предупреждать об оферте |
+| `max_bond_events` | int | Макс. событий в меню трея (по умолчанию 50) |
+| `theme` | str | Тема дашборда: `"system"` / `"dark"` / `"light"` |
+| `use_logos` | bool | Показывать логотипы инструментов из CDN |
+| `app_name` | str | Пользовательское название приложения |
+| `show_hints` | bool | Показывать подсказки (концентрация и т.д.) |
+| `auto_update` | bool | Проверять обновления через GitHub Releases |
 
 ---
 
@@ -449,10 +465,59 @@ pystray.MenuItem("Открыть", fn, default=True, visible=False)
 
 ---
 
-## 17. Что ещё не реализовано (backlog)
+## 17. Изменения v2.3.1
 
-- Несколько токенов / профилей в одном config.json
-- Логотипы инструментов из API T-Bank
-- Детальная информация по позиции (цена покупки, средняя и т.д.)
-- Экспорт в Excel/CSV
+### Архитектура
+- **Главный поток** = `webview.start()`, pystray через `run_detached()`
+- **ЛКМ**: monkey-patch `_message_handlers[WM_NOTIFY]` в pystray
+- **Окно**: `hidden=True` при старте, `show()/hide()` по ЛКМ, `closing` → hide
+- **Файлы .exe**: данные в `%APPDATA%\TBankWatcher\`, ресурсы внутри .exe
+
+### Дашборд (dashboard.html)
+- **5 табов**: Обзор, Позиции, Облигации, Аналитика, Настройки (через шестерёнку)
+- **Стиль T-Bank**: тёмная/светлая тема, системная по умолчанию
+- **Skeleton loading**: мерцающие заглушки при загрузке данных
+- **Lucide Icons**: SVG-иконки вместо эмодзи
+- **P&L переключатель**: клик меняет день/всё время, нулевой P&L серым
+- **Табы счетов**: фильтрация по счёту, обрезка длинных названий с tooltip
+- **Позиции**: поиск, сортировка (6 вариантов), фильтры по типу, итого
+- **Облигации**: календарь событий + карточки с пилюлями + фильтры
+- **Аналитика**: doughnut аллокация, купоны 12 мес., сравнение счетов, валютная экспозиция
+- **Экспорт**: CSV + Excel XML (с формулами SUM, 2 листа)
+- **Горячие клавиши**: Ctrl+R обновить, Esc закрыть, 1-4 табы
+- **Относительное время**: "только что" → "5 сек назад" → "2 мин назад"
+- **Режим стримера**: размытие балансов
+- **Пользовательское название** приложения
+
+### Данные
+- `ticker` берётся из GetPortfolio API (не нужен отдельный запрос)
+- `dailyYield` / `expectedYield` позиций — правильный P&L день/всё время
+- Валюта: дробное количество (0.95 USD), `money_value()` для qty
+- Кэш инструментов в памяти (rate limit protection)
+- Логотипы из CDN: `invest-brands.cdn-tinkoff.ru/{logoName}x160.png`
+
+### API
+- `GetInstrumentBy` — информация по любому инструменту
+- `ShareBy` — информация по акции
+- Rate limit 429: увеличенная пауза 5/10/15 сек + паузы между запросами
+
+### Автообновление (updater.py)
+- Проверка GitHub Releases при старте (`Damfler/TBank-Watcher`)
+- Сравнение `tag_name` с `APP_VERSION` из `version.py`
+- Скачивание .exe → .bat скрипт замены → перезапуск
+- Чекбокс вкл/выкл в настройках
+
+### Сборка
+- GitHub Actions: `build.yml` — по тегу `v*` или вручную
+- `.env` для разработки (токен не попадает в git)
+- `.gitignore` — dist, build, config, cache, .env
+- `build.bat` — чистый dist, config генерируется через wizard
+
+---
+
+## 18. Что ещё не реализовано (backlog)
+
+- Несколько токенов / профилей
+- Детальная информация по позиции (цена покупки, средняя)
+- График истории портфеля (данные копятся в history.json, UI скрыт)
 - Уведомления в Telegram

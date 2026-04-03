@@ -120,10 +120,16 @@ class TBankTrayApp:
         self._store.save_to_cache()
 
     def _refresh_loop(self):
-        self._do_refresh(force_bonds=True)
+        try:
+            self._do_refresh(force_bonds=True)
+        except Exception:
+            log.exception("Ошибка первого обновления")
         while True:
             time.sleep(REFRESH_SECONDS)
-            self._do_refresh()
+            try:
+                self._do_refresh()
+            except Exception:
+                log.exception("Ошибка обновления")
 
     # ──────────────────────────────────────────
     #  Иконка и тултип (не трогает меню!)
@@ -131,6 +137,12 @@ class TBankTrayApp:
     def _update_icon_and_tooltip(self):
         if not self._icon:
             return
+        try:
+            self._do_update_icon_and_tooltip()
+        except Exception:
+            log.debug("Ошибка обновления иконки", exc_info=True)
+
+    def _do_update_icon_and_tooltip(self):
 
         s  = self._store.snapshot()
         al = s["alert_level"]

@@ -1,5 +1,6 @@
 """
-config.py — загрузка и сохранение конфигурации
+config.py — загрузка и сохранение конфигурации.
+Токен берётся из .env (для разработки) или config.json (для пользователя).
 """
 import json
 import os
@@ -126,6 +127,20 @@ def load_config() -> dict:
     cfg["bond_horizon_days"] = int(cfg.get("bond_horizon_days", 60))
     if cfg.get("bond_sort") not in ("date", "amount"):
         cfg["bond_sort"] = "date"
+
+    # .env — перезаписывает токен из config.json (для разработки)
+    _env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if os.path.exists(_env_file):
+        try:
+            with open(_env_file, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        key, val = line.split("=", 1)
+                        if key.strip() == "TBANK_TOKEN" and val.strip():
+                            cfg["token"] = val.strip()
+        except Exception:
+            pass
 
     return cfg
 

@@ -207,7 +207,11 @@ a{color:var(--blue);text-decoration:none}
         <option value="name">По названию</option>
         <option value="pct">По доле %</option>
       </select>
-      <button id="btnExport" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px" title="Экспорт CSV"><i data-lucide="download" style="width:14px;height:14px"></i>CSV</button>
+      <select id="selExport" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer">
+        <option value="" disabled selected>Экспорт</option>
+        <option value="excel">Excel</option>
+        <option value="xml">XML</option>
+      </select>
     </div>
     <div id="positionsList"></div>
     <div id="posTotals" style="margin-top:10px;padding:10px 14px;background:var(--bg2);border-radius:10px;font-size:13px;display:none"></div>
@@ -269,7 +273,7 @@ a{color:var(--blue);text-decoration:none}
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
         <input type="checkbox" id="chkLogos" style="width:18px;height:18px;accent-color:var(--pink);cursor:pointer">
         <div>
-          <div style="font-weight:600">Логотипы инструментов</div>
+          <div style="font-weight:600">Логотипы бумаг</div>
           <div style="font-size:12px;color:var(--muted)">Показывать изображения бумаг вместо иконок</div>
         </div>
       </label>
@@ -355,6 +359,7 @@ a{color:var(--blue);text-decoration:none}
       <div style="font-size:12px;color:var(--muted)">Разработчик</div>
       <div style="font-weight:600;margin-top:4px">Гашук Дмитрий</div>
       <div style="font-size:11px;color:var(--border);margin-top:8px" id="appVersion">TBank Watcher</div>
+      <div style="margin-top:10px"><a href="#" onclick="try{pywebview.api.open_url('https://pay.cloudtips.ru/p/789f174f')}catch(e){};return false" style="font-size:11px;color:var(--muted);opacity:.5;text-decoration:none;transition:opacity .2s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='.5'">&#x2764; Поддержать проект</a></div>
     </div>
   </div>
   </div><!-- /mainContent -->
@@ -425,12 +430,6 @@ document.addEventListener('keydown',function(e){
   if(e.key==='2')setActiveTab(activeTab='positions');
   if(e.key==='3')setActiveTab(activeTab='bonds');
   if(e.key==='4')setActiveTab(activeTab='analytics');
-});
-
-// Search
-document.getElementById('posSearch').addEventListener('input',function(){
-  posSearchQuery=this.value.toLowerCase();
-  if(D)applyPosFilter(D._lastPosData||[],D._lastTotAll||0,D._lastShowAcc);lucide.createIcons();
 });
 
 // Tabs
@@ -568,7 +567,7 @@ function render(data){
   var sorted=fPos.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});
   document.getElementById('topPositions').innerHTML=renderPosList(sorted.slice(0,8),totAll,selAcc==='all');
 
-  D._lastPosArgs=[fPos,totAll,selAcc==='all'];
+  D._lastPosArgs=[fPos.slice(),totAll,selAcc==='all'];
   renderPosTab(fPos,totAll,selAcc==='all');
   // Фильтруем события облигаций по FIGI позиций выбранного счёта
   var fEvts=evts;
@@ -657,7 +656,11 @@ function renderPosTab(positions,totAll,showAcc){
   var ce=document.getElementById('posChips');ce.innerHTML=ch;
   ce.onclick=function(e){var c=e.target.closest('.chip');if(!c)return;posTypeFilter=c.getAttribute('data-type');ce.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-type')===posTypeFilter)});applyPosFilter(positions,totAll,showAcc);lucide.createIcons()};
   ce.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-type')===posTypeFilter)});
-  var ss=document.getElementById('posSort');if(ss){ss.value=posSortBy;ss.onchange=function(){posSortBy=this.value;applyPosFilter(positions,totAll,showAcc);lucide.createIcons()}}
+  var ss=document.getElementById('posSort');
+  if(ss){
+    ss.value=posSortBy;
+    ss.onchange=function(){posSortBy=this.value;applyPosFilter(positions,totAll,showAcc);lucide.createIcons()};
+  }
   // Восстанавливаем поиск
   var se=document.getElementById('posSearch');if(se&&!se.matches(':focus'))se.value=posSearchQuery;
   applyPosFilter(positions,totAll,showAcc);
@@ -845,42 +848,31 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(function(){if(!_dataLoaded)startLoading()},2000);
 });
 
-// ── Search ──
-var posSearchQuery='';
+// Sort (inline onchange calls this)
+window._doSort=function(v){
+  posSortBy=v;
+  if(D&&D._lastPosArgs)applyPosFilter(D._lastPosArgs[0],D._lastPosArgs[1],D._lastPosArgs[2]);
+  lucide.createIcons();
+};
+// Search
 document.getElementById('posSearch').addEventListener('input',function(){
   posSearchQuery=this.value.toLowerCase();
-  if(D)applyPosFilter(D._lastPosArgs?D._lastPosArgs[0]:(D.positions_extra||[]),
-    D._lastPosArgs?D._lastPosArgs[1]:0,
-    D._lastPosArgs?D._lastPosArgs[2]:true);
+  if(D&&D._lastPosArgs)applyPosFilter(D._lastPosArgs[0],D._lastPosArgs[1],D._lastPosArgs[2]);
   lucide.createIcons();
 });
-
-// ── Totals ──
-function updatePosTotals(positions){
-  var el=document.getElementById('posTotals');if(!el)return;
-  if(!positions.length){el.style.display='none';return}
-  el.style.display='flex';
-  var totVal=0,totPnl=0;
-  positions.forEach(function(p){totVal+=(p.current_value||0);totPnl+=(plMode==='day'?(p.day_delta||0):(p.alltime_delta||0))});
-  var cl=totPnl>0?'up':totPnl<0?'dn':'zero';
-  el.innerHTML='<span>Итого: '+fmt(totVal)+'</span><span class="'+cl+'">'+(totPnl>0?'+':'')+fmt(totPnl)+'</span>';
-}
-
-// ── Export CSV ──
-document.getElementById('btnExport').addEventListener('click',function(){
+// Export
+document.getElementById('selExport').addEventListener('change',function(){
+  var v=this.value;this.selectedIndex=0;
   if(!D)return;
-  var pos=D.positions_extra||[];
-  var lines=['Название;Тикер;ISIN;Тип;Кол-во;Цена;Стоимость;P&L день;P&L всё время;Счёт'];
-  pos.forEach(function(p){
-    lines.push([p.name,p.ticker,p.isin,p.instrumentType,p.qty,
-      (p.current_price||0).toFixed(2),(p.current_value||0).toFixed(2),
-      (p.day_delta||0).toFixed(2),(p.alltime_delta||0).toFixed(2),
-      p.account_name||''].join(';'));
-  });
-  var blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='tbank_positions_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();URL.revokeObjectURL(a.href);
+  if(v==='excel'){
+    pywebview.api.export_xlsx().then(function(r){
+      if(r&&r!=='no_data')alert('Сохранено: '+r);
+    }).catch(function(e){alert('Ошибка: '+e)});
+  }else if(v==='xml'){
+    pywebview.api.export_excel().then(function(r){
+      if(r&&r!=='no_data')alert('Сохранено: '+r);
+    }).catch(function(e){alert('Ошибка: '+e)});
+  }
 });
 
 // ── Hotkeys ──
