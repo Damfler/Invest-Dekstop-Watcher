@@ -1,0 +1,31 @@
+# Build
+dist/
+build/
+*.spec.bak
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+
+# User data (tokens, cache, logs)
+config.json
+cache.json
+history.json
+dismissed.json
+tbank_errors.log*
+_dashboard.html
+_test.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
