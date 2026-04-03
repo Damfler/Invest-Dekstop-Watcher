@@ -1,0 +1,50 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller>=6.0
+
+      - name: Build .exe
+        run: python -m PyInstaller tbank_invest.spec --noconfirm --clean
+
+      - name: Get version from tag
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "TBank Watcher v${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## TBank Watcher v${{ steps.version.outputs.VERSION }}
+
+            ### Установка
+            1. Скачайте `tbank_invest.exe`
+            2. Запустите — при первом запуске откроется мастер настройки
+            3. Введите API-токен T-Invest
+
+            Данные хранятся в `%APPDATA%\TBankWatcher\`
+          files: dist/tbank_invest.exe
+          draft: false
+          prerelease: false
