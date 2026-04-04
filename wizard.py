@@ -57,7 +57,7 @@ def run_wizard() -> str | None:
 
     root = tk.Tk()
     root.title(APP_NAME)
-    root.geometry("480x580")
+    root.geometry("480x640")
     root.resizable(False, False)
     root.configure(bg=BG)
     root.attributes("-topmost", True)

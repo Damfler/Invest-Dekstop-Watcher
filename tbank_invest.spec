@@ -12,15 +12,24 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 block_cipher = None
 BASE = os.path.abspath('.')
 
-# ── Дополнительные данные ────────────────────────────────────────────────────
-datas = [
-    # Папка с иконками
-    (os.path.join(BASE, 'icons', 'positive.png'), 'icons'),
-    (os.path.join(BASE, 'icons', 'negative.png'), 'icons'),
-]
+# ── Конвертация icon.png → icon.ico ─────────────────────────────────────────
+_icon_png = os.path.join(BASE, 'icons', 'icon.png')
+_icon_ico = os.path.join(BASE, 'icons', 'icon.ico')
+if os.path.exists(_icon_png) and not os.path.exists(_icon_ico):
+    try:
+        from PIL import Image
+        img = Image.open(_icon_png).convert("RGBA")
+        img.save(_icon_ico, format="ICO",
+                 sizes=[(256, 256), (128, 128), (64, 64), (32, 32), (16, 16)])
+        print(f"[spec] icon.png → icon.ico")
+    except Exception as e:
+        print(f"[spec] Не удалось конвертировать иконку: {e}")
 
-# Опциональные иконки (warn / crit) — добавляем если есть
-for name in ('warn.png', 'crit.png'):
+# ── Дополнительные данные ────────────────────────────────────────────────────
+datas = []
+
+# Все PNG-иконки из папки icons/
+for name in ('positive.png', 'negative.png', 'warn.png', 'crit.png', 'icon.png'):
     p = os.path.join(BASE, 'icons', name)
     if os.path.exists(p):
         datas.append((p, 'icons'))
@@ -89,7 +98,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='tbank_invest',
+    name='InvestDesktopWatcher',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -101,7 +110,9 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # Иконка .ico (если есть рядом со spec-файлом)
-    icon='icons\\positive.ico' if os.path.exists('icons\\positive.ico') else None,
+    # Иконка .exe: сначала icon.ico (из icon.png), потом positive.ico как запасная
+    icon=(_icon_ico if os.path.exists(_icon_ico)
+          else 'icons\\positive.ico' if os.path.exists('icons\\positive.ico')
+          else None),
     version='version_info.txt' if os.path.exists('version_info.txt') else None,
 )

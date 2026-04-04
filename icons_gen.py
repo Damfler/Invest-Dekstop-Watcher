@@ -14,7 +14,7 @@ ICONS_DIR      = os.path.join(BASE_DIR, "icons")
 if getattr(sys, 'frozen', False):
     _USER_ICONS = os.path.join(
         os.environ.get("APPDATA", os.path.dirname(sys.executable)),
-        "TBankWatcher", "icons")
+        "InvestDesktopWatcher", "icons")
 else:
     _USER_ICONS = ICONS_DIR
 
@@ -82,7 +82,7 @@ def _draw_text(symbol):
 def make_icon_normal(delta: float, use_custom: bool) -> Image.Image:
     if use_custom:
         name = "positive.png" if delta >= 0 else "negative.png"
-        img = _load_custom(name)
+        img = _load_custom(name) or _load_custom("icon.png")
         if img:
             return img
     if delta >= 0:
@@ -93,7 +93,7 @@ def make_icon_normal(delta: float, use_custom: bool) -> Image.Image:
 
 def make_icon_warn(use_custom: bool) -> Image.Image:
     if use_custom:
-        img = _load_custom("warn.png")
+        img = _load_custom("warn.png") or _load_custom("icon.png")
         if img:
             return img
     return _draw_icon((234, 128, 0), _draw_text("!"))

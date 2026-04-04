@@ -32,7 +32,7 @@ DEFAULT_CONFIG: dict = {
         }
     ],
 
-    "use_custom_icons": True,
+    "use_custom_icons": False,
 
     # Горизонт событий облигаций (дни). Переключается в меню.
     "bond_horizon_days": 60,

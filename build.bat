@@ -1,6 +1,17 @@
 @echo off
 setlocal EnableDelayedExpansion
 chcp 65001 >nul 2>&1
+
+:: Запрос прав администратора если их нет
+net session >nul 2>&1
+if errorlevel 1 (
+    echo Запрашиваем права администратора...
+    powershell -Command "Start-Process cmd -ArgumentList '/c pushd \"%~dp0\" && \"%~f0\"' -Verb RunAs"
+    exit /b
+)
+
+:: Переходим в папку скрипта (работает с UNC-путями \\wsl.localhost\...)
+pushd "%~dp0"
 title T-Bank Invest Build
 
 echo.
@@ -36,9 +47,9 @@ if errorlevel 1 (
 :: Clean old build
 echo.
 echo [2/3] Cleaning previous build...
-if exist dist\tbank_invest.exe (
-    del /f /q dist\tbank_invest.exe
-    echo   Removed old tbank_invest.exe
+if exist dist\InvestDesktopWatcher.exe (
+    del /f /q dist\InvestDesktopWatcher.exe
+    echo   Removed old InvestDesktopWatcher.exe
 )
 if exist build rmdir /s /q build
 
@@ -62,19 +73,20 @@ echo Config will be stored in %%APPDATA%%\TBankWatcher\
 
 :: Result
 echo.
-if exist dist\tbank_invest.exe (
-    for %%A in (dist\tbank_invest.exe) do set SIZE=%%~zA
+if exist dist\InvestDesktopWatcher.exe (
+    for %%A in (dist\InvestDesktopWatcher.exe) do set SIZE=%%~zA
     set /a SIZE_MB=!SIZE! / 1048576
     echo === BUILD OK ===
-    echo dist\tbank_invest.exe (!SIZE_MB! MB^)
+    echo dist\InvestDesktopWatcher.exe (!SIZE_MB! MB^)
     echo.
     echo Next steps:
     echo   1. Go to dist\
     echo   2. Edit config.json - add API token
-    echo   3. Run tbank_invest.exe
+    echo   3. Run InvestDesktopWatcher.exe
     echo.
 ) else (
     echo [ERROR] .exe not found - something went wrong.
 )
 
+popd
 pause
