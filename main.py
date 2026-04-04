@@ -7,7 +7,7 @@ import os
 import sys
 
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "TBankWatcher")
+    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "InvestDesktopWatcher")
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -53,7 +53,6 @@ def main():
         sys.exit(1)
 
     from config import load_config
-    from api import TBankAPI
     from data_store import DataStore
     from app import TBankTrayApp
     from wizard import needs_wizard, run_wizard
@@ -69,8 +68,32 @@ def main():
             sys.exit(0)
         cfg = load_config()   # перечитываем — wizard сохранил токен
 
-    api   = TBankAPI(cfg["token"], use_sandbox=cfg.get("use_sandbox", False))
-    store = DataStore(api, cfg)
+    # Создаём API для каждого активного подключения
+    from constants import TOKEN_STUB
+    connections = cfg.get("connections", [])
+    apis = []
+    for conn in connections:
+        if not conn.get("enabled", True):
+            continue
+        broker = conn.get("broker", "tbank")
+        token  = conn.get("token", "")
+        if not token or token == TOKEN_STUB:
+            continue
+        if broker == "tbank":
+            from api import TBankAPI
+            apis.append((
+                conn.get("name", "Т-Банк"),
+                TBankAPI(token, use_sandbox=conn.get("use_sandbox", False)),
+            ))
+        else:
+            log.warning("Неизвестный брокер '%s' в подключении '%s' — пропускаем",
+                        broker, conn.get("name", "?"))
+
+    if not apis:
+        log.error("Нет активных подключений с токеном. Проверьте config.json.")
+        sys.exit(1)
+
+    store = DataStore(apis, cfg)
     app   = TBankTrayApp(cfg, store)
 
     try:

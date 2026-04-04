@@ -79,6 +79,16 @@ a{color:var(--blue);text-decoration:none}
 .event-alert-warn{background:rgba(255,171,0,.1);border:1px solid rgba(255,171,0,.25);color:#ffab00}
 .event-alert-info{background:rgba(10,132,255,.1);border:1px solid rgba(10,132,255,.25);color:var(--blue)}
 .event-alert-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* Connections */
+.conn-item{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px}
+.conn-item:last-child{border-bottom:none}
+.conn-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.3px}
+.conn-badge.active{background:rgba(48,209,88,.15);color:var(--green)}
+.conn-badge.disabled{background:rgba(142,142,147,.15);color:var(--muted)}
+.conn-add-form{background:var(--surface);border-radius:10px;padding:14px;margin-top:10px;display:none}
+.conn-add-form.open{display:block}
+.conn-input{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;font-family:var(--font);margin-bottom:8px}
+.conn-input:focus{outline:none;border-color:var(--pink)}
 .event-alert-body{flex:1;min-width:0}
 .event-alert-title{font-weight:600;font-size:13px}
 .event-alert-sub{font-size:11px;opacity:.7;margin-top:1px}
@@ -350,6 +360,43 @@ a{color:var(--blue);text-decoration:none}
         </div>
       </label>
     </div>
+    <!-- Подключения -->
+    <div class="section-title" style="margin-top:20px"><i data-lucide="plug" style="width:16px;height:16px"></i> Подключения</div>
+    <div class="card" style="margin-bottom:12px">
+      <div id="connList" style="margin-bottom:10px"></div>
+      <button onclick="openAddConn()" id="btnAddConn"
+        style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s"
+        onmouseover="this.style.borderColor='var(--pink)';this.style.color='var(--pink)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <i data-lucide="plus-circle" style="width:14px;height:14px"></i> Добавить подключение
+      </button>
+      <div class="conn-add-form" id="connAddForm">
+        <div style="font-weight:600;margin-bottom:10px;font-size:13px">Новое подключение</div>
+        <input class="conn-input" id="connName" placeholder="Название (например: Т-Банк ИИС)">
+        <select id="connBroker" class="conn-input" style="cursor:pointer">
+          <option value="tbank">Т-Банк (Тинькофф Инвестиции)</option>
+        </select>
+        <input class="conn-input" id="connToken" placeholder="API-токен" type="password" autocomplete="off">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="connSandbox" style="accent-color:var(--pink)"> Sandbox-режим
+        </label>
+        <div style="display:flex;gap:8px">
+          <button onclick="submitAddConn()"
+            style="padding:7px 18px;border-radius:8px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer">
+            Добавить
+          </button>
+          <button onclick="closeAddConn()"
+            style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer">
+            Отмена
+          </button>
+        </div>
+        <div id="connAddError" style="font-size:12px;color:var(--red);margin-top:8px"></div>
+      </div>
+      <div id="connRestartBanner" style="display:none;margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.3);font-size:12px;color:var(--yellow);display:flex;align-items:center;gap:6px">
+        <i data-lucide="rotate-cw" style="width:14px;height:14px"></i>
+        Перезапустите приложение для применения изменений
+      </div>
+    </div>
     <div class="card" style="margin-bottom:12px">
       <div style="font-weight:600;margin-bottom:4px">Информация</div>
       <div style="font-size:12px;color:var(--muted)">Данные обновляются каждые 60 сек.</div>
@@ -418,7 +465,7 @@ function openInstr(ticker,type,figi){
 function togTheme(){document.body.classList.toggle('light');var l=document.body.classList.contains('light');try{pywebview.api.set_theme(l?'light':'dark')}catch(e){}localStorage.setItem('tbank_theme',l?'light':'dark');updThemeBtn();if(D)reCharts();}
 function updThemeBtn(){var b=document.getElementById('btnTheme');if(b){b.innerHTML=ic(document.body.classList.contains('light')?'sun':'moon',18);lucide.createIcons({nameAttr:'data-lucide',attrs:{style:b.querySelector('i').getAttribute('style')}});}}
 document.getElementById('btnTheme').addEventListener('click',togTheme);
-document.getElementById('btnSettings').addEventListener('click',function(){activeTab='settings';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.remove('active')})});
+document.getElementById('btnSettings').addEventListener('click',function(){activeTab='settings';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.remove('active')});loadConnections();});
 document.getElementById('btnRefresh').addEventListener('click',function(){try{pywebview.api.refresh()}catch(e){}});
 
 // Hotkeys
@@ -434,7 +481,7 @@ document.addEventListener('keydown',function(e){
 
 // Tabs
 document.getElementById('mainTabs').addEventListener('click',function(e){var t=e.target.closest('.tab');if(!t)return;activeTab=t.getAttribute('data-tab');setActiveTab(activeTab)});
-function setActiveTab(tab){document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')===tab)});document.querySelectorAll('.tab-content').forEach(function(x){x.classList.toggle('active',x.id==='tab-'+tab)})}
+function setActiveTab(tab){document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')===tab)});document.querySelectorAll('.tab-content').forEach(function(x){x.classList.toggle('active',x.id==='tab-'+tab)});if(tab==='settings')loadConnections();}
 document.getElementById('allocChips').addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;allocMode=c.getAttribute('data-mode');document.querySelectorAll('#allocChips .chip').forEach(function(x){x.classList.remove('active')});c.classList.add('active');renderAllocChart()});
 document.getElementById('historyChips').addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;historyRange=c.getAttribute('data-range');document.querySelectorAll('#historyChips .chip').forEach(function(x){x.classList.remove('active')});c.classList.add('active');renderHistoryChart()});
 document.getElementById('calPrev').addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}calSelectedDay=null;renderCalendar()});
@@ -489,6 +536,74 @@ document.getElementById('selTheme').addEventListener('change',function(){
   localStorage.setItem('tbank_theme',v);
   updThemeBtn();if(D)reCharts();
 });
+
+// ── Управление подключениями ──────────────────────────────────────────────────
+var BROKER_NAMES={'tbank':'Т-Банк'};
+function loadConnections(){
+  try{
+    pywebview.api.get_connections().then(function(r){
+      var conns=JSON.parse(r||'[]');renderConnList(conns);
+    }).catch(function(){});
+  }catch(e){}
+}
+function renderConnList(conns){
+  var el=document.getElementById('connList');if(!el)return;
+  if(!conns.length){el.innerHTML='<div style="font-size:12px;color:var(--muted)">Нет подключений</div>';return}
+  var h='';
+  conns.forEach(function(c,i){
+    var broker=BROKER_NAMES[c.broker]||c.broker;
+    var badge=c.enabled?'<span class="conn-badge active">Активно</span>':'<span class="conn-badge disabled">Откл.</span>';
+    h+='<div class="conn-item">';
+    h+='<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+esc(c.name||broker)+'</div>';
+    h+='<div style="font-size:11px;color:var(--muted)">'+broker+(c.use_sandbox?' · Sandbox':'')+'</div></div>';
+    h+=badge;
+    if(conns.length>1){
+      h+='<button onclick="connToggle('+i+')" title="'+(c.enabled?'Отключить':'Включить')+'" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer">'+
+        (c.enabled?ic('pause-circle',12):ic('play-circle',12))+'</button>';
+      h+='<button onclick="connRemove('+i+')" title="Удалить" style="padding:4px 8px;border-radius:6px;border:none;background:rgba(255,69,58,.1);color:var(--red);font-size:11px;cursor:pointer">'+ic('trash-2',12)+'</button>';
+    }
+    h+='</div>';
+  });
+  el.innerHTML=h;lucide.createIcons();
+}
+function connToggle(i){
+  try{pywebview.api.toggle_connection(i).then(function(){loadConnections();showConnRestart()}).catch(function(){})}catch(e){}
+}
+function connRemove(i){
+  if(!confirm('Удалить подключение?'))return;
+  try{pywebview.api.remove_connection(i).then(function(ok){if(ok){loadConnections();showConnRestart()}else{alert('Нельзя удалить единственное подключение')}}).catch(function(){})}catch(e){}
+}
+function openAddConn(){
+  document.getElementById('connAddForm').classList.add('open');
+  document.getElementById('btnAddConn').style.display='none';
+  document.getElementById('connAddError').textContent='';
+  lucide.createIcons();
+}
+function closeAddConn(){
+  document.getElementById('connAddForm').classList.remove('open');
+  document.getElementById('btnAddConn').style.display='';
+  document.getElementById('connName').value='';
+  document.getElementById('connToken').value='';
+  document.getElementById('connSandbox').checked=false;
+  document.getElementById('connAddError').textContent='';
+}
+function submitAddConn(){
+  var name=document.getElementById('connName').value.trim();
+  var broker=document.getElementById('connBroker').value;
+  var token=document.getElementById('connToken').value.trim();
+  var sandbox=document.getElementById('connSandbox').checked;
+  if(!token||token.length<10){document.getElementById('connAddError').textContent='Введите токен (минимум 10 символов)';return}
+  try{
+    pywebview.api.add_connection(name,broker,token,sandbox).then(function(ok){
+      if(ok){closeAddConn();loadConnections();showConnRestart()}
+      else{document.getElementById('connAddError').textContent='Ошибка: проверьте токен'}
+    }).catch(function(e){document.getElementById('connAddError').textContent='Ошибка: '+e});
+  }catch(e){document.getElementById('connAddError').textContent='Ошибка API'}
+}
+function showConnRestart(){
+  var b=document.getElementById('connRestartBanner');
+  if(b){b.style.display='flex';lucide.createIcons();}
+}
 
 function hideSkeleton(){var s=document.getElementById('skeleton'),m=document.getElementById('mainContent');if(s)s.classList.add('hidden');if(m)m.classList.remove('loading');}
 
@@ -620,7 +735,6 @@ function mergePositions(positions){
 function renderPosList(positions,totAll,showAcc){
   if(!positions.length)return'<div class="empty">Нет позиций</div>';
   var list=showAcc?mergePositions(positions):positions;
-  list.sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});
   var h='';list.forEach(function(p){
     var d=plMode==='day'?(p.day_delta||0):(p.alltime_delta||p.day_delta||0),cl=d>0?'up':d<0?'dn':'zero',si=d>0?'+':'',it=p.instrumentType||'other';
     var icCls={bond:'bond',share:'share',etf:'etf',currency:'currency'}[it]||'other';
@@ -649,8 +763,8 @@ function sortPositions(list,totAll){
 }
 
 function renderPosTab(positions,totAll,showAcc){
-  // Сохраняем для поиска
-  if(D){D._lastPosData=positions;D._lastTotAll=totAll;D._lastShowAcc=showAcc}
+  // Сохраняем для поиска и сортировки
+  if(D){D._lastPosData=positions;D._lastTotAll=totAll;D._lastShowAcc=showAcc;D._lastPosArgs=[positions,totAll,showAcc]}
   var types=[];positions.forEach(function(p){var t=p.instrumentType||'other';if(types.indexOf(t)<0)types.push(t)});
   var ch='<div class="chip active" data-type="all">Все</div>';types.forEach(function(t){ch+='<div class="chip" data-type="'+t+'">'+(TM[t]||t)+'</div>'});
   var ce=document.getElementById('posChips');ce.innerHTML=ch;
@@ -669,8 +783,10 @@ function applyPosFilter(positions,totAll,showAcc){
   var f=posTypeFilter==='all'?positions:positions.filter(function(p){return p.instrumentType===posTypeFilter});
   // Поиск
   if(posSearchQuery){var q=posSearchQuery;f=f.filter(function(p){return(p.name||'').toLowerCase().indexOf(q)>=0||(p.ticker||'').toLowerCase().indexOf(q)>=0||(p.isin||'').toLowerCase().indexOf(q)>=0||(p.figi||'').toLowerCase().indexOf(q)>=0})}
-  var sorted=sortPositions(f,totAll);
-  document.getElementById('positionsList').innerHTML=renderPosList(sorted,totAll,showAcc);
+  // Мёрджим по счетам ПЕРЕД сортировкой, затем сортируем смёрдженный список
+  var merged=showAcc?mergePositions(f):f;
+  var sorted=sortPositions(merged,totAll);
+  document.getElementById('positionsList').innerHTML=renderPosList(sorted,totAll,false);
   // Итого
   var tEl=document.getElementById('posTotals');
   if(tEl&&sorted.length>0){

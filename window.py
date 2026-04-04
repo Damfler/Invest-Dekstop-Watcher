@@ -298,12 +298,6 @@ class _DashboardAPI:
         return fpath
 
 
-def _xml_esc(s):
-    """Escape XML special chars."""
-    if not s:
-        return ""
-    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-
     def set_theme(self, theme: str):
         from config import save_config
         self._cfg["theme"] = theme
@@ -339,7 +333,6 @@ def _xml_esc(s):
         if not exe_path:
             return "download_failed"
         apply_update(exe_path)
-        # Закрываем приложение
         import sys
         sys.exit(0)
 
@@ -352,9 +345,75 @@ def _xml_esc(s):
         from config import save_config
         self._cfg["bond_horizon_days"] = days
         save_config(self._cfg)
-        # Обновляем DataStore и перезагружаем облигации
         self._store.set_horizon(days, self._cfg)
         threading.Thread(target=self._refresh, daemon=True).start()
+
+    # ── Управление подключениями ──────────────────────────────────────────────
+
+    def get_connections(self) -> str:
+        """Возвращает список подключений (без токенов) в JSON."""
+        conns = self._cfg.get("connections", [])
+        safe = [
+            {
+                "name":        c.get("name", ""),
+                "broker":      c.get("broker", "tbank"),
+                "enabled":     c.get("enabled", True),
+                "use_sandbox": c.get("use_sandbox", False),
+                "has_token":   bool(c.get("token")),
+            }
+            for c in conns
+        ]
+        return json.dumps(safe, ensure_ascii=False)
+
+    def add_connection(self, name: str, broker: str, token: str,
+                       use_sandbox: bool = False) -> bool:
+        """Добавляет новое подключение. Требует перезапуска."""
+        from config import save_config
+        from constants import TOKEN_STUB
+        if not token or token == TOKEN_STUB or len(token) < 10:
+            return False
+        conns = self._cfg.get("connections", [])
+        conns.append({
+            "name":        name.strip() or broker,
+            "broker":      broker,
+            "token":       token.strip(),
+            "enabled":     True,
+            "use_sandbox": bool(use_sandbox),
+        })
+        self._cfg["connections"] = conns
+        save_config(self._cfg)
+        return True
+
+    def remove_connection(self, index: int) -> bool:
+        """Удаляет подключение по индексу. Требует перезапуска."""
+        from config import save_config
+        conns = self._cfg.get("connections", [])
+        if len(conns) <= 1:
+            return False  # нельзя удалить последнее
+        if 0 <= index < len(conns):
+            conns.pop(index)
+            self._cfg["connections"] = conns
+            save_config(self._cfg)
+            return True
+        return False
+
+    def toggle_connection(self, index: int) -> bool:
+        """Включает/выключает подключение. Требует перезапуска."""
+        from config import save_config
+        conns = self._cfg.get("connections", [])
+        if 0 <= index < len(conns):
+            conns[index]["enabled"] = not conns[index].get("enabled", True)
+            self._cfg["connections"] = conns
+            save_config(self._cfg)
+            return conns[index]["enabled"]
+        return False
+
+
+def _xml_esc(s):
+    """Escape XML special chars."""
+    if not s:
+        return ""
+    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
 # ──────────────────────────────────────────────────────────────────────────────

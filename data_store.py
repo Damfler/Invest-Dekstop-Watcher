@@ -6,18 +6,15 @@ import logging
 import threading
 from datetime import datetime, timezone, timedelta
 
-from api import TBankAPI, TBankAPIError
+from api import TBankAPIError
 from api_endpoints import LOGO_CDN
 from utils import money_value, parse_ts, days_until, alert_key
 import time as _time
 from cache import save_cache, load_cache, save_history, load_history
 from config import load_dismissed, save_dismissed
+from constants import ALERT_NONE, ALERT_WARN, ALERT_CRIT
 
 log = logging.getLogger("tbank.data")
-
-ALERT_NONE = 0
-ALERT_WARN = 1
-ALERT_CRIT = 2
 
 
 class DataStore:
@@ -27,9 +24,10 @@ class DataStore:
     menu.py берёт снапшот через snapshot() и работает с копией.
     """
 
-    def __init__(self, api: TBankAPI, cfg: dict):
-        self._api = api
-        self._cfg = cfg
+    def __init__(self, apis: list, cfg: dict):
+        # apis: list of (connection_name: str, api_instance)
+        self._apis = apis
+        self._cfg  = cfg
         self._lock = threading.Lock()
 
         # ── Данные портфеля
@@ -116,167 +114,160 @@ class DataStore:
     #  Загрузка портфеля
     # ──────────────────────────────────────────
     def fetch_portfolio(self):
-        try:
-            accounts = self._api.get_accounts()
-            result        = []
-            bond_pos      = {}
-            bond_nkd      = {}
-            positions_all = []
+        result        = []
+        bond_pos      = {}
+        bond_nkd      = {}
+        positions_all = []
+        errors        = []
 
-            for acc in accounts:
-                acc_id   = acc.get("id", "")
-                acc_name = acc.get("name") or acc.get("type", "Счёт")
-                p        = self._api.get_portfolio(acc_id)
+        for conn_name, api in self._apis:
+            try:
+                accounts = api.get_accounts()
 
-                total         = money_value(p.get("totalAmountPortfolio"))
-                day_delta     = money_value(p.get("dailyYield"))
-                # expectedYield портфеля — это % доходности, не рубли!
-                # alltime_delta считаем как сумму expectedYield всех позиций
-                alltime_delta = 0.0
+                for acc in accounts:
+                    acc_id   = acc.get("id", "")
+                    acc_name = acc.get("name") or acc.get("type", "Счёт")
+                    p        = api.get_portfolio(acc_id)
 
-                for pos in p.get("positions", []):
-                    itype = pos.get("instrumentType", "").lower()
-                    figi  = pos.get("figi", "")
-                    isin  = pos.get("isin", "")
-                    name  = pos.get("name") or isin or figi
-                    ticker = pos.get("ticker", "")
-                    # quantity: для валют дробное (0.95 USD), для остальных целое
-                    qty_raw = money_value(pos.get("quantity"))
-                    qty     = qty_raw if itype == "currency" else int(qty_raw)
-                    cur_p   = money_value(pos.get("currentPrice"))
-                    nkd     = money_value(pos.get("currentNkd"))
-                    pos_pnl = money_value(pos.get("expectedYield"))   # P&L за всё время (руб)
-                    pos_day = money_value(pos.get("dailyYield"))      # P&L за сегодня (руб)
+                    total         = money_value(p.get("totalAmountPortfolio"))
+                    day_delta     = money_value(p.get("dailyYield"))
+                    alltime_delta = 0.0
 
-                    # текущая стоимость позиции = цена × кол-во
-                    pos_value = cur_p * qty if cur_p else 0
-                    alltime_delta += pos_pnl
+                    for pos in p.get("positions", []):
+                        itype  = pos.get("instrumentType", "").lower()
+                        figi   = pos.get("figi", "")
+                        isin   = pos.get("isin", "")
+                        name   = pos.get("name") or isin or figi
+                        ticker = pos.get("ticker", "")
+                        qty_raw = money_value(pos.get("quantity"))
+                        qty     = qty_raw if itype == "currency" else int(qty_raw)
+                        cur_p   = money_value(pos.get("currentPrice"))
+                        nkd     = money_value(pos.get("currentNkd"))
+                        pos_pnl = money_value(pos.get("expectedYield"))
+                        pos_day = money_value(pos.get("dailyYield"))
 
-                    positions_all.append({
-                        "instrumentType": itype,
-                        "name":           name,
-                        "isin":           isin,
-                        "figi":           figi,
-                        "ticker":         ticker,
-                        "qty":            qty,
-                        "current_price":  cur_p,
-                        "current_value":  pos_value,
-                        "day_delta":      pos_day,
-                        "alltime_delta":  pos_pnl,
-                        "account_id":     acc_id,
-                        "account_name":   acc_name,
-                        "logo_url":       "",
+                        pos_value = cur_p * qty if cur_p else 0
+                        alltime_delta += pos_pnl
+
+                        positions_all.append({
+                            "instrumentType":  itype,
+                            "name":            name,
+                            "isin":            isin,
+                            "figi":            figi,
+                            "ticker":          ticker,
+                            "qty":             qty,
+                            "current_price":   cur_p,
+                            "current_value":   pos_value,
+                            "day_delta":       pos_day,
+                            "alltime_delta":   pos_pnl,
+                            "account_id":      acc_id,
+                            "account_name":    acc_name,
+                            "connection_name": conn_name,
+                            "logo_url":        "",
+                        })
+
+                        if itype == "bond" and figi and qty > 0:
+                            if figi in bond_pos:
+                                bond_pos[figi]["qty"]       += qty
+                                bond_nkd[figi]["qty"]       += qty
+                                bond_nkd[figi]["nkd_total"] += nkd * qty
+                            else:
+                                bond_pos[figi] = {"name": name, "isin": isin, "qty": qty}
+                                bond_nkd[figi] = {
+                                    "name":      name,
+                                    "isin":      isin,
+                                    "nkd_per":   nkd,
+                                    "nkd_total": nkd * qty,
+                                    "qty":       qty,
+                                }
+
+                    result.append({
+                        "name":            acc_name,
+                        "total":           total,
+                        "day_delta":       day_delta,
+                        "alltime_delta":   alltime_delta,
+                        "account_id":      acc_id,
+                        "connection_name": conn_name,
                     })
 
-                    if itype == "bond" and figi and qty > 0:
-                        if figi in bond_pos:
-                            bond_pos[figi]["qty"]           += qty
-                            bond_nkd[figi]["qty"]           += qty
-                            bond_nkd[figi]["nkd_total"]     += nkd * qty
-                        else:
-                            bond_pos[figi] = {
-                                "name": name, "isin": isin, "qty": qty,
-                            }
-                            bond_nkd[figi] = {
-                                "name":      name,
-                                "isin":      isin,
-                                "nkd_per":   nkd,
-                                "nkd_total": nkd * qty,
-                                "qty":       qty,
-                            }
+                # Обогащаем позиции логотипами/ISIN через кэш инструментов
+                for pos in positions_all:
+                    if pos.get("connection_name") != conn_name:
+                        continue
+                    figi = pos.get("figi", "")
+                    if not figi:
+                        continue
 
-                result.append({
-                    "name":          acc_name,
-                    "total":         total,
-                    "day_delta":     day_delta,
-                    "alltime_delta": alltime_delta,
-                    "account_id":    acc_id,
-                })
+                    cached = self._instrument_cache.get(figi)
+                    if cached:
+                        if not pos["isin"]:
+                            pos["isin"] = cached.get("isin", "")
+                        if not pos.get("ticker"):
+                            pos["ticker"] = cached.get("ticker", "")
+                        if pos["name"] == figi:
+                            pos["name"] = cached.get("name", figi)
+                        if cached.get("logo_url"):
+                            pos["logo_url"] = cached["logo_url"]
+                        continue
 
-            # Обогащаем позиции: подтягиваем ISIN, имя и логотип
-            # (ticker уже приходит из GetPortfolio)
-            # Используем кэш чтобы не делать лишних запросов (429 rate limit)
-            for pos in positions_all:
-                figi = pos.get("figi", "")
-                if not figi:
-                    continue
+                    needs = not pos["isin"] or pos["name"] == figi or self._cfg.get("use_logos")
+                    if not needs:
+                        continue
 
-                # Проверяем кэш
-                cached = self._instrument_cache.get(figi)
-                if cached:
+                    _time.sleep(0.2)
+                    itype = pos.get("instrumentType", "")
+                    info = None
+                    if itype == "bond":
+                        info = api.get_bond_by_figi(figi)
+                    if not info:
+                        info = api.get_instrument_by_figi(figi)
+                    if not info:
+                        continue
+
                     if not pos["isin"]:
-                        pos["isin"] = cached.get("isin", "")
+                        pos["isin"] = info.get("isin", "")
                     if not pos.get("ticker"):
-                        pos["ticker"] = cached.get("ticker", "")
+                        pos["ticker"] = info.get("ticker", "")
                     if pos["name"] == figi:
-                        pos["name"] = cached.get("name", figi)
-                    if cached.get("logo_url"):
-                        pos["logo_url"] = cached["logo_url"]
-                    continue
+                        pos["name"] = info.get("name", figi)
+                    logo_url = ""
+                    brand = info.get("brand", {})
+                    logo = brand.get("logoName", "") if brand else ""
+                    if logo:
+                        logo_id = logo.replace(".png", "").replace(".jpg", "")
+                        logo_url = LOGO_CDN.format(logo_id=logo_id)
+                        pos["logo_url"] = logo_url
 
-                # Нужен ли запрос к API?
-                needs = not pos["isin"] or pos["name"] == figi or self._cfg.get("use_logos")
-                if not needs:
-                    continue
+                    self._instrument_cache[figi] = {
+                        "isin": pos["isin"], "name": pos["name"],
+                        "ticker": pos.get("ticker", ""),
+                        "logo_url": logo_url,
+                    }
 
-                # Запрос к API с паузой (rate limit)
-                _time.sleep(0.2)
-                itype = pos.get("instrumentType", "")
-                info = None
-                if itype == "bond":
-                    info = self._api.get_bond_by_figi(figi)
-                if not info:
-                    info = self._api.get_instrument_by_figi(figi)
-                if not info:
-                    continue
+            except TBankAPIError as e:
+                errors.append(f"[{conn_name}] {str(e)[:60]}")
+                log.error("fetch_portfolio [%s]: %s", conn_name, e)
+            except Exception as e:
+                errors.append(f"[{conn_name}] {str(e)[:60]}")
+                log.exception("fetch_portfolio [%s] unexpected:", conn_name)
 
-                if not pos["isin"]:
-                    pos["isin"] = info.get("isin", "")
-                if not pos.get("ticker"):
-                    pos["ticker"] = info.get("ticker", "")
-                if pos["name"] == figi:
-                    pos["name"] = info.get("name", figi)
-                logo_url = ""
-                brand = info.get("brand", {})
-                logo = brand.get("logoName", "") if brand else ""
-                if logo:
-                    logo_id = logo.replace(".png", "").replace(".jpg", "")
-                    logo_url = LOGO_CDN.format(logo_id=logo_id)
-                    pos["logo_url"] = logo_url
+        with self._lock:
+            self.portfolios      = result
+            self.bond_positions  = bond_pos
+            self.bond_nkd        = bond_nkd
+            self.positions_extra = positions_all
+            self.last_update     = datetime.now().strftime("%H:%M:%S")
+            self.error           = "; ".join(errors) if errors and not result else None
 
-                # Сохраняем в кэш
-                self._instrument_cache[figi] = {
-                    "isin": pos["isin"], "name": pos["name"],
-                    "ticker": pos.get("ticker", ""),
-                    "logo_url": logo_url,
-                }
-
-            with self._lock:
-                self.portfolios      = result
-                self.bond_positions  = bond_pos
-                self.bond_nkd        = bond_nkd
-                self.positions_extra = positions_all
-                self.last_update     = datetime.now().strftime("%H:%M:%S")
-                self.error           = None
-
-                # Записываем точку истории (раз в 5 минут)
-                total = sum(p["total"] for p in result)
-                now_ts = _time.time()
-                if total > 0 and now_ts - self._last_history_ts >= 300:
-                    self.portfolio_history.append({
-                        "ts": datetime.now(timezone.utc).isoformat(),
-                        "value": total,
-                    })
-                    self._last_history_ts = now_ts
-
-        except TBankAPIError as e:
-            with self._lock:
-                self.error = str(e)[:80]
-            log.error("fetch_portfolio: %s", e)
-        except Exception as e:
-            with self._lock:
-                self.error = str(e)[:80]
-            log.exception("fetch_portfolio unexpected:")
+            # Записываем точку истории (раз в 5 минут)
+            total_val = sum(p["total"] for p in result)
+            now_ts = _time.time()
+            if total_val > 0 and now_ts - self._last_history_ts >= 300:
+                self.portfolio_history.append({
+                    "ts": datetime.now(timezone.utc).isoformat(),
+                    "value": total_val,
+                })
+                self._last_history_ts = now_ts
 
     # ──────────────────────────────────────────
     #  Загрузка событий облигаций
@@ -307,7 +298,8 @@ class DataStore:
             if i > 0:
                 _time.sleep(0.3)
 
-            bond = self._api.get_bond_by_figi(figi)
+            api = self._apis[0][1]  # TODO: выбирать по connection_name когда будет multi-broker
+            bond = api.get_bond_by_figi(figi)
             if bond:
                 if not isin:
                     isin = bond.get("isin", "")
@@ -347,7 +339,7 @@ class DataStore:
 
             # Купоны
             _time.sleep(0.2)
-            for c in self._api.get_bond_coupons(figi, today_start, horizon_dt):
+            for c in api.get_bond_coupons(figi, today_start, horizon_dt):
                 dt     = parse_ts(c.get("couponDate"))
                 amount = money_value(c.get("payOneBond"))
                 if dt and dt.date() >= now.date():

@@ -14,14 +14,14 @@ import tempfile
 log = logging.getLogger("tbank.updater")
 
 from version import APP_VERSION
+from constants import GITHUB_REPO
 
-GITHUB_REPO = "Damfler/TBank-Watcher"
-GITHUB_API  = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+GITHUB_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
 if getattr(sys, 'frozen', False):
     _UPDATE_DIR = os.path.join(
         os.environ.get("APPDATA", os.path.dirname(sys.executable)),
-        "TBankWatcher", "update")
+        "InvestDesktopWatcher", "update")
 else:
     _UPDATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_update")
 
@@ -128,8 +128,9 @@ def apply_update(new_exe_path: str):
     current_exe = sys.executable
     bat_path = os.path.join(_UPDATE_DIR, "_update.bat")
 
+    from version import APP_NAME
     bat_content = f'''@echo off
-echo Обновление TBank Watcher...
+echo Обновление {APP_NAME}...
 timeout /t 2 /nobreak >nul
 copy /y "{new_exe_path}" "{current_exe}" >nul
 if errorlevel 1 (

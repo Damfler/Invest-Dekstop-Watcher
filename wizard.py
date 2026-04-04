@@ -1,7 +1,7 @@
 """
 wizard.py — мастер первого запуска.
 Показывается когда токен не введён.
-Стилизован под дашборд TBank Watcher.
+Стилизован под дашборд Invest Desktop Watcher.
 """
 import os
 import sys
@@ -11,18 +11,26 @@ import webbrowser
 
 log = logging.getLogger("tbank.wizard")
 
+from version import APP_VERSION, APP_NAME
+from constants import TOKEN_STUB, BROKERS, BROKER_INFO
+
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "TBankWatcher")
+    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "InvestDesktopWatcher")
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(BASE_DIR, exist_ok=True)
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
-TOKEN_STUB  = "YOUR_TBANK_API_TOKEN_HERE"
 
 
 def needs_wizard(cfg: dict) -> bool:
-    token = cfg.get("token", TOKEN_STUB)
-    return not token or token == TOKEN_STUB
+    connections = cfg.get("connections", [])
+    if not connections:
+        return True
+    # Нужен мастер если ни одно подключение не настроено (все TOKEN_STUB)
+    return all(
+        not c.get("token") or c.get("token") == TOKEN_STUB
+        for c in connections
+    )
 
 
 def run_wizard() -> str | None:
@@ -48,8 +56,8 @@ def run_wizard() -> str | None:
     RED     = "#ff453a"
 
     root = tk.Tk()
-    root.title("TBank Watcher")
-    root.geometry("480x520")
+    root.title(APP_NAME)
+    root.geometry("480x580")
     root.resizable(False, False)
     root.configure(bg=BG)
     root.attributes("-topmost", True)
@@ -67,21 +75,57 @@ def run_wizard() -> str | None:
                     font=("Segoe UI", 10))
     style.map("TCheckbutton",
               background=[("active", BG)], foreground=[("active", TEXT)])
+    style.configure("Broker.TCombobox", fieldbackground=SURFACE, foreground=TEXT,
+                    selectbackground=BLUE, selectforeground="#fff",
+                    bordercolor=BORDER, font=("Segoe UI", 10))
 
     # ── Контейнер с отступами ────────────────────────────────────────────────
     wrap = tk.Frame(root, bg=BG)
     wrap.pack(fill="both", expand=True, padx=28, pady=24)
 
     # ── Заголовок ────────────────────────────────────────────────────────────
-    tk.Label(wrap, text="TBank Watcher", fg=TEXT, bg=BG,
-             font=("Segoe UI", 22, "bold")).pack(anchor="w")
-    tk.Label(wrap, text="v2.1", fg=BORDER, bg=BG,
+    tk.Label(wrap, text=APP_NAME, fg=TEXT, bg=BG,
+             font=("Segoe UI", 20, "bold")).pack(anchor="w")
+    tk.Label(wrap, text=f"v{APP_VERSION}", fg=BORDER, bg=BG,
              font=("Segoe UI", 11)).pack(anchor="w", pady=(0, 4))
     tk.Label(wrap, text="Виджет для отслеживания инвестиционного портфеля",
              fg=MUTED, bg=BG, font=("Segoe UI", 10)).pack(anchor="w")
 
     # ── Разделитель ──────────────────────────────────────────────────────────
     tk.Frame(wrap, bg=BORDER, height=1).pack(fill="x", pady=16)
+
+    # ── Карточка выбора брокера ──────────────────────────────────────────────
+    broker_card = tk.Frame(wrap, bg=BG2, highlightbackground=BORDER,
+                           highlightthickness=1, bd=0)
+    broker_card.pack(fill="x", pady=(0, 10))
+    broker_inner = tk.Frame(broker_card, bg=BG2)
+    broker_inner.pack(fill="x", padx=16, pady=14)
+
+    tk.Label(broker_inner, text="Брокер", fg=TEXT, bg=BG2,
+             font=("Segoe UI", 12, "bold")).pack(anchor="w")
+    tk.Label(broker_inner, text="Выберите брокера для подключения",
+             fg=MUTED, bg=BG2, font=("Segoe UI", 9)).pack(anchor="w", pady=(2, 8))
+
+    broker_var = tk.StringVar(value=list(BROKERS.keys())[0])
+    broker_display = tk.StringVar(value=list(BROKERS.values())[0])
+
+    broker_combo = ttk.Combobox(broker_inner, textvariable=broker_display,
+                                values=list(BROKERS.values()),
+                                state="readonly", style="Broker.TCombobox",
+                                font=("Segoe UI", 10))
+    broker_combo.pack(fill="x", ipady=4)
+
+    def _on_broker_change(event=None):
+        idx = list(BROKERS.values()).index(broker_display.get())
+        key = list(BROKERS.keys())[idx]
+        broker_var.set(key)
+        info = BROKER_INFO.get(key, BROKER_INFO["tbank"])
+        token_title_lbl.config(text=info["token_label"])
+        token_hint_lbl.config(text=info["hint"])
+        api_link_lbl.config(text=info["api_label"])
+        api_link_lbl.bind("<Button-1>", lambda e: webbrowser.open(info["api_url"]))
+
+    broker_combo.bind("<<ComboboxSelected>>", _on_broker_change)
 
     # ── Карточка ввода токена ────────────────────────────────────────────────
     card = tk.Frame(wrap, bg=BG2, highlightbackground=BORDER,
@@ -90,20 +134,23 @@ def run_wizard() -> str | None:
     card_inner = tk.Frame(card, bg=BG2)
     card_inner.pack(fill="x", padx=16, pady=14)
 
-    tk.Label(card_inner, text="API-токен T-Invest", fg=TEXT, bg=BG2,
-             font=("Segoe UI", 12, "bold")).pack(anchor="w")
-    tk.Label(card_inner,
-             text="Только чтение. Создайте в приложении Т-Инвестиции:\nНастройки → Открыть API → Создать токен",
-             fg=MUTED, bg=BG2, font=("Segoe UI", 9),
-             justify="left").pack(anchor="w", pady=(4, 8))
+    default_info = BROKER_INFO[broker_var.get()]
 
-    # Ссылка
-    lnk = tk.Label(card_inner, text="Открыть страницу T-Bank Invest API",
-                   fg=BLUE, bg=BG2, cursor="hand2",
-                   font=("Segoe UI", 9, "underline"))
-    lnk.pack(anchor="w", pady=(0, 10))
-    lnk.bind("<Button-1>",
-             lambda e: webbrowser.open("https://www.tbank.ru/invest/open-api/"))
+    token_title_lbl = tk.Label(card_inner, text=default_info["token_label"],
+                                fg=TEXT, bg=BG2, font=("Segoe UI", 12, "bold"))
+    token_title_lbl.pack(anchor="w")
+
+    token_hint_lbl = tk.Label(card_inner, text=default_info["hint"],
+                               fg=MUTED, bg=BG2, font=("Segoe UI", 9),
+                               justify="left")
+    token_hint_lbl.pack(anchor="w", pady=(4, 8))
+
+    api_link_lbl = tk.Label(card_inner, text=default_info["api_label"],
+                             fg=BLUE, bg=BG2, cursor="hand2",
+                             font=("Segoe UI", 9, "underline"))
+    api_link_lbl.pack(anchor="w", pady=(0, 10))
+    api_link_lbl.bind("<Button-1>",
+                      lambda e: webbrowser.open(BROKER_INFO[broker_var.get()]["api_url"]))
 
     # Поле ввода
     token_var = tk.StringVar()
@@ -139,7 +186,6 @@ def run_wizard() -> str | None:
     tk.Label(card_inner, text="Ctrl+V — вставить из буфера",
              fg=BORDER, bg=BG2, font=("Segoe UI", 8)).pack(anchor="w", pady=(6, 0))
 
-    # Ctrl+V — на русской раскладке генерирует <Control-м>/<Control-igrave>
     def _do_paste():
         try:
             txt = root.clipboard_get().strip()
@@ -150,9 +196,8 @@ def run_wizard() -> str | None:
         except tk.TclError:
             pass
 
-    # Ловим ВСЕ Ctrl+клавиша и проверяем keycode (V = 86 на всех раскладках)
     def _on_key(event):
-        if event.state & 0x4 and event.keycode == 86:  # Ctrl + keycode 86 = V
+        if event.state & 0x4 and event.keycode == 86:
             _do_paste()
             return "break"
 
@@ -203,7 +248,23 @@ def run_wizard() -> str | None:
             else:
                 from config import DEFAULT_CONFIG
                 cfg = dict(DEFAULT_CONFIG)
-            cfg["token"] = tok
+            # Сохраняем в connections[0] (новый формат)
+            first_conn = {
+                "name":        list(BROKERS.values())[list(BROKERS.keys()).index(broker_var.get())],
+                "broker":      broker_var.get(),
+                "token":       tok,
+                "enabled":     True,
+                "use_sandbox": False,
+            }
+            existing = cfg.get("connections", [])
+            if existing:
+                existing[0] = first_conn
+            else:
+                existing = [first_conn]
+            cfg["connections"] = existing
+            # Удаляем старые поля если остались от миграции
+            cfg.pop("token", None)
+            cfg.pop("broker", None)
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(cfg, f, indent=2, ensure_ascii=False)
         except Exception as e:
@@ -220,7 +281,6 @@ def run_wizard() -> str | None:
     def _cancel():
         root.destroy()
 
-    # Кнопка "Начать"
     start_btn = tk.Button(btn_frame, text="Начать работу", command=_submit,
                           bg=PINK, fg="#fff", relief="flat",
                           font=("Segoe UI", 11, "bold"), cursor="hand2",
@@ -239,7 +299,6 @@ def run_wizard() -> str | None:
     root.bind("<Escape>", lambda e: _cancel())
     root.protocol("WM_DELETE_WINDOW", _cancel)
 
-    # ── Фокус ────────────────────────────────────────────────────────────────
     def _set_focus():
         root.attributes("-topmost", False)
         root.lift()

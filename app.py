@@ -2,6 +2,7 @@
 app.py — главный класс TBankTrayApp.
 Координирует DataStore, MenuBuilder, иконки и фоновые потоки.
 """
+import sys
 import threading
 import time
 import logging
@@ -9,21 +10,19 @@ import logging
 import pystray
 
 import autostart
+from version import APP_NAME
 from icons_gen import (make_icon_normal, make_icon_warn, make_icon_crit)
-from data_store import DataStore, ALERT_NONE, ALERT_WARN, ALERT_CRIT
+from data_store import DataStore
 from menu import MenuBuilder
 from notifications import NotificationManager
 from window import DashboardWindow
+from constants import (
+    ALERT_NONE, ALERT_WARN, ALERT_CRIT,
+    REFRESH_SECONDS, BOND_REFRESH_HOURS, BLINK_INTERVAL,
+    WM_LBUTTONUP, WM_NOTIFY,
+)
 
 log = logging.getLogger("tbank.app")
-
-REFRESH_SECONDS    = 60
-BOND_REFRESH_HOURS = 6
-BLINK_INTERVAL     = 0.6
-
-
-_WM_LBUTTONUP = 0x0202   # Win32 WM_LBUTTONUP
-_WM_NOTIFY    = 1035     # pystray custom WM_NOTIFY (WM_USER + 11)
 
 
 class TBankTrayApp:
@@ -47,6 +46,7 @@ class TBankTrayApp:
             "dismiss_warnings": self._dismiss_warnings,
             "toggle_bond_sort": self._toggle_bond_sort,
             "set_horizon":      self._set_horizon,
+            "download_update":  self._start_update,
         }, cfg=cfg)
 
     # ──────────────────────────────────────────
@@ -80,6 +80,24 @@ class TBankTrayApp:
         if self._icon:
             self._icon.stop()
         self._dashboard.request_quit()
+
+    def _start_update(self, icon=None, item=None):
+        threading.Thread(target=self._download_and_apply_update, daemon=True).start()
+
+    def _download_and_apply_update(self):
+        from updater import download_update, apply_update
+        info = self._store.update_info
+        if not info or not info.get("available"):
+            return
+        log.info("Скачивание обновления v%s...", info.get("version", "?"))
+        path = download_update(info["url"], info.get("asset_name", "invest_desktop_watcher.exe"))
+        if path:
+            log.info("Применение обновления, перезапуск...")
+            self._store.save_to_cache()
+            if self._icon:
+                self._icon.stop()
+            apply_update(path)
+            sys.exit(0)
 
     # ──────────────────────────────────────────
     #  Обновление данных
@@ -168,7 +186,7 @@ class TBankTrayApp:
 
         # Тултип
         if s["error"]:
-            tip = f"T-Bank Invest ⚠ {s['error']}"
+            tip = f"{APP_NAME} ⚠ {s['error']}"
         elif s["portfolios"]:
             from utils import fmt_total, fmt_money, fmt_date
             from analytics import coupon_sum_horizon
@@ -195,11 +213,11 @@ class TBankTrayApp:
             elif al == ALERT_WARN:
                 alert_tip = f"\n⚠ Оферта через 1–{self._cfg.get('notify_offer_days',2)} дня!"
 
-            tip = (f"T-Bank Invest\n{fmt_total(total)}\n"
+            tip = (f"{APP_NAME}\n{fmt_total(total)}\n"
                    f"{mode_str.capitalize()}: {sign}{delta:,.0f} ₽"
                    f"{nkd_tip}{coup_tip}{alert_tip}")
         else:
-            tip = "T-Bank Invest — загрузка…"
+            tip = f"{APP_NAME} — загрузка…"
 
         self._icon.title = tip
 
@@ -226,7 +244,7 @@ class TBankTrayApp:
     # ──────────────────────────────────────────
     def run(self):
         import webview as _webview
-        log.info("Запуск T-Bank Invest Tray")
+        log.info("Запуск %s Tray", APP_NAME)
 
         # Создаём окно дашборда ДО start() (скрытым).
         # pywebview требует минимум одно окно перед start().
@@ -242,20 +260,20 @@ class TBankTrayApp:
         self._icon = pystray.Icon(
             name  = "tbank_invest",
             icon  = make_icon_normal(0, self._cfg.get("use_custom_icons", True)),
-            title = "T-Bank Invest — загрузка…",
+            title = f"{APP_NAME} — загрузка…",
             menu  = pystray.Menu(self._menu),
         )
 
         # Monkey-patch: перехватываем ЛКМ на иконке трея.
         # pystray Win32 хранит обработчики в dict _message_handlers,
         # диспетчер вызывает их по ключу. Патчим запись в dict.
-        _orig_on_notify = self._icon._message_handlers[_WM_NOTIFY]
+        _orig_on_notify = self._icon._message_handlers[WM_NOTIFY]
         def _patched_on_notify(wparam, lparam):
-            if lparam == _WM_LBUTTONUP:
+            if lparam == WM_LBUTTONUP:
                 self._on_left_click()
                 return 0
             return _orig_on_notify(wparam, lparam)
-        self._icon._message_handlers[_WM_NOTIFY] = _patched_on_notify
+        self._icon._message_handlers[WM_NOTIFY] = _patched_on_notify
 
         # Refresh loop в отдельном потоке
         threading.Thread(target=self._refresh_loop, daemon=True).start()

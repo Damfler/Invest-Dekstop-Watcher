@@ -6,10 +6,12 @@ import json
 import os
 import sys
 
+from constants import TOKEN_STUB
+
 # Пользовательские файлы в %APPDATA%/TBankWatcher/ (для .exe)
 # или рядом со скриптом (для разработки)
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "TBankWatcher")
+    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "InvestDesktopWatcher")
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -17,8 +19,18 @@ CONFIG_FILE    = os.path.join(BASE_DIR, "config.json")
 DISMISSED_FILE = os.path.join(BASE_DIR, "dismissed.json")
 
 DEFAULT_CONFIG: dict = {
-    "token": "YOUR_TBANK_API_TOKEN_HERE",
-    "use_sandbox": False,
+    # Подключения к брокерам. Список объектов:
+    # {"name": str, "broker": str, "token": str, "enabled": bool, "use_sandbox": bool}
+    # Каждое подключение — отдельный аккаунт/брокер.
+    "connections": [
+        {
+            "name":        "Т-Банк",
+            "broker":      "tbank",
+            "token":       TOKEN_STUB,
+            "enabled":     True,
+            "use_sandbox": False,
+        }
+    ],
 
     "use_custom_icons": True,
 
@@ -111,9 +123,26 @@ def load_config() -> dict:
         print("=" * 60)
         sys.exit(1)
 
+    # Миграция старого формата: {broker, token} → connections[0]
+    if "connections" not in cfg and "token" in cfg:
+        old_broker  = cfg.pop("broker", "tbank")
+        old_token   = cfg.pop("token", TOKEN_STUB)
+        old_sandbox = cfg.pop("use_sandbox", False)
+        cfg["connections"] = [
+            {
+                "name":        "Т-Банк",
+                "broker":      old_broker,
+                "token":       old_token,
+                "enabled":     True,
+                "use_sandbox": old_sandbox,
+            }
+        ]
+
     # Мягкое слияние: добавляем новые ключи не ломая старый конфиг
     def _merge(dst: dict, src: dict):
         for k, v in src.items():
+            if k == "connections":
+                continue   # connections не мёрджим, только мигрируем
             if k not in dst:
                 dst[k] = v
             elif isinstance(v, dict) and isinstance(dst.get(k), dict):

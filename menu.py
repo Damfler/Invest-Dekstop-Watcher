@@ -26,10 +26,9 @@ import autostart
 import analytics as an
 from utils import (fmt_total, fmt_delta, fmt_money, fmt_date,
                    fmt_days, days_until)
-from data_store import DataStore, ALERT_NONE, ALERT_WARN, ALERT_CRIT
-
-TBANK_INVEST_URL = "https://www.tbank.ru/invest/portfolio/"
-TBANK_BOND_URL   = "https://www.tbank.ru/invest/bonds/{isin}/"
+from data_store import DataStore
+from constants import ALERT_NONE, ALERT_WARN, ALERT_CRIT
+from api_endpoints import TBANK_PORTFOLIO_URL, TBANK_BONDS_URL
 
 
 class MenuBuilder:
@@ -91,6 +90,13 @@ class MenuBuilder:
         items.append(pystray.Menu.SEPARATOR)
 
         # ── Футер ────────────────────────────────────────
+        update_info = s.get("update_info", {})
+        if update_info.get("available"):
+            ver = update_info.get("version", "?")
+            items.append(pystray.MenuItem(
+                f"⬆ Доступно обновление v{ver} — скачать и установить",
+                self._cb.get("download_update"),
+            ))
         items.append(pystray.MenuItem(
             f"Обновлено: {s['last_update']}", None, enabled=False))
         items.append(pystray.MenuItem("🔄 Обновить сейчас", self._cb["refresh"]))
@@ -130,7 +136,7 @@ class MenuBuilder:
             arrow = "▲" if delta >= 0 else "▼"
             items.append(pystray.MenuItem(
                 f"{p['name']}:  {fmt_total(p['total'])}   {arrow} {fmt_delta(delta)}",
-                lambda _, aid=p["account_id"]: webbrowser.open(TBANK_INVEST_URL),
+                lambda _, aid=p["account_id"]: webbrowser.open(TBANK_PORTFOLIO_URL),
             ))
         return items
 
@@ -171,14 +177,14 @@ class MenuBuilder:
                 for p in gainers:
                     items.append(pystray.MenuItem(
                         f"   {p['name']}   +{fmt_money(p['day_delta'])}",
-                        lambda _, i=p.get("isin", ""): self._open_bond(i) if i else webbrowser.open(TBANK_INVEST_URL)
+                        lambda _, i=p.get("isin", ""): self._open_bond(i) if i else webbrowser.open(TBANK_PORTFOLIO_URL)
                     ))
             if losers:
                 items.append(pystray.MenuItem("📉 Худшие за день:", None, enabled=False))
                 for p in losers:
                     items.append(pystray.MenuItem(
                         f"   {p['name']}   {fmt_money(p['day_delta'])}",
-                        lambda _, i=p.get("isin", ""): self._open_bond(i) if i else webbrowser.open(TBANK_INVEST_URL)
+                        lambda _, i=p.get("isin", ""): self._open_bond(i) if i else webbrowser.open(TBANK_PORTFOLIO_URL)
                     ))
             if gainers or losers:
                 items.append(pystray.Menu.SEPARATOR)
@@ -356,5 +362,5 @@ class MenuBuilder:
     @staticmethod
     def _open_bond(isin: str):
         webbrowser.open(
-            TBANK_BOND_URL.format(isin=isin) if isin else TBANK_INVEST_URL
+            TBANK_BONDS_URL.format(ticker=isin) if isin else TBANK_PORTFOLIO_URL
         )

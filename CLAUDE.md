@@ -1,17 +1,34 @@
-# TBank Watcher — Техническое задание
+# Invest Desktop Watcher — Техническое задание
 
-> Версия: v2.3.1
+> Версия: v2.4.0
 > Язык: Python 3.13+, Windows
 > Точка входа: `main.py`
-> Репозиторий: https://github.com/Damfler/TBank-Watcher
+> Репозиторий: https://github.com/Damfler/Invest-Dekstop-Watcher
+
+---
+
+## Контекст для Claude
+
+Это **виджет системного трея** для отслеживания инвестиций. Архитектура:
+- **Брокеры**: сейчас только ТБанк (`api.py`), структура подготовлена для других (поле `broker` в конфиге)
+- **Данные**: `data_store.py` (DataStore, потокобезопасно) → `menu.py` + `window.py` (только читают через `snapshot()`)
+- **GUI**: `pywebview` (HTML-дашборд) + `pystray` (иконка трея), оба в разных потоках
+- **Константы**: всё в `constants.py` — алерты, таймеры, GITHUB_REPO, TOKEN_STUB, BROKERS, BROKER_INFO, WM_коды
+- **Апдейтер**: `updater.py` → `check_for_update()` → `download_update()` → `apply_update()`. Работает только в `.exe` режиме (`sys.frozen`). Меню показывает кнопку если `update_info.available`
+- **Мастер**: `wizard.py` запускается если `token == TOKEN_STUB`. Содержит выбор брокера.
+- **APPDATA путь**: `%APPDATA%\InvestDesktopWatcher\` (в `.exe`) или рядом со скриптом (в dev)
+
+Не менять без причины: структуру `snapshot()`, callable-меню pystray, monkey-patch ЛКМ, однопоточность webview.
+
+---
 
 ---
 
 ## 1. Назначение
 
-Виджет в системном трее Windows для отслеживания инвестиционного портфеля
-через T-Bank Invest API (REST). Показывает стоимость счетов, P&L за день
-или за всё время, события по облигациям (купоны, оферты, погашения).
+Виджет в системном трее Windows для отслеживания инвестиционного портфеля.
+Текущий брокер: T-Bank Invest API (REST). Структура подготовлена для подключения других брокеров.
+Показывает стоимость счетов, P&L за день или за всё время, события по облигациям (купоны, оферты, погашения).
 
 **Левый клик** на иконке → открывает popup-дашборд.  
 **Правый клик** → контекстное меню со всеми данными.
@@ -21,9 +38,10 @@
 ## 2. Структура файлов
 
 ```
-tbank_v6/
+invest-desktop-watcher/
 ├── main.py            # Точка входа. Логирование, wizard, запуск app.
 ├── version.py         # Единый источник версии (APP_VERSION, APP_NAME).
+├── constants.py       # ВСЕ константы приложения (алерты, таймеры, брокеры, WM_*, TOKEN_STUB, GITHUB_REPO).
 ├── config.py          # Загрузка/сохранение config.json. Поддержка .env.
 ├── api.py             # T-Bank Invest REST API. Retry + rate limit 429.
 ├── cache.py           # Дисковый кэш (cache.json 24ч + history.json бессрочно).
@@ -37,7 +55,7 @@ tbank_v6/
 ├── app.py             # Главный класс TBankTrayApp. pywebview main + pystray detached.
 ├── window.py          # Менеджер окна pywebview + JS API + Excel XML экспорт.
 ├── dashboard.html     # HTML-дашборд (Chart.js, Lucide Icons, 5 табов).
-├── wizard.py          # Мастер первого запуска (ввод токена, стиль T-Bank).
+├── wizard.py          # Мастер первого запуска (выбор брокера + ввод токена).
 ├── updater.py         # Автообновление через GitHub Releases.
 ├── .env               # Токен для разработки (в .gitignore).
 ├── tbank_invest.spec  # PyInstaller spec для сборки .exe.
@@ -53,7 +71,7 @@ tbank_v6/
 ```
 
 **При сборке .exe:**
-- Пользовательские данные: `%APPDATA%\TBankWatcher\` (config, cache, logs)
+- Пользовательские данные: `%APPDATA%\InvestDesktopWatcher\` (config, cache, logs)
 - dashboard.html + icons упакованы внутрь .exe
 - Пользователь видит только `tbank_invest.exe`
 
@@ -515,8 +533,29 @@ pystray.MenuItem("Открыть", fn, default=True, visible=False)
 
 ---
 
-## 18. Что ещё не реализовано (backlog)
+## 18. Изменения v2.4.0
 
+### Переименование проекта
+- `APP_NAME` → `"Invest Desktop Watcher"` (version.py)
+- `%APPDATA%\TBankWatcher\` → `%APPDATA%\InvestDesktopWatcher\` (config.py, wizard.py, updater.py, main.py)
+- SPEC.md переименован в CLAUDE.md (автоматически читается Claude Code)
+
+### Выбор брокера (структура для будущего)
+- `config.json`: новое поле `"broker": "tbank"` (DEFAULT_CONFIG)
+- `wizard.py`: Combobox выбора брокера перед полем токена. BROKERS dict + BROKER_INFO dict — добавляй сюда новых брокеров
+- `main.py`: API создаётся через `cfg["broker"]` → можно добавить `elif broker == "sber": ...`
+- Пока поддерживается только `"tbank"`
+
+### Фикс автообновления (updater)
+- Добавлен пункт меню `⬆ Доступно обновление vX.Y.Z — скачать и установить` когда `update_info["available"] == True`
+- `app.py`: новый callback `_start_update` → `_download_and_apply_update` (вызывает `download_update` + `apply_update` + `sys.exit(0)`)
+- `menu.py`: проверяет `s["update_info"]["available"]` в секции футера
+
+---
+
+## 19. Что ещё не реализовано (backlog)
+
+- Другие брокеры (Сбер, ВТБ и т.д.) — структура готова в wizard.py и main.py
 - Несколько токенов / профилей
 - Детальная информация по позиции (цена покупки, средняя)
 - График истории портфеля (данные копятся в history.json, UI скрыт)
