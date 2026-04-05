@@ -42,7 +42,55 @@ def setup_logging():
     return logging.getLogger("tbank.main")
 
 
+def reset_config():
+    """Сбрасывает конфиг и кэш для повторного прохождения визарда (только dev)."""
+    if getattr(sys, 'frozen', False):
+        print("--reset недоступен в .exe режиме")
+        sys.exit(1)
+
+    import json
+    from constants import TOKEN_STUB
+
+    base = os.path.dirname(os.path.abspath(__file__))
+    config_file    = os.path.join(base, "config.json")
+    dismissed_file = os.path.join(base, "dismissed.json")
+    cache_file     = os.path.join(base, "cache.json")
+
+    removed = []
+
+    # Сбрасываем connections в конфиге (остальные настройки сохраняем)
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, encoding="utf-8") as f:
+                cfg = json.load(f)
+            cfg["connections"] = [
+                {"name": "Т-Банк", "broker": "tbank",
+                 "token": TOKEN_STUB, "enabled": True, "use_sandbox": False}
+            ]
+            with open(config_file, "w", encoding="utf-8") as f:
+                json.dump(cfg, f, indent=2, ensure_ascii=False)
+            removed.append("config.json (connections сброшены)")
+        except Exception as e:
+            print(f"Не удалось сбросить config.json: {e}")
+    else:
+        removed.append("config.json отсутствовал")
+
+    for fpath, label in [(dismissed_file, "dismissed.json"), (cache_file, "cache.json")]:
+        if os.path.exists(fpath):
+            os.remove(fpath)
+            removed.append(label)
+
+    print("Сброс выполнен:")
+    for item in removed:
+        print(f"  • {item}")
+    print("\nПерезапустите: python main.py")
+
+
 def main():
+    if "--reset" in sys.argv:
+        reset_config()
+        sys.exit(0)
+
     log = setup_logging()
 
     try:

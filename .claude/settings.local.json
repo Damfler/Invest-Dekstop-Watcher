@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(python3 -m py_compile config.py data_store.py wizard.py main.py window.py)"
+    ]
+  }
+}

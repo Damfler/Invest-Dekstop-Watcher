@@ -85,6 +85,7 @@ class TBankTrayApp:
         threading.Thread(target=self._download_and_apply_update, daemon=True).start()
 
     def _download_and_apply_update(self):
+        import os
         from updater import download_update, apply_update
         info = self._store.update_info
         if not info or not info.get("available"):
@@ -94,10 +95,10 @@ class TBankTrayApp:
         if path:
             log.info("Применение обновления, перезапуск...")
             self._store.save_to_cache()
-            if self._icon:
-                self._icon.stop()
             apply_update(path)
-            sys.exit(0)
+            # os._exit завершает весь процесс из любого потока,
+            # sys.exit работает только в главном потоке
+            os._exit(0)
 
     # ──────────────────────────────────────────
     #  Обновление данных

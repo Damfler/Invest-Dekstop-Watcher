@@ -1076,3 +1076,7 @@ webview.errors.WebViewException: You must create a window first before calling t
 2026-04-03 14:55:40 [INFO] tbank.data: Данные загружены из кэша
 2026-04-03 14:55:40 [INFO] tbank.app: Запуск T-Bank Invest Tray
 2026-04-03 14:55:53 [INFO] tbank.app: Выход...
+2026-04-05 18:17:42 [INFO] tbank.main: Запуск мастера первого запуска
+2026-04-05 18:17:58 [INFO] tbank.main: Мастер отменён пользователем
+2026-04-05 18:35:32 [INFO] tbank.main: Запуск мастера первого запуска
+2026-04-05 18:35:37 [INFO] tbank.main: Мастер отменён пользователем

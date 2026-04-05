@@ -76,8 +76,17 @@ def run_wizard() -> str | None:
     style.map("TCheckbutton",
               background=[("active", BG)], foreground=[("active", TEXT)])
     style.configure("Broker.TCombobox", fieldbackground=SURFACE, foreground=TEXT,
-                    selectbackground=BLUE, selectforeground="#fff",
-                    bordercolor=BORDER, font=("Segoe UI", 10))
+                    background=SURFACE, selectbackground=BLUE, selectforeground="#fff",
+                    bordercolor=BORDER, arrowcolor=TEXT, font=("Segoe UI", 10))
+    style.map("Broker.TCombobox",
+              fieldbackground=[("readonly", SURFACE), ("disabled", BG2), ("", SURFACE)],
+              foreground=[("readonly", TEXT), ("disabled", MUTED), ("", TEXT)],
+              background=[("readonly", SURFACE), ("active", SURFACE), ("", SURFACE)],
+              bordercolor=[("focus", BLUE), ("", BORDER)])
+    root.option_add("*TCombobox*Listbox.background", SURFACE)
+    root.option_add("*TCombobox*Listbox.foreground", TEXT)
+    root.option_add("*TCombobox*Listbox.selectBackground", BLUE)
+    root.option_add("*TCombobox*Listbox.selectForeground", "#ffffff")
 
     # ── Контейнер с отступами ────────────────────────────────────────────────
     wrap = tk.Frame(root, bg=BG)

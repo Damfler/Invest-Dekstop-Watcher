@@ -325,6 +325,7 @@ class _DashboardAPI:
 
     def apply_update(self):
         """Скачать и применить обновление."""
+        import os
         from updater import download_update, apply_update
         info = self._store.update_info
         if not info or not info.get("url"):
@@ -333,8 +334,7 @@ class _DashboardAPI:
         if not exe_path:
             return "download_failed"
         apply_update(exe_path)
-        import sys
-        sys.exit(0)
+        os._exit(0)
 
     def set_auto_update(self, val: bool):
         from config import save_config
