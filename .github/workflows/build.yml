@@ -48,16 +48,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.TAG }}
-          name: "TBank Watcher v${{ steps.version.outputs.VERSION }}"
+          name: "Invest Desktop Watcher v${{ steps.version.outputs.VERSION }}"
           body: |
-            ## TBank Watcher v${{ steps.version.outputs.VERSION }}
+            ## Invest Desktop Watcher v${{ steps.version.outputs.VERSION }}
 
             ### Установка
-            1. Скачайте `tbank_invest.exe`
+            1. Скачайте `InvestDesktopWatcher.exe`
             2. Запустите — при первом запуске откроется мастер настройки
             3. Введите API-токен T-Invest
 
-            Данные хранятся в `%APPDATA%\TBankWatcher\`
-          files: dist/tbank_invest.exe
+            Данные хранятся в `%APPDATA%\InvestDesktopWatcher\`
+          files: dist/InvestDesktopWatcher.exe
           draft: false
           prerelease: false

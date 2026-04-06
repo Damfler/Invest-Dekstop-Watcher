@@ -66,10 +66,10 @@ if errorlevel 1 (
 
 :: No need to copy config/dashboard/icons to dist:
 :: - dashboard.html + icons are packed inside .exe (via spec datas)
-:: - config.json is created in %%APPDATA%%\TBankWatcher\ on first run (wizard)
+:: - config.json is created in %%APPDATA%%\InvestDesktopWatcher\ on first run (wizard)
 echo.
 echo All data is packed inside .exe
-echo Config will be stored in %%APPDATA%%\TBankWatcher\
+echo Config will be stored in %%APPDATA%%\InvestDesktopWatcher\
 
 :: Result
 echo.

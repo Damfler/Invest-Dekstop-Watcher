@@ -146,7 +146,7 @@ a{color:var(--blue);text-decoration:none}
 <body>
 <div class="app">
   <div class="header">
-    <h1 id="appTitle">TBank Watcher</h1>
+    <h1 id="appTitle">Invest Desktop Watcher</h1>
     <div class="header-btns">
       <button class="icon-btn" id="btnTheme" title="Тема"><i data-lucide="moon" style="width:18px;height:18px"></i></button>
       <button class="icon-btn" id="btnSettings" title="Настройки"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
@@ -276,7 +276,7 @@ a{color:var(--blue);text-decoration:none}
     <div class="section-title"><i data-lucide="settings" style="width:16px;height:16px"></i> Настройки</div>
     <div class="card" style="margin-bottom:12px">
       <div style="font-weight:600;margin-bottom:6px">Название приложения</div>
-      <input type="text" id="inputAppName" placeholder="TBank Watcher" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font)">
+      <input type="text" id="inputAppName" placeholder="Invest Desktop Watcher" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font)">
       <div style="font-size:11px;color:var(--muted);margin-top:4px">Оставьте пустым для названия по умолчанию</div>
     </div>
     <div class="card" style="margin-bottom:12px">
@@ -405,7 +405,7 @@ a{color:var(--blue);text-decoration:none}
     <div class="card" style="margin-bottom:12px;text-align:center">
       <div style="font-size:12px;color:var(--muted)">Разработчик</div>
       <div style="font-weight:600;margin-top:4px">Гашук Дмитрий</div>
-      <div style="font-size:11px;color:var(--border);margin-top:8px" id="appVersion">TBank Watcher</div>
+      <div style="font-size:11px;color:var(--border);margin-top:8px" id="appVersion">Invest Desktop Watcher</div>
       <div style="margin-top:10px"><a href="#" onclick="try{pywebview.api.open_url('https://pay.cloudtips.ru/p/789f174f')}catch(e){};return false" style="font-size:11px;color:var(--muted);opacity:.5;text-decoration:none;transition:opacity .2s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='.5'">&#x2764; Поддержать проект</a></div>
     </div>
   </div>
@@ -447,8 +447,8 @@ function applyUpdate(){
 }
 function updateTitle(name){
   var el=document.getElementById('appTitle');
-  if(name){el.innerHTML=esc(name)+' <span style="font-size:11px;font-weight:400;color:var(--muted);opacity:.5;margin-left:6px">TBank Watcher</span>'}
-  else{el.textContent='TBank Watcher'}
+  if(name){el.innerHTML=esc(name)+' <span style="font-size:11px;font-weight:400;color:var(--muted);opacity:.5;margin-left:6px">Invest Desktop Watcher</span>'}
+  else{el.textContent='Invest Desktop Watcher'}
 }
 function openInstr(ticker,type,figi){
   var b='https://www.tbank.ru/invest/';
@@ -706,7 +706,7 @@ function render(data){
   var sh=document.getElementById('selHorizon');if(sh)sh.value=String(data.bond_horizon_days||60);
   var an=document.getElementById('inputAppName');if(an&&!an.matches(':focus'))an.value=data.app_name||'';
   updateTitle(data.app_name||'');
-  var av=document.getElementById('appVersion');if(av)av.textContent=(data.app_brand||'TBank Watcher')+' v'+(data.app_version||'?');
+  var av=document.getElementById('appVersion');if(av)av.textContent=(data.app_brand||'Invest Desktop Watcher')+' v'+(data.app_version||'?');
   var si=document.getElementById('settingsInfo');if(si)si.textContent='Последнее обновление: '+(data.last_update||'\u2014');
   // Relative time
   _lastUpdateTs=Date.now();_origUpdateTitle=data.last_update||'';

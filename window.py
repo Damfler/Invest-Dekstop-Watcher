@@ -330,7 +330,7 @@ class _DashboardAPI:
         info = self._store.update_info
         if not info or not info.get("url"):
             return "no_update"
-        exe_path = download_update(info["url"], info.get("asset_name", "tbank_invest.exe"))
+        exe_path = download_update(info["url"], info.get("asset_name", "InvestDesktopWatcher.exe"))
         if not exe_path:
             return "download_failed"
         apply_update(exe_path)

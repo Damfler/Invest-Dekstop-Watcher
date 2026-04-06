@@ -8,7 +8,7 @@ import sys
 
 from constants import TOKEN_STUB
 
-# Пользовательские файлы в %APPDATA%/TBankWatcher/ (для .exe)
+# Пользовательские файлы в %APPDATA%/InvestDesktopWatcher/ (для .exe)
 # или рядом со скриптом (для разработки)
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "InvestDesktopWatcher")

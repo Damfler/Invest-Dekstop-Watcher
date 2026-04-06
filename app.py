@@ -259,7 +259,7 @@ class TBankTrayApp:
         """Инициализация в фоновом потоке (вызывается pywebview после старта)."""
         # Создаём pystray Icon
         self._icon = pystray.Icon(
-            name  = "tbank_invest",
+            name  = "InvestDesktopWatcher",
             icon  = make_icon_normal(0, self._cfg.get("use_custom_icons", True)),
             title = f"{APP_NAME} — загрузка…",
             menu  = pystray.Menu(self._menu),

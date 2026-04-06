@@ -86,7 +86,7 @@ def check_for_update() -> dict:
     return result
 
 
-def download_update(url: str, asset_name: str = "tbank_invest.exe") -> str | None:
+def download_update(url: str, asset_name: str = "InvestDesktopWatcher.exe") -> str | None:
     """
     Скачивает новый .exe в папку update/.
     Возвращает путь к скачанному файлу или None.
