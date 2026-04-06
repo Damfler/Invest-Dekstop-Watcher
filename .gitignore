@@ -18,9 +18,8 @@ config.json
 cache.json
 history.json
 dismissed.json
-tbank_errors.log*
-_dashboard.html
-_test.html
+*.log
+*.log.*
 
 # IDE
 .vscode/

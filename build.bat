@@ -56,7 +56,7 @@ if exist build rmdir /s /q build
 :: Build
 echo.
 echo [3/3] Building (1-2 minutes)...
-python -m PyInstaller tbank_invest.spec --noconfirm --clean
+python -m PyInstaller invest_desktop_watcher.spec --noconfirm --clean
 
 if errorlevel 1 (
     echo.

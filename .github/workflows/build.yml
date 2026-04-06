@@ -30,7 +30,7 @@ jobs:
           pip install pyinstaller>=6.0
 
       - name: Build .exe
-        run: python -m PyInstaller tbank_invest.spec --noconfirm --clean
+        run: python -m PyInstaller invest_desktop_watcher.spec --noconfirm --clean
 
       - name: Get version
         id: version

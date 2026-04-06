@@ -100,10 +100,10 @@ def main():
         print("Установите зависимости: pip install -r requirements.txt")
         sys.exit(1)
 
-    from config import load_config
-    from data_store import DataStore
-    from app import TBankTrayApp
-    from wizard import needs_wizard, run_wizard
+    from core.config import load_config
+    from core.data_store import DataStore
+    from core.app import TBankTrayApp
+    from ui.wizard import needs_wizard, run_wizard
 
     cfg = load_config()
 
@@ -128,7 +128,7 @@ def main():
         if not token or token == TOKEN_STUB:
             continue
         if broker == "tbank":
-            from api import TBankAPI
+            from api.client import TBankAPI
             apis.append((
                 conn.get("name", "Т-Банк"),
                 TBankAPI(token, use_sandbox=conn.get("use_sandbox", False)),
