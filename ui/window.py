@@ -436,7 +436,7 @@ class DashboardWindow:
     def create_window(self):
         """Создать окно ДО webview.start(). Окно скрыто."""
         self._window = _webview.create_window(
-            title            = "T-Bank Invest",
+            title            = "Invest Desktop Watcher",
             url              = _HTML_FILE,
             js_api           = self._api,
             width            = 960,

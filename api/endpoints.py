@@ -25,6 +25,7 @@ BOND_BY            = f"{_P}.InstrumentsService/BondBy"
 SHARE_BY           = f"{_P}.InstrumentsService/ShareBy"
 GET_INSTRUMENT_BY  = f"{_P}.InstrumentsService/GetInstrumentBy"
 GET_BOND_COUPONS   = f"{_P}.InstrumentsService/GetBondCoupons"
+GET_DIVIDENDS      = f"{_P}.InstrumentsService/GetDividends"
 
 # ── Типы ID инструментов ────────────────────────────────────────────────────
 ID_TYPE_FIGI       = "INSTRUMENT_ID_TYPE_FIGI"

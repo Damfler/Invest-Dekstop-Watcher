@@ -438,7 +438,7 @@ a{color:var(--blue);text-decoration:none}
 </div>
 <script>
 var TM={bond:'Облигации',share:'Акции',etf:'Фонды',currency:'Валюта',futures:'Фьючерсы',sp:'СП',option:'Опционы'};
-var TL={coupon:'Купон',offer:'Оферта',call:'Оферта',maturity:'Погашение',dividend:'Дивиденд'};
+var TL={coupon:'Купон',offer:'Оферта',call:'Оферта (call)',maturity:'Погашение',dividend:'Дивиденд'};
 var PC=['#0a84ff','#ffd60a','#30d158','#ff453a','#bf5af2','#30b0c7','#ff9f0a','#ff6482'];
 var LI={bond:'landmark',share:'trending-up',etf:'layers',currency:'circle-dollar-sign',futures:'zap',sp:'box',option:'target'};
 var allocChart=null,couponChart=null,historyChart=null,accountChart=null,currencyChart=null;
@@ -830,17 +830,14 @@ function renderBondsTab(events,nkd){
 }
 
 function fillBonds(events,typeFilter){
-  var filtered=typeFilter==='all'?events:events.filter(function(e){
-    if(typeFilter==='offer')return e.type==='offer'||e.type==='call';
-    return e.type===typeFilter;
-  });
+  var filtered=typeFilter==='all'?events:events.filter(function(e){return e.type===typeFilter});
   if(!filtered.length){document.getElementById('bondsList').innerHTML='<div class="empty">Нет событий</div>';return}
-  var byKey={};filtered.forEach(function(e){var k=e.figi||e.ticker||e.name;if(!byKey[k])byKey[k]={name:e.name,figi:e.figi,ticker:e.ticker||'',qty:e.qty,events:[]};byKey[k].events.push(e)});
+  var byKey={};filtered.forEach(function(e){var k=e.isin||e.figi||e.name;if(!byKey[k])byKey[k]={name:e.name,isin:e.isin,figi:e.figi,ticker:e.ticker||'',qty:e.qty,events:[]};byKey[k].events.push(e)});
   var h='';Object.values(byKey).forEach(function(b){
-    var bTicker=b.ticker||'';
+    var bTicker=b.ticker||b.isin||'';
     var bType=b.events&&b.events[0]&&b.events[0].type==='dividend'?'share':'bond';
     h+='<div class="bond-card" onclick="openInstr(\''+esc(bTicker)+'\',\''+bType+'\',\''+esc(b.figi||'')+'\')">';
-    h+='<div class="bond-name">'+esc(b.name)+'</div><div class="bond-isin">'+(bTicker||'\u2014')+' \u00b7 '+fmtQty(b.qty)+' шт.</div>';
+    h+='<div class="bond-name">'+esc(b.name)+'</div><div class="bond-isin">'+(b.ticker||b.isin||'\u2014')+' \u00b7 '+fmtQty(b.qty)+' шт.</div>';
     h+='<div class="bond-events">';
     b.events.forEach(function(e){var d=dU(e.date),dl=dL(d);var pc='pill-coupon';if(e.type==='dividend')pc='pill-dividend';if(e.type==='offer'||e.type==='call')pc='pill-offer';if(e.type==='maturity')pc='pill-maturity';if(d===0)pc='pill-today';var amt=e.amount||e.amount_est||0;var total=amt*(e.qty||1);h+='<span class="pill '+pc+'">'+(TL[e.type]||e.type)+' '+fmtD(e.date)+(dl?' ('+dl+')':'')+(total>0?' = '+(e.amount_est?'~':'')+fmt(total,2):'')+'</span>'});
     h+='</div></div>'});
@@ -882,8 +879,7 @@ function renderCalendar(evts){
     calSelectedDay=key;
     var ph='<div class="cal-popup-title">'+fmtD(key)+'</div>';
     dayEvts.forEach(function(e){var amt=e.amount||e.amount_est||0;var total=amt*(e.qty||1);
-      var pCls=e.type==='coupon'?'coupon':e.type==='dividend'?'dividend':e.type==='maturity'?'maturity':'offer';
-      ph+='<div class="cal-popup-event"><div>'+esc(e.name)+' <span class="pill pill-'+pCls+'">'+(TL[e.type]||e.type)+'</span></div>'+(total>0?'<div style="font-weight:600">'+fmt(total,2)+'</div>':'')+'</div>'});
+      ph+='<div class="cal-popup-event"><div>'+esc(e.name)+' <span class="pill pill-'+(e.type==='coupon'?'coupon':e.type==='maturity'?'maturity':'offer')+'">'+(TL[e.type]||e.type)+'</span></div>'+(total>0?'<div style="font-weight:600">'+fmt(total,2)+'</div>':'')+'</div>'});
     var pp=document.getElementById('calPopup');pp.innerHTML=ph;pp.className='cal-popup show';
   };
 }

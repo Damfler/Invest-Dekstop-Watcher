@@ -12,7 +12,7 @@ from datetime import datetime
 from api.endpoints import (
     API_BASE_PROD, API_BASE_SANDBOX,
     GET_ACCOUNTS, GET_PORTFOLIO,
-    BOND_BY, SHARE_BY, GET_INSTRUMENT_BY, GET_BOND_COUPONS,
+    BOND_BY, SHARE_BY, GET_INSTRUMENT_BY, GET_BOND_COUPONS, GET_DIVIDENDS,
     ID_TYPE_FIGI,
 )
 
@@ -123,4 +123,16 @@ class TBankAPI:
             }).get("events", [])
         except Exception as e:
             log.debug("get_bond_coupons(%s): %s", figi, e)
+            return []
+
+    def get_dividends(self, figi: str, from_dt: datetime, to_dt: datetime) -> list[dict]:
+        """Получить дивиденды по инструменту (figi) за период."""
+        try:
+            return self._post(GET_DIVIDENDS, {
+                "instrumentId": figi,
+                "from": from_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "to":   to_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }).get("dividends", [])
+        except Exception as e:
+            log.debug("get_dividends(%s): %s", figi, e)
             return []

@@ -1,7 +1,7 @@
 {
   "use_sandbox": false,
   "use_custom_icons": false,
-  "bond_horizon_days": 30,
+  "bond_horizon_days": 365,
   "bond_sort": "date",
   "max_bond_events": 50,
   "notifications": {

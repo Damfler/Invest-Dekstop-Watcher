@@ -2,6 +2,7 @@
 app.py — главный класс InvestWatcherTrayApp.
 Координирует DataStore, MenuBuilder, иконки и фоновые потоки.
 """
+import os
 import sys
 import threading
 import time
@@ -253,9 +254,16 @@ class TBankTrayApp:
         # pywebview требует минимум одно окно перед start().
         self._dashboard.create_window()
 
+        # Иконка окна
+        _icon_path = os.path.join(
+            getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "assets", "icons", "icon.ico")
+        if not os.path.exists(_icon_path):
+            _icon_path = None
+
         # Главный поток = pywebview event loop.
         # func= запускается pywebview в фоновом потоке ПОСЛЕ старта GUI loop.
-        _webview.start(func=self._background_init)
+        _webview.start(func=self._background_init, icon=_icon_path)
 
     def _background_init(self):
         """Инициализация в фоновом потоке (вызывается pywebview после старта)."""

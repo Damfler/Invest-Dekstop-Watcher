@@ -320,34 +320,60 @@ class DataStore:
             if i > 0:
                 _time.sleep(0.3)
 
-            api = self._apis[0][1]  # TODO: выбирать по connection_name когда будет multi-broker
+            api = self._apis[0][1]
+
+            # Сначала проверяем кэш инструментов
+            cached = self._instrument_cache.get(figi)
             bond = api.get_bond_by_figi(figi)
             if bond:
-                if not isin:
-                    isin = bond.get("isin", "")
+                # Всегда берём настоящее имя и ticker из API
+                real_name = bond.get("name") or name
+                bond_ticker = bond.get("ticker", "")
+                isin = bond.get("isin", "") or isin
+
+                # Сохраняем в кэш
+                logo_url = ""
+                brand = bond.get("brand", {})
+                logo = brand.get("logoName", "") if brand else ""
+                if logo:
+                    logo_id = logo.replace(".png", "").replace(".jpg", "")
+                    logo_url = LOGO_CDN.format(logo_id=logo_id)
+                self._instrument_cache[figi] = {
+                    "isin": isin, "name": real_name,
+                    "ticker": bond_ticker, "logo_url": logo_url,
+                }
+                name = real_name
 
                 # Для YTM
                 face_val = money_value(bond.get("nominal"))
                 mat_ts   = parse_ts(bond.get("maturityDate"))
                 ann_coupon = money_value(bond.get("initialNominal")) * \
                              float(bond.get("couponQuantityPerYear", 0) or 0) * \
-                             money_value(bond.get("couponRate"))   # приближение
+                             money_value(bond.get("couponRate"))
 
                 nkd_data = bond_nkd.get(figi, {})
-                cur_price = nkd_data.get("nkd_per", 0)   # НКД как прокси цены — заменить на реальную
+                cur_price = nkd_data.get("nkd_per", 0)
 
                 analytics.append({
                     "name":           name,
                     "figi":           figi,
                     "isin":           isin,
-                    "ticker":         bond.get("ticker", ""),
+                    "ticker":         bond_ticker,
                     "qty":            qty,
                     "face_value":     face_val or 1000,
                     "maturity_date":  mat_ts,
                     "annual_coupon":  ann_coupon,
                     "current_price":  cur_price,
                 })
+            elif cached:
+                # Данные из кэша если API не ответил
+                name = cached.get("name", name)
+                bond_ticker = cached.get("ticker", "")
+                isin = cached.get("isin", isin)
+            else:
+                bond_ticker = ""
 
+            if bond:
                 for ev_type, field in [("maturity", "maturityDate"),
                                        ("offer",    "putDate"),
                                        ("call",     "callDate")]:
@@ -356,6 +382,7 @@ class DataStore:
                         events.append({
                             "type": ev_type, "name": name,
                             "isin": isin, "figi": figi,
+                            "ticker": bond_ticker,
                             "date": dt, "amount": None,
                             "amount_est": None, "qty": qty,
                         })
@@ -377,11 +404,50 @@ class DataStore:
                         "name":       name,
                         "isin":       isin,
                         "figi":       figi,
+                        "ticker":     bond_ticker,
                         "date":       dt,
                         "amount":     amount if not is_est else None,
-                        "amount_est": amount_est,  # расчётное значение
+                        "amount_est": amount_est,
                         "qty":        qty,
                     })
+
+        # ── Дивиденды по акциям ──────────────────────────
+        with self._lock:
+            share_positions = [p for p in self.positions_extra
+                               if p.get("instrumentType") == "share" and p.get("figi")]
+
+        seen_shares = set()
+        for pos in share_positions:
+            figi = pos["figi"]
+            if figi in seen_shares:
+                continue
+            seen_shares.add(figi)
+            _time.sleep(0.2)
+            # Берём API из первого подключения
+            if not self._apis:
+                break
+            _, api = self._apis[0]
+            try:
+                divs = api.get_dividends(figi, today_start, horizon_dt)
+                for d in divs:
+                    dt = parse_ts(d.get("paymentDate"))
+                    if not dt:
+                        dt = parse_ts(d.get("recordDate"))
+                    if dt and dt.date() >= now.date():
+                        amount = money_value(d.get("dividendNet"))
+                        events.append({
+                            "type":       "dividend",
+                            "name":       pos.get("name", figi),
+                            "isin":       pos.get("isin", ""),
+                            "figi":       figi,
+                            "ticker":     pos.get("ticker", ""),
+                            "date":       dt,
+                            "amount":     amount,
+                            "amount_est": None,
+                            "qty":        pos.get("qty", 0),
+                        })
+            except Exception as e:
+                log.debug("get_dividends(%s): %s", figi, e)
 
         events.sort(key=lambda e: e["date"])
 
