@@ -70,9 +70,10 @@ a{color:var(--blue);text-decoration:none}
 .bond-events{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .empty{text-align:center;padding:40px;color:var(--muted)}
 /* Risk banner */
-.update-banner{padding:12px 14px;border-radius:var(--radius);margin-bottom:10px;background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.3);display:flex;align-items:center;gap:10px;font-size:13px;color:var(--green)}
-.update-banner button{background:var(--green);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
-.update-banner button:hover{opacity:.85}
+.update-btn{background:rgba(48,209,88,.15)!important;color:var(--green)!important;position:relative}
+.update-btn:hover{background:rgba(48,209,88,.25)!important}
+.update-btn::after{content:'';position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 .risk-banner{padding:10px 14px;border-radius:var(--radius);margin-bottom:10px;background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.3);font-size:13px;display:flex;align-items:center;gap:8px;color:var(--yellow)}
 .event-alert{padding:12px 14px;border-radius:var(--radius);margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;transition:opacity .15s}
 .event-alert:hover{opacity:.85}
@@ -148,6 +149,7 @@ a{color:var(--blue);text-decoration:none}
 .ladder-marker:hover .ladder-tooltip{opacity:1}
 /* Skeleton */
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .sk{border-radius:8px;background:var(--bg2);background-image:linear-gradient(90deg,var(--bg2) 0%,var(--surface) 40%,var(--bg2) 80%);background-size:800px 100%;animation:shimmer 1.5s infinite linear}
 .sk-title{height:32px;width:220px;margin-bottom:6px}
 .sk-subtitle{height:16px;width:160px;margin-bottom:16px}
@@ -168,6 +170,7 @@ a{color:var(--blue);text-decoration:none}
   <div class="header">
     <h1 id="appTitle">Invest Desktop Watcher</h1>
     <div class="header-btns">
+      <button class="icon-btn update-btn" id="btnUpdate" title="Доступно обновление" style="display:none" onclick="openGitHubRelease()"><i data-lucide="arrow-up-circle" style="width:18px;height:18px"></i></button>
       <button class="icon-btn" id="btnTheme" title="Тема"><i data-lucide="moon" style="width:18px;height:18px"></i></button>
       <button class="icon-btn" id="btnSettings" title="Настройки"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
       <button class="icon-btn" id="btnRefresh" title="Обновить"><i data-lucide="refresh-cw" style="width:18px;height:18px"></i></button>
@@ -214,7 +217,6 @@ a{color:var(--blue);text-decoration:none}
       <div class="chart-container"><canvas id="historyChart"></canvas></div>
     </div>
     <div class="cards" id="statCards"></div>
-    <div id="updateBanner"></div>
     <div id="riskBanner"></div>
     <div id="upcomingWrap" class="section" style="display:none">
       <div class="section-title"><i data-lucide="calendar-clock" style="width:16px;height:16px"></i> Ближайшие события</div>
@@ -350,6 +352,7 @@ a{color:var(--blue);text-decoration:none}
           <ul style="margin:6px 0 6px 18px">
             <li><code>positive.png</code> &mdash; портфель в плюсе (зелёный)</li>
             <li><code>negative.png</code> &mdash; портфель в минусе (красный)</li>
+            <li><code>neutral.png</code> &mdash; без изменений (серый, опционально)</li>
             <li><code>warn.png</code> &mdash; оферта скоро (опционально)</li>
             <li><code>crit.png</code> &mdash; оферта сегодня (опционально)</li>
           </ul>
@@ -487,7 +490,18 @@ function togTheme(){document.body.classList.toggle('light');var l=document.body.
 function updThemeBtn(){var b=document.getElementById('btnTheme');if(b){b.innerHTML=ic(document.body.classList.contains('light')?'sun':'moon',18);lucide.createIcons({nameAttr:'data-lucide',attrs:{style:b.querySelector('i').getAttribute('style')}});}}
 document.getElementById('btnTheme').addEventListener('click',togTheme);
 document.getElementById('btnSettings').addEventListener('click',function(){activeTab='settings';setActiveTab(activeTab);document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.remove('active')});loadConnections();});
-document.getElementById('btnRefresh').addEventListener('click',function(){try{pywebview.api.refresh()}catch(e){}});
+document.getElementById('btnRefresh').addEventListener('click',function(){
+  var btn=this;var icon=btn.querySelector('i');
+  if(icon)icon.style.animation='spin 1s linear infinite';
+  btn.disabled=true;
+  try{pywebview.api.refresh()}catch(e){}
+  // Через 5 сек перезагружаем данные и останавливаем анимацию
+  setTimeout(function(){
+    loadData();
+    if(icon)icon.style.animation='';
+    btn.disabled=false;
+  },5000);
+});
 
 // Hotkeys
 document.addEventListener('keydown',function(e){
@@ -668,14 +682,17 @@ function render(data){
     '<div class="card"><div class="card-label">'+ic('coins',14)+' НКД</div><div class="card-value">'+(tNkd>0?fmt(tNkd,2):'\u2014')+'</div></div>'+
     '<div class="card"><div class="card-label">'+ic('percent',14)+' YTM</div><div class="card-value">'+(ytm!=null?ytm.toFixed(2)+'%':'\u2014')+'</div></div>';
 
-  // Update banner
-  var ubEl=document.getElementById('updateBanner');
+  // Update icon in header
+  var ubEl=document.getElementById('btnUpdate');
   var uInfo=data.update_info||{};
-  if(uInfo.available){
-    ubEl.innerHTML='<div class="update-banner">'+ic('download',16)+
-      '<div style="flex:1"><b>Доступно обновление v'+esc(uInfo.version)+'</b>'+(uInfo.changelog?'<div style="font-size:11px;opacity:.7;margin-top:2px">'+esc(uInfo.changelog.substring(0,100))+'</div>':'')+'</div>'+
-      '<button onclick="openGitHubRelease()">Скачать</button></div>';
-  }else{ubEl.innerHTML=''}
+  if(ubEl){
+    if(uInfo.available){
+      ubEl.style.display='';
+      ubEl.title='Доступно обновление v'+(uInfo.version||'?')+' — нажмите для скачивания';
+    }else{
+      ubEl.style.display='none';
+    }
+  }
 
   // Risk concentration (only if hints enabled)
   var rh='';

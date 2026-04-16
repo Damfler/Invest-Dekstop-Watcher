@@ -52,6 +52,12 @@ def _draw_arrow_down(draw, color):
     draw.rectangle([cx - 4, cy - 18, cx + 4, cy - 6], fill=color)
 
 
+def _draw_dash(draw, color):
+    """Горизонтальная полоса (без изменений)."""
+    cx, cy = ICON_SIZE // 2, ICON_SIZE // 2
+    draw.rectangle([cx - 18, cy - 5, cx + 18, cy + 5], fill=color)
+
+
 def _draw_icon(bg, draw_fn, fg=(255, 255, 255)):
     """Рисует иконку с фоном и символом."""
     img = Image.new("RGBA", (ICON_SIZE, ICON_SIZE), (0, 0, 0, 0))
@@ -81,14 +87,21 @@ def _draw_text(symbol):
 
 def make_icon_normal(delta: float, use_custom: bool) -> Image.Image:
     if use_custom:
-        name = "positive.png" if delta >= 0 else "negative.png"
+        if delta > 0:
+            name = "positive.png"
+        elif delta < 0:
+            name = "negative.png"
+        else:
+            name = "neutral.png"
         img = _load_custom(name) or _load_custom("icon.png")
         if img:
             return img
-    if delta >= 0:
+    if delta > 0:
         return _draw_icon((34, 180, 80), _draw_arrow_up)
-    else:
+    elif delta < 0:
         return _draw_icon((220, 50, 50), _draw_arrow_down)
+    else:
+        return _draw_icon((120, 120, 120), _draw_dash)
 
 
 def make_icon_warn(use_custom: bool) -> Image.Image:
