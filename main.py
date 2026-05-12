@@ -7,7 +7,7 @@ import os
 import sys
 
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "InvestDesktopWatcher")
+    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "Stack")
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -102,7 +102,7 @@ def main():
 
     from core.config import load_config
     from core.data_store import DataStore
-    from core.app import TBankTrayApp
+    from core.app import StackTrayApp
     from ui.wizard import needs_wizard, run_wizard
 
     cfg = load_config()
@@ -142,7 +142,7 @@ def main():
         sys.exit(1)
 
     store = DataStore(apis, cfg)
-    app   = TBankTrayApp(cfg, store)
+    app   = StackTrayApp(cfg, store)
 
     try:
         app.run()

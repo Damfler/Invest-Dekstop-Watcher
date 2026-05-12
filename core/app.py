@@ -1,5 +1,5 @@
 """
-app.py — главный класс InvestWatcherTrayApp.
+app.py — главный класс StackTrayApp.
 Координирует DataStore, MenuBuilder, иконки и фоновые потоки.
 """
 import os
@@ -23,10 +23,10 @@ from constants import (
     WM_LBUTTONUP, WM_NOTIFY,
 )
 
-log = logging.getLogger("investWatcher.app")
+log = logging.getLogger("stack.app")
 
 
-class TBankTrayApp:
+class StackTrayApp:
     def __init__(self, cfg: dict, store: DataStore):
         self._cfg        = cfg
         self._store      = store
@@ -92,7 +92,7 @@ class TBankTrayApp:
         if not info or not info.get("available"):
             return
         log.info("Скачивание обновления v%s...", info.get("version", "?"))
-        path = download_update(info["url"], info.get("asset_name", "invest_desktop_watcher.exe"))
+        path = download_update(info["url"], info.get("asset_name", "Stack.exe"))
         if path:
             log.info("Применение обновления, перезапуск...")
             self._store.save_to_cache()
@@ -270,7 +270,7 @@ class TBankTrayApp:
         log.info("_background_init вызван")
         # Создаём pystray Icon
         self._icon = pystray.Icon(
-            name  = "InvestDesktopWatcher",
+            name  = "Stack",
             icon  = make_icon_normal(0, self._cfg.get("use_custom_icons", True)),
             title = f"{APP_NAME} — загрузка…",
             menu  = pystray.Menu(self._menu),

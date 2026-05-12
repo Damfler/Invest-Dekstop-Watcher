@@ -34,11 +34,14 @@ class _DashboardAPI:
         s = self._store.snapshot()
         s["theme"] = self._cfg.get("theme", "system")
         s["use_logos"] = self._cfg.get("use_logos", False)
-        s["bond_horizon_days"] = self._cfg.get("bond_horizon_days", 60)
+        s["bond_horizon_days"] = self._cfg.get("bond_horizon_days", 365)
         s["app_name"] = self._cfg.get("app_name", "")
-        s["use_custom_icons"] = self._cfg.get("use_custom_icons", True)
         s["show_hints"] = self._cfg.get("show_hints", False)
         s["auto_update"] = self._cfg.get("auto_update", True)
+        s["design"] = self._cfg.get("design", "classic")
+        # dev-режим = запуск из исходников (python main.py).
+        # В собранном .exe (sys.frozen=True) кнопка скриншота скрыта.
+        s["dev_mode"] = not getattr(_sys, "frozen", False)
         from version import APP_VERSION, APP_NAME
         s["app_version"] = APP_VERSION
         s["app_brand"]   = APP_NAME
@@ -303,6 +306,11 @@ class _DashboardAPI:
         self._cfg["theme"] = theme
         save_config(self._cfg)
 
+    def set_design(self, design: str):
+        from core.config import save_config
+        self._cfg["design"] = design
+        save_config(self._cfg)
+
     def set_use_logos(self, val: bool):
         from core.config import save_config
         self._cfg["use_logos"] = val
@@ -311,11 +319,6 @@ class _DashboardAPI:
     def set_show_hints(self, val: bool):
         from core.config import save_config
         self._cfg["show_hints"] = val
-        save_config(self._cfg)
-
-    def set_custom_icons(self, val: bool):
-        from core.config import save_config
-        self._cfg["use_custom_icons"] = val
         save_config(self._cfg)
 
     def set_app_name(self, name: str):
@@ -330,7 +333,7 @@ class _DashboardAPI:
         info = self._store.update_info
         if not info or not info.get("url"):
             return "no_update"
-        exe_path = download_update(info["url"], info.get("asset_name", "InvestDesktopWatcher.exe"))
+        exe_path = download_update(info["url"], info.get("asset_name", "Stack.exe"))
         if not exe_path:
             return "download_failed"
         apply_update(exe_path)
@@ -340,6 +343,40 @@ class _DashboardAPI:
         from core.config import save_config
         self._cfg["auto_update"] = val
         save_config(self._cfg)
+
+    def save_screenshot(self, base64_data: str, name: str) -> str:
+        """
+        Сохраняет скриншот, сделанный через html2canvas в браузере.
+        Используется для генерации mockup-PNG для GitHub social preview.
+
+        Args:
+            base64_data: data-URL вида "data:image/png;base64,iVBOR..."
+            name: имя файла без расширения (overview / positions / bonds /
+                  analytics / settings / simple)
+        """
+        import base64
+        # Снимаем data-URL префикс если есть
+        if "," in base64_data:
+            base64_data = base64_data.split(",", 1)[1]
+        raw = base64.b64decode(base64_data)
+
+        # В .exe режиме MEIPASS — read-only, поэтому пишем рядом с приложением
+        # (в dev-режиме это директория проекта).
+        if getattr(_sys, "frozen", False):
+            base_dir = os.path.dirname(_sys.executable)
+        else:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        out_dir = os.path.join(base_dir, "assets", "mockups")
+        os.makedirs(out_dir, exist_ok=True)
+
+        # Безопасное имя файла
+        safe = "".join(c for c in name if c.isalnum() or c in "-_") or "screenshot"
+        out_path = os.path.join(out_dir, f"dashboard-{safe}.png")
+        with open(out_path, "wb") as f:
+            f.write(raw)
+
+        log.info("Screenshot saved: %s (%d bytes)", out_path, len(raw))
+        return out_path
 
     def set_horizon(self, days: int):
         from core.config import save_config
@@ -436,7 +473,7 @@ class DashboardWindow:
     def create_window(self):
         """Создать окно ДО webview.start(). Окно скрыто."""
         self._window = _webview.create_window(
-            title            = "Invest Desktop Watcher",
+            title            = "Stack",
             url              = _HTML_FILE,
             js_api           = self._api,
             width            = 960,

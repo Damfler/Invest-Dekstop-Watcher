@@ -16,7 +16,7 @@ from version import APP_VERSION, APP_NAME
 from constants import TOKEN_STUB, BROKERS, BROKER_INFO, GITHUB_REPO
 
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "InvestDesktopWatcher")
+    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "Stack")
     _PROJ_DIR = os.path.dirname(sys.executable)
 else:
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

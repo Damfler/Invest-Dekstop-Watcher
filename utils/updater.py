@@ -21,7 +21,7 @@ GITHUB_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 if getattr(sys, 'frozen', False):
     _UPDATE_DIR = os.path.join(
         os.environ.get("APPDATA", os.path.dirname(sys.executable)),
-        "InvestDesktopWatcher", "update")
+        "Stack", "update")
 else:
     _UPDATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_update")
 
@@ -86,7 +86,7 @@ def check_for_update() -> dict:
     return result
 
 
-def download_update(url: str, asset_name: str = "InvestDesktopWatcher.exe") -> str | None:
+def download_update(url: str, asset_name: str = "Stack.exe") -> str | None:
     """
     Скачивает новый .exe в папку update/.
     Возвращает путь к скачанному файлу или None.

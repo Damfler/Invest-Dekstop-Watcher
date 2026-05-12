@@ -30,7 +30,7 @@ jobs:
           pip install pyinstaller>=6.0
 
       - name: Build .exe
-        run: python -m PyInstaller invest_desktop_watcher.spec --noconfirm --clean
+        run: python -m PyInstaller stack.spec --noconfirm --clean
 
       - name: Get version
         id: version
@@ -48,16 +48,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.TAG }}
-          name: "Invest Desktop Watcher v${{ steps.version.outputs.VERSION }}"
+          name: "Stack v${{ steps.version.outputs.VERSION }}"
           body: |
-            ## Invest Desktop Watcher v${{ steps.version.outputs.VERSION }}
+            ## Stack v${{ steps.version.outputs.VERSION }}
 
             ### Установка
-            1. Скачайте `InvestDesktopWatcher.exe`
+            1. Скачайте `Stack.exe`
             2. Запустите — при первом запуске откроется мастер настройки
             3. Введите API-токен T-Invest
 
-            Данные хранятся в `%APPDATA%\InvestDesktopWatcher\`
-          files: dist/InvestDesktopWatcher.exe
+            Данные хранятся в `%APPDATA%\Stack\`
+          files: dist/Stack.exe
           draft: false
           prerelease: false

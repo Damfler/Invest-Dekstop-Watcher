@@ -304,8 +304,8 @@ class MenuBuilder:
                     None, enabled=False))
             items.append(pystray.Menu.SEPARATOR)
 
-        for ev_list, header in [(offers, "📌 Оферты (put):"),
-                                (calls,  "📞 Оферты (call):"),
+        for ev_list, header in [(offers, "📌 Put-оферты:"),
+                                (calls,  "📞 Колл-оферты:"),
                                 (maturities, "🏁 Погашения:")]:
             if not ev_list:
                 continue

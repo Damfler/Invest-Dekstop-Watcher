@@ -8,10 +8,10 @@ import sys
 
 from constants import TOKEN_STUB
 
-# Пользовательские файлы в %APPDATA%/InvestDesktopWatcher/ (для .exe)
+# Пользовательские файлы в %APPDATA%/Stack/ (для .exe)
 # или рядом со скриптом (для разработки)
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "InvestDesktopWatcher")
+    BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "Stack")
 else:
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -32,10 +32,12 @@ DEFAULT_CONFIG: dict = {
         }
     ],
 
-    "use_custom_icons": False,
+    # Использовать готовые PNG из assets/icons/ (positive/negative/...).
+    # False — рисовать программно (Pillow-fallback).
+    "use_custom_icons": True,
 
     # Горизонт событий облигаций (дни). Переключается в меню.
-    "bond_horizon_days": 60,
+    "bond_horizon_days": 365,
 
     # Сортировка событий: "date" | "amount"
     "bond_sort": "date",
@@ -45,6 +47,9 @@ DEFAULT_CONFIG: dict = {
 
     # Тема дашборда: "dark" | "light" | "system"
     "theme": "system",
+
+    # Дизайн дашборда: "classic" | "simple" (моноширинный, плотный)
+    "design": "classic",
 
     # Показывать логотипы инструментов (True) или иконки (False)
     "use_logos": False,
@@ -153,7 +158,7 @@ def load_config() -> dict:
     # Валидация
     cfg["notify_move_pct"]   = max(0.1, float(cfg.get("notify_move_pct",   1.0)))
     cfg["notify_offer_days"] = max(0,   int(cfg.get("notify_offer_days",   2)))
-    cfg["bond_horizon_days"] = int(cfg.get("bond_horizon_days", 60))
+    cfg["bond_horizon_days"] = int(cfg.get("bond_horizon_days", 365))
     if cfg.get("bond_sort") not in ("date", "amount"):
         cfg["bond_sort"] = "date"
 

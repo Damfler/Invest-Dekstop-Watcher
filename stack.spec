@@ -1,8 +1,8 @@
-# invest_desktop_watcher.spec
-# PyInstaller spec — сборка Invest Desktop Watcher в один .exe
+# stack.spec
+# PyInstaller spec — сборка Stack в один .exe
 #
 # Использование:
-#   pyinstaller invest_desktop_watcher.spec
+#   pyinstaller stack.spec
 # Или через build.bat (рекомендуется)
 
 import os, sys
@@ -103,7 +103,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='InvestDesktopWatcher',
+    name='Stack',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

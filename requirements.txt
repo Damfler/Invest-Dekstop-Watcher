@@ -6,3 +6,6 @@ plyer>=2.1.0
 # Если не нужно — можно не ставить, скрипт автоматически переключится на tkinter.
 pywebview>=5.0.0
 openpyxl>=3.1.0
+# Только для tools/gen_icons.py (build-time, не требуется в .exe).
+# Нативный SVG-рендерер на Rust, не требует cairo.
+resvg-py>=0.1.0

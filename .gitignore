@@ -31,3 +31,6 @@ dismissed.json
 Thumbs.db
 .DS_Store
 desktop.ini
+
+# Fonts downloaded by CI for social preview generation (not committed)
+assets/fonts/

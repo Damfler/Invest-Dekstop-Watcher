@@ -46,7 +46,7 @@ class DataStore:
 
         # ── Настройки меню
         self.show_mode:        str  = "day"      # "day" | "alltime"
-        self.bond_horizon:     int  = cfg.get("bond_horizon_days", 60)
+        self.bond_horizon:     int  = cfg.get("bond_horizon_days", 365)
         self.bond_sort:        str  = cfg.get("bond_sort", "date")  # "date" | "amount"
         self.alert_level:      int  = ALERT_NONE
 

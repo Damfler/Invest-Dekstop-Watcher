@@ -47,16 +47,16 @@ if errorlevel 1 (
 :: Clean old build
 echo.
 echo [2/3] Cleaning previous build...
-if exist dist\InvestDesktopWatcher.exe (
-    del /f /q dist\InvestDesktopWatcher.exe
-    echo   Removed old InvestDesktopWatcher.exe
+if exist dist\Stack.exe (
+    del /f /q dist\Stack.exe
+    echo   Removed old Stack.exe
 )
 if exist build rmdir /s /q build
 
 :: Build
 echo.
 echo [3/3] Building (1-2 minutes)...
-python -m PyInstaller invest_desktop_watcher.spec --noconfirm --clean
+python -m PyInstaller stack.spec --noconfirm --clean
 
 if errorlevel 1 (
     echo.
@@ -66,23 +66,23 @@ if errorlevel 1 (
 
 :: No need to copy config/dashboard/icons to dist:
 :: - dashboard.html + icons are packed inside .exe (via spec datas)
-:: - config.json is created in %%APPDATA%%\InvestDesktopWatcher\ on first run (wizard)
+:: - config.json is created in %%APPDATA%%\Stack\ on first run (wizard)
 echo.
 echo All data is packed inside .exe
-echo Config will be stored in %%APPDATA%%\InvestDesktopWatcher\
+echo Config will be stored in %%APPDATA%%\Stack\
 
 :: Result
 echo.
-if exist dist\InvestDesktopWatcher.exe (
-    for %%A in (dist\InvestDesktopWatcher.exe) do set SIZE=%%~zA
+if exist dist\Stack.exe (
+    for %%A in (dist\Stack.exe) do set SIZE=%%~zA
     set /a SIZE_MB=!SIZE! / 1048576
     echo === BUILD OK ===
-    echo dist\InvestDesktopWatcher.exe (!SIZE_MB! MB^)
+    echo dist\Stack.exe (!SIZE_MB! MB^)
     echo.
     echo Next steps:
     echo   1. Go to dist\
     echo   2. Edit config.json - add API token
-    echo   3. Run InvestDesktopWatcher.exe
+    echo   3. Run Stack.exe
     echo.
 ) else (
     echo [ERROR] .exe not found - something went wrong.

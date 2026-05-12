@@ -1,0 +1,78 @@
+name: Social Preview
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'version.py'
+      - 'tools/gen_social_preview.py'
+  release:
+    types: [created, published]
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Pillow
+        run: pip install --quiet Pillow
+
+      - name: Download fonts (Inter + JetBrains Mono)
+        run: |
+          mkdir -p assets/fonts
+          # Inter
+          curl -sL -o assets/fonts/Inter-Regular.ttf https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Regular.ttf
+          curl -sL -o assets/fonts/Inter-Medium.ttf  https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Medium.ttf
+          curl -sL -o assets/fonts/Inter-Bold.ttf    https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Bold.ttf
+          curl -sL -o assets/fonts/Inter-Black.ttf   https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Black.ttf
+          # JetBrains Mono
+          curl -sL -o assets/fonts/JetBrainsMono-Regular.ttf https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsMono-Regular.ttf
+          curl -sL -o assets/fonts/JetBrainsMono-Bold.ttf    https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsMono-Bold.ttf
+          ls -la assets/fonts/
+
+      - name: Generate previews (default + all locales)
+        run: |
+          python tools/gen_social_preview.py
+          python tools/gen_social_preview.py --all
+
+      - name: Remove downloaded fonts (we don't commit them)
+        run: rm -rf assets/fonts
+
+      - name: Commit regenerated previews
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add assets/github-social-preview*.png
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: regenerate social preview [skip ci]"
+            git push
+          fi
+
+      - name: Attach previews to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            assets/github-social-preview.png
+            assets/github-social-preview-en.png
+            assets/github-social-preview-ru.png
+
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-preview
+          path: assets/github-social-preview*.png
+          retention-days: 30
