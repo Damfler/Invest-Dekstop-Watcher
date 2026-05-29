@@ -27,11 +27,26 @@ if os.path.exists(_icon_png) and not os.path.exists(_icon_ico):
 # ── Дополнительные данные ────────────────────────────────────────────────────
 datas = []
 
-# Иконки из assets/icons/
-for name in ('positive.png', 'negative.png', 'warn.png', 'crit.png', 'icon.png'):
+# Иконки из assets/icons/ (PNG для трея + SVG-источник логотипа)
+# Каждая state-иконка имеет 2 варианта: <name>.png (для тёмного taskbar)
+# и <name>-light.png (для светлого taskbar Windows). Code выбирает
+# нужный автоматически по `SystemUsesLightTheme` в реестре.
+_icon_names = []
+for base in ('positive', 'negative', 'neutral', 'warn', 'crit', 'icon'):
+    _icon_names += [f'{base}.png', f'{base}-light.png']
+_icon_names.append('logo.svg')
+for name in _icon_names:
     p = os.path.join(BASE, 'assets', 'icons', name)
     if os.path.exists(p):
         datas.append((p, os.path.join('assets', 'icons')))
+
+# SVG-иконки брокеров (показываются в выпадашке "Все счета" в дашборде)
+_banks_dir = os.path.join(BASE, 'assets', 'icons', 'banks')
+if os.path.isdir(_banks_dir):
+    for fname in os.listdir(_banks_dir):
+        if fname.lower().endswith('.svg'):
+            datas.append((os.path.join(_banks_dir, fname),
+                          os.path.join('assets', 'icons', 'banks')))
 
 # HTML-дашборд
 datas.append((os.path.join(BASE, 'assets', 'dashboard.html'), 'assets'))

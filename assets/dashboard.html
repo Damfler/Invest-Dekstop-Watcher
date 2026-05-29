@@ -107,23 +107,326 @@ body.simple .overview-row:hover{background:rgba(184,243,74,.04);padding-left:14p
 body.simple.light .overview-row:nth-child(even){background:rgba(0,0,0,.02)}
 body.simple.light .overview-row:hover{background:rgba(184,243,74,.08)}
 
-/* Инструмент: убираем иконку и подпись (qty/account) — оставляем только имя */
-body.simple .overview-instr-icon,
-body.simple .overview-instr-sub{display:none!important}
+/* Инструмент: убираем иконку, но подпись (кол-во) ОСТАВЛЯЕМ */
+body.simple .overview-instr-icon{display:none!important}
 body.simple .overview-instr{gap:0}
 body.simple .overview-instr-name{font-family:var(--font-mono);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:0}
+body.simple .overview-instr-sub{font-family:var(--font-mono);font-size:11px}
 body.simple .overview-row .num{font-size:13px}
+/* Панель управления списком в simple-режиме (сортировка + фильтр кол-ва) */
+.simple-pos-controls{display:none}
+body.simple .simple-pos-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+body.simple .simple-pos-controls .chips{margin:0;flex:1}
 body.simple .overview-pnl-pct{font-size:11px}
 
 /* Footer статус */
 body.simple .simple-footer{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--font-mono)}
 body.simple .simple-footer .conn{color:var(--green)}
 body.simple .simple-footer .conn::before{content:'\2022 '}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Стеклянный дизайн (glassmorphism). Включается при design="glass".
+   Параллельный simple — эти классы не пересекаются (selDesign — radio-выбор).
+   ─────────────────────────────────────────────────────────────────────────── */
+body.glass{
+  --glass-bg: rgba(20,24,28,0.55);
+  --glass-bg-strong: rgba(20,24,28,0.72);
+  --glass-bg-soft: rgba(20,24,28,0.35);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-border-hi: rgba(255,255,255,0.14);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+  --glass-blur: blur(24px) saturate(180%);
+  /* Цветной "mesh"-фон — мягкие blob'ы за стеклом */
+  background:
+    radial-gradient(900px circle at 12% 18%, rgba(184,243,74,0.10), transparent 45%),
+    radial-gradient(800px circle at 88% 12%, rgba(96,165,250,0.10), transparent 50%),
+    radial-gradient(1000px circle at 50% 105%, rgba(192,132,252,0.10), transparent 55%),
+    #0B0D0E !important;
+  background-attachment:fixed;
+}
+body.glass.light{
+  --glass-bg: rgba(255,255,255,0.55);
+  --glass-bg-strong: rgba(255,255,255,0.78);
+  --glass-bg-soft: rgba(255,255,255,0.32);
+  --glass-border: rgba(255,255,255,0.55);
+  --glass-border-hi: rgba(255,255,255,0.70);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.40);
+  background:
+    radial-gradient(900px circle at 12% 18%, rgba(184,243,74,0.22), transparent 45%),
+    radial-gradient(800px circle at 88% 12%, rgba(96,165,250,0.18), transparent 50%),
+    radial-gradient(1000px circle at 50% 105%, rgba(192,132,252,0.14), transparent 55%),
+    #F5F7F9 !important;
+  background-attachment:fixed;
+}
+
+/* Frosted-карточки: hero-stats, секции обзора, settings-карточки, календарь */
+body.glass .hero-stat,
+body.glass .overview-section,
+body.glass .card,
+body.glass .an-card,
+body.glass #analyticsCards .card,
+body.glass .cal,
+body.glass .cal-popup,
+body.glass .risk-banner{
+  background: var(--glass-bg) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+          backdrop-filter: var(--glass-blur);
+  border:1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow);
+}
+
+/* Header — translucent sticky bar, во всю ширину viewport.
+   Выпрыгиваем за пределы .app через width:100vw + negative margin.
+   Боковой padding = `calc(50vw - 456px)` → ровно по краю .app (max-width 960px).
+   Min 24px — чтобы на узких экранах сохранялся воздух.
+   Вертикальный padding 12px сверху и снизу — одинаковый. */
+body.glass .header{
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+          backdrop-filter: blur(20px) saturate(160%);
+  border-bottom:1px solid var(--glass-border);
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding: 14px max(24px, calc(50vw - 456px));
+  box-sizing: border-box;
+}
+
+/* Дроп-кнопки и выпадающие меню — самый блюр (поверх всего) */
+body.glass .acc-dd-btn,
+body.glass .stack-dd-btn,
+body.glass .icon-btn,
+body.glass .theme-seg,
+body.glass .up-filter-btn,
+body.glass .cal-nav-group{
+  background: var(--glass-bg-soft) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+          backdrop-filter: blur(14px) saturate(160%);
+  border-color: var(--glass-border) !important;
+}
+body.glass .acc-dd-menu,
+body.glass .stack-dd-menu,
+body.glass .up-filter-menu{
+  background: var(--glass-bg-strong) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+          backdrop-filter: blur(28px) saturate(200%);
+  border-color: var(--glass-border-hi) !important;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.45);
+}
+
+/* Табы — пилюли с фростед фоном */
+body.glass .tabs{border-bottom:none;background:var(--glass-bg-soft);padding:4px;border-radius:var(--radius-md);gap:2px;border:1px solid var(--glass-border)}
+body.glass .tab{border-bottom:none;border-radius:8px;padding:8px 14px;color:var(--muted)}
+body.glass .tab.active{background:rgba(184,243,74,0.14);color:var(--accent);border-bottom:none}
+body.glass .tab:hover:not(.active){background:rgba(255,255,255,0.04)}
+
+/* Строки таблицы и пилюли событий — лёгкий контраст */
+body.glass .overview-row{background:transparent}
+body.glass .overview-row:hover{background:rgba(184,243,74,0.06)}
+body.glass .overview-instr-icon{background:rgba(255,255,255,0.06)}
+body.glass .pos-icon{background:rgba(255,255,255,0.06)}
+
+/* Календарные дни */
+body.glass .cal-day{background:var(--glass-bg-soft);border:1px solid var(--glass-border)}
+body.glass .cal-day.has-events:hover{background:rgba(184,243,74,0.10)}
+body.glass .cal-day.today{background:rgba(184,243,74,0.20);box-shadow:0 0 20px rgba(184,243,74,0.30)}
+
+/* Скруглённый акцент: лаймовые элементы получают свечение */
+body.glass .hero-stat-value,
+body.glass .big-value{text-shadow:0 0 30px rgba(184,243,74,0.20)}
+
+/* Inputs/textareas */
+body.glass .conn-input,
+body.glass input[type="text"],
+body.glass input[type="password"]{
+  background:var(--glass-bg-soft) !important;
+  border:1px solid var(--glass-border) !important;
+  -webkit-backdrop-filter:blur(10px);
+          backdrop-filter:blur(10px);
+}
+
+/* Лёгкая правка скроллбара под стекло */
+body.glass ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:8px}
+body.glass ::-webkit-scrollbar-thumb:hover{background:rgba(184,243,74,0.30)}
+body.glass ::-webkit-scrollbar-track{background:transparent}
+
+/* ── Glass: точечные правки UI ────────────────────────────────────────── */
+/* Воздух сверху между header и контентом (раньше прижато) */
+body.glass #mainContent{padding-top:16px}
+body.glass .hero-row{margin-bottom:8px}
+body.glass .big-delta{padding-bottom:2px}
+body.glass .hero-stat{padding:13px 16px}
+body.glass .hero-stats{align-items:flex-start}
+
+
+/* Активная кнопка настроек — лаймовая, а не чёрная */
+body.glass .icon-btn.active-btn{
+  background:rgba(184,243,74,0.20) !important;
+  border-color:var(--accent) !important;
+  color:var(--accent) !important;
+}
+body.glass .icon-btn.active-btn:hover{background:rgba(184,243,74,0.28) !important}
+
+/* Меню дроп-даунов поверх всего (раньше уезжали под карточки) */
+body.glass .stack-dd-menu,
+body.glass .acc-dd-menu,
+body.glass .up-filter-menu{z-index:9999}
+/* На всякий случай — без glass тоже */
+.stack-dd-menu,.acc-dd-menu,.up-filter-menu{z-index:1000}
+
+/* Сегодняшний день в календаре — заметный и в тёмной теме */
+body.glass .cal-day.today{
+  background:linear-gradient(135deg,rgba(184,243,74,0.28),rgba(184,243,74,0.16)) !important;
+  border:1px solid rgba(184,243,74,0.45) !important;
+  color:var(--text) !important;
+  box-shadow:0 0 24px rgba(184,243,74,0.35), inset 0 0 0 1px rgba(184,243,74,0.20);
+}
+body.glass .cal-day.today .cal-dot{background:var(--accent) !important}
+
+/* Bubble-чипы (Все / Купоны / Оферты / Погашения / по типу позиций) — frosted */
+body.glass .chip{
+  background:var(--glass-bg-soft) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(160%);
+          backdrop-filter:blur(12px) saturate(160%);
+  border:1px solid var(--glass-border) !important;
+  color:var(--text);
+}
+body.glass .chip:hover:not(.active){border-color:var(--glass-border-hi) !important;color:var(--accent)}
+body.glass .chip.active{
+  background:rgba(184,243,74,0.22) !important;
+  border-color:rgba(184,243,74,0.45) !important;
+  color:var(--accent) !important;
+  box-shadow:0 4px 16px rgba(184,243,74,0.15);
+}
+
+/* Пилюли типа событий тоже подкрашиваем под стекло (повышенный контраст) */
+body.glass .pill{
+  -webkit-backdrop-filter:blur(8px);
+          backdrop-filter:blur(8px);
+  border:1px solid var(--glass-border);
+}
+body.glass #positionsWrap,
+body.glass .pos-footer{
+  background:var(--glass-bg)!important;
+  -webkit-backdrop-filter:var(--glass-blur);
+          backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border)!important;
+  box-shadow:var(--glass-shadow);
+}
+
+/* ── Вкладка "Позиции": 5-колоночная таблица ── */
+#positionsWrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card)}
+.pos-cols{display:grid;grid-template-columns:1fr 120px 84px 104px 84px;gap:12px;align-items:center}
+.pos-table-head{padding:13px 18px;border-bottom:1px solid var(--divider);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:500}
+.pos-table-head .num{text-align:right}
+.pos-table-head .sort-col{cursor:pointer;display:inline-flex;align-items:center;gap:3px;justify-content:flex-end;transition:color .12s;user-select:none}
+.pos-table-head .sort-col:hover{color:var(--text)}
+.pos-table-head .sort-col.active{color:var(--text)}
+/* Указатель направления сортировки — маленькая стрелка, появляется только у активной колонки */
+.pos-table-head .sort-ind{font-size:10px;line-height:1;color:var(--accent);width:9px;display:inline-block;text-align:center}
+.pos-table-head .sort-col:not(.active) .sort-ind{color:var(--muted);opacity:0;transition:opacity .12s}
+.pos-table-head .sort-col:not(.active):hover .sort-ind{opacity:.45}
+.pos-table-head .sort-col-left{justify-content:flex-start}
+/* Бейдж типа инструмента рядом с количеством */
+.pos-type-badge{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:5px;margin-left:6px;vertical-align:middle;font-family:var(--font);background:var(--surface);color:var(--muted)}
+/* Фильтр по количеству (popover в панели управления) */
+.qty-filter{position:relative}
+.qty-filter-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:var(--radius-md);padding:6px 10px;font-size:12px;font-weight:500;font-family:var(--font);line-height:1.2;cursor:pointer;transition:all .15s}
+.qty-filter-btn:hover{background:var(--bg2);border-color:var(--border);color:var(--text)}
+.qty-filter.active .qty-filter-btn{background:rgba(184,243,74,.10);border-color:var(--accent);color:var(--accent)}
+.qty-filter-btn i,.qty-filter-btn svg{width:13px!important;height:13px!important;flex-shrink:0}
+/* В упрощённом дизайне фильтр-кнопку "Кол-во" убираем (остаётся чип сортировки) */
+body.simple #qtyFilter2{display:none!important}
+.qty-filter-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 12px 32px rgba(0,0,0,.55);padding:12px;z-index:1000;display:none;min-width:200px}
+.qty-filter.open .qty-filter-menu{display:block}
+.qf-title{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.qf-inputs{display:flex;align-items:center;gap:8px}
+.qf-inputs input{width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font-mono);text-align:center}
+.qf-inputs input:focus{outline:none;border-color:var(--accent)}
+.qf-inputs span{color:var(--muted)}
+.qf-actions{margin-top:10px;text-align:right}
+.qf-actions button{background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:4px}
+.qf-actions button:hover{color:var(--accent)}
+body.glass .qty-filter-btn,body.glass .qty-filter-menu{background:var(--glass-bg-soft)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-color:var(--glass-border)!important}
+.pos-row{padding:12px 18px;border-bottom:1px solid var(--divider);cursor:pointer;transition:background .12s}
+.pos-row:last-child{border-bottom:none}
+.pos-row:hover{background:rgba(184,243,74,.045)}
+.pos-row .num{text-align:right;font-family:var(--font-mono);font-size:13px;color:var(--text)}
+.pos-row .num.up{color:var(--green)}
+.pos-row .num.dn{color:var(--red)}
+.pos-row .num.muted{color:var(--muted)}
+.pos-instr{display:flex;align-items:center;gap:11px;min-width:0}
+.pos-instr-icon{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.pos-instr-icon.bond{background:rgba(96,165,250,.14);color:var(--blue)}
+.pos-instr-icon.share{background:rgba(74,222,128,.14);color:var(--green)}
+.pos-instr-icon.etf{background:rgba(192,132,252,.14);color:var(--purple)}
+.pos-instr-icon.currency{background:rgba(250,204,21,.14);color:var(--yellow)}
+.pos-instr-icon.other{background:var(--surface);color:var(--muted)}
+.pos-instr-text{min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.pos-instr-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-instr-sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Футер таблицы позиций — Итого | P&L | Экспорт */
+.pos-footer{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:12px;padding:12px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:13px}
+.pos-footer .pf-total{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.pos-footer .pf-total b{color:var(--text);font-family:var(--font-mono);font-weight:700}
+.pos-footer .pf-pnl{font-family:var(--font-mono);font-weight:600}
+.pos-footer .pf-pnl.up{color:var(--green)}
+.pos-footer .pf-pnl.dn{color:var(--red)}
+.pos-footer .pf-spacer{flex:1}
+.streamer .pos-row .num{filter:blur(9px)}
+.streamer .pos-footer b,.streamer .pos-footer .pf-pnl{filter:blur(9px)}
+@media(max-width:720px){
+  .pos-cols{grid-template-columns:1fr 90px 90px;gap:8px}
+  .pos-table-head .col-share,.pos-table-head .col-pnlpct,
+  .pos-row .col-share,.pos-row .col-pnlpct{display:none}
+}
+/* ── Настройки: сгруппированный современный вид (iOS-style) ── */
+.settings-group{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-card);margin-bottom:18px;overflow:hidden}
+.settings-group-title{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:16px 18px 4px}
+.settings-group-title i,.settings-group-title svg{color:var(--accent);width:15px;height:15px}
+.settings-row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-top:1px solid var(--divider)}
+.settings-group-title + .settings-row{border-top:none}
+.settings-row:first-child{border-top:none}
+.settings-row-main{flex:1;min-width:0}
+.settings-row-title{font-weight:600;font-size:14px}
+.settings-row-desc{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+.settings-row-control{flex-shrink:0;display:flex;align-items:center}
+.settings-row.column{flex-direction:column;align-items:stretch;gap:8px}
+/* iOS-style toggle */
+.tgl{position:relative;display:inline-flex;width:44px;height:25px;flex-shrink:0;cursor:pointer}
+.tgl input{opacity:0;width:0;height:0;position:absolute;margin:0}
+.tgl-track{position:absolute;inset:0;background:var(--surface);border:1px solid var(--border);border-radius:25px;transition:background .2s,border-color .2s}
+.tgl-track::before{content:'';position:absolute;width:19px;height:19px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:transform .2s,background .2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.tgl input:checked + .tgl-track{background:var(--accent);border-color:var(--accent)}
+.tgl input:checked + .tgl-track::before{transform:translateX(19px);background:var(--accent-ink)}
+.tgl input:focus-visible + .tgl-track{box-shadow:0 0 0 3px rgba(184,243,74,.25)}
+.settings-input{width:100%;padding:9px 12px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font);transition:all .15s}
+.settings-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(184,243,74,.15)}
+.settings-about{text-align:center;padding:20px 18px}
+.settings-about .sa-dev{font-weight:600;margin-top:4px}
+.settings-about .sa-ver{font-size:11px;color:var(--muted);margin-top:8px;font-family:var(--font-mono)}
+/* Glass-вариант */
+body.glass .settings-group{background:var(--glass-bg)!important;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border)!important;box-shadow:var(--glass-shadow)}
+body.glass .tgl-track{background:var(--glass-bg-soft)}
+body.glass .settings-input{background:var(--glass-bg-soft)!important;border-color:var(--glass-border)!important}
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;transition:background .2s,color .2s}
-.app{max-width:960px;margin:0 auto;padding:0 16px 32px}
+/* Только вертикальная прокрутка — горизонтальную убираем.
+   overflow-x:clip (а НЕ hidden!) — клиппит горизонталь, но НЕ создаёт scroll-контейнер,
+   поэтому position:sticky у .header продолжает работать (hidden его ломал). */
+html,body{overflow-x:clip;max-width:100%}
+/* Скроллбар под тему приложения (Chromium/WebView2) */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+::-webkit-scrollbar-corner{background:transparent}
+/* Firefox */
+html{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.app{max-width:960px;margin:0 auto;padding:0 16px 32px;overflow-x:clip}
 a{color:var(--blue);text-decoration:none}
-.header{display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px;position:sticky;top:0;z-index:10;background:var(--bg)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 0;position:sticky;top:0;z-index:10;background:var(--bg)}
 .header h1{font-size:20px;font-weight:800;letter-spacing:-.5px}
 .brand{display:flex;align-items:center;gap:10px}
 .logo-mark{width:34px;height:28px;color:var(--accent);filter:drop-shadow(0 0 8px rgba(184,243,74,.35));flex-shrink:0}
@@ -180,9 +483,9 @@ body.simple .acc-dd{display:none!important}
 .big-eye.active{color:var(--accent);border-color:var(--accent)}
 
 /* ── Hero-блок: bigBlock слева + stat-плашки справа в одну строку ── */
-.hero-row{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:flex-start;margin-bottom:16px}
+.hero-row{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:flex-start;margin-bottom:10px}
 @media(max-width:900px){.hero-row{grid-template-columns:1fr}}
-.hero-stats{display:flex;gap:10px;flex-wrap:nowrap}
+.hero-stats{display:flex;gap:10px;flex-wrap:nowrap;align-items:flex-start}
 .hero-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 18px;min-width:150px;display:flex;flex-direction:column;gap:6px}
 .hero-stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500}
 .hero-stat-value{font-size:24px;font-weight:700;font-family:var(--font-mono);letter-spacing:-.5px;color:var(--text);line-height:1.1}
@@ -251,7 +554,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .up-filter-item .up-filter-dot{width:6px;height:6px;border-radius:50%}
 .up-filter-item-check{margin-left:auto;color:var(--accent);opacity:0}
 .up-filter-item.active .up-filter-item-check{opacity:1}
-.big-delta{font-size:15px;font-weight:600;padding-bottom:12px}
+.big-delta{font-size:15px;font-weight:600;padding-bottom:4px}
 .up{color:var(--green)}.dn{color:var(--red)}.zero{color:var(--muted)}.zero{color:var(--muted)}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:default;box-shadow:var(--shadow-card)}
@@ -284,6 +587,58 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .chart-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
 .chart-container{position:relative;height:240px}
 .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+
+/* ── Аналитика: единый card-стиль (как overview-section) ── */
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:900px){.an-grid{grid-template-columns:1fr}}
+.an-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;min-width:0}
+.an-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.an-card-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:var(--text)}
+.an-card-title::before{content:'';width:3px;height:16px;background:var(--accent);border-radius:2px;flex-shrink:0}
+.an-card-title i,.an-card-title svg{color:var(--accent);width:15px;height:15px}
+.an-card-extra{font-family:var(--font-mono);font-weight:700;font-size:15px;color:var(--accent)}
+/* Шапка списка выплат (заголовок + фильтр-чипы рядом со списком) */
+.bonds-list-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:18px 0 10px}
+/* Таблица купонов по месяцам */
+.coupon-table{display:flex;flex-direction:column;max-height:240px;overflow-y:auto}
+.coupon-trow{display:grid;grid-template-columns:84px 1fr auto;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--divider);font-size:12px}
+.coupon-trow:last-child{border-bottom:none}
+.coupon-trow.peak .ct-val{color:var(--accent)}
+.ct-month{color:var(--muted);text-transform:capitalize;white-space:nowrap}
+.ct-bar{height:8px;background:var(--surface);border-radius:5px;overflow:hidden}
+.ct-bar>span{display:block;height:100%;border-radius:5px;background:rgba(96,165,250,.6)}
+.coupon-trow.peak .ct-bar>span{background:rgba(184,243,74,.85)}
+.ct-val{font-family:var(--font-mono);font-weight:600;text-align:right;white-space:nowrap}
+/* Сравнение счетов — HTML-бары (читаемо, без углов) */
+.acct-bars{display:flex;flex-direction:column;gap:13px;padding-top:4px}
+.acct-row{display:flex;flex-direction:column;gap:6px;cursor:default}
+.acct-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.acct-name{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.acct-val{font-family:var(--font-mono);font-weight:600;font-size:13px;white-space:nowrap;flex-shrink:0}
+.acct-track{height:10px;background:var(--surface);border-radius:6px;overflow:hidden}
+.acct-bar{height:100%;border-radius:6px;min-width:6px;transition:width .35s ease}
+/* KPI-плашки сверху вкладки */
+#analyticsCards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+#analyticsCards .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-card);cursor:default}
+#analyticsCards .card-label{display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:500;margin-bottom:8px}
+#analyticsCards .card-label i,#analyticsCards .card-label svg{color:var(--accent);width:14px;height:14px}
+#analyticsCards .card-value{font-size:24px;font-weight:700;font-family:var(--font-mono);letter-spacing:-.5px}
+@media(max-width:640px){#analyticsCards{grid-template-columns:1fr}}
+/* Топ-движение — две колонки с цветными заголовками */
+.movers-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:640px){.movers-grid{grid-template-columns:1fr;gap:16px}}
+.movers-col-title{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;padding-bottom:8px;border-bottom:1px solid var(--divider)}
+.movers-col-title.up{color:var(--green)}
+.movers-col-title.dn{color:var(--red)}
+.mover-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--divider);cursor:pointer;font-size:13px;transition:padding .12s}
+.mover-row:last-child{border-bottom:none}
+.mover-row:hover{padding-left:6px}
+.mover-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;min-width:0}
+.mover-vals{display:flex;gap:10px;align-items:baseline;font-family:var(--font-mono);flex-shrink:0}
+.mover-vals .v{font-weight:600}
+.mover-vals .p{font-size:11px;opacity:.85}
+.mover-vals.up{color:var(--green)}
+.mover-vals.dn{color:var(--red)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .chip{padding:5px 14px;border-radius:16px;font-size:12px;font-weight:500;cursor:pointer;background:var(--bg2);color:var(--muted);border:1px solid var(--border);transition:all .15s;user-select:none}
 .chip.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
@@ -338,9 +693,8 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .cal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px;box-shadow:var(--shadow-card)}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .cal-nav-btns{display:flex;gap:4px}
-/* Стрелки prev/next в шапке календаря — НЕ задеваем кнопку "Сегодня" (.cal-day-today-btn) */
-.cal-nav button:not(.cal-day-today-btn){background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;width:26px;height:26px;border-radius:6px;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.cal-nav button:not(.cal-day-today-btn):hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+/* (legacy-правила .cal-nav button удалены — теперь используется группа
+    .cal-nav-group со своими стилями .cal-nav-arrow / .cal-nav-today ниже) */
 .cal-month{font-weight:700;font-size:14px}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
 .cal-day{min-height:60px!important;padding:10px 6px!important;font-size:14px!important;border-radius:8px!important;align-items:flex-start!important;justify-content:flex-start!important}
@@ -350,6 +704,58 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .cal-legend-dot{width:8px;height:8px;border-radius:50%}
 .cal-day-today-btn{display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 12px;line-height:1;white-space:nowrap;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .15s;box-sizing:border-box;flex:0 0 auto}
 .cal-day-today-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(184,243,74,.06)}
+
+/* Кастомный дропдаун (как .acc-dd, но переиспользуемый). Не нативный <select>:
+   нативный select не позволяет стилизовать раскрытое меню — это ограничение ОС. */
+.stack-dd{position:relative;display:inline-block;font-family:var(--font);vertical-align:middle}
+.stack-dd-btn{
+  display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--bg2);border:1px solid var(--border);color:var(--text);
+  border-radius:var(--radius-md);padding:8px 12px;font-size:13px;font-weight:500;
+  font-family:var(--font);cursor:pointer;line-height:1.2;
+  transition:all .15s;outline:none;min-width:140px;user-select:none;
+}
+.stack-dd-btn:hover{border-color:var(--accent);background:var(--surface)}
+.stack-dd-btn:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px rgba(184,243,74,.15)}
+.stack-dd-label{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stack-dd-chev{color:var(--muted);transition:transform .15s;flex-shrink:0}
+.stack-dd.open .stack-dd-chev{transform:rotate(180deg)}
+.stack-dd-menu{
+  position:absolute;top:calc(100% + 6px);left:0;min-width:100%;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:0 12px 32px rgba(0,0,0,.55);
+  padding:6px;z-index:1000;display:none;max-height:340px;overflow-y:auto;
+}
+.stack-dd.open .stack-dd-menu{display:block;animation:stackDDPop .14s ease-out}
+@keyframes stackDDPop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.stack-dd-menu.align-right{left:auto;right:0}
+.stack-dd-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:8px 12px;border-radius:8px;cursor:pointer;
+  color:var(--text);font-size:13px;font-weight:500;
+  white-space:nowrap;transition:background .12s;
+}
+.stack-dd-item:hover{background:var(--surface)}
+.stack-dd-item.active{background:rgba(184,243,74,.10);color:var(--accent)}
+.stack-dd-item.active::after{content:'';width:14px;height:14px;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B8F34A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center/contain no-repeat}
+/* Компактный размер для control-bar */
+.stack-dd.sm .stack-dd-btn{padding:6px 10px;font-size:12px;min-width:120px}
+.stack-dd.sm .stack-dd-item{padding:6px 10px;font-size:12px}
+
+/* Группа prev / today / next — сегментный контрол без зазоров */
+.cal-nav-group .cal-nav-arrow,
+.cal-nav-group .cal-nav-today{
+  background:transparent;border:0;color:var(--muted);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  height:28px;border-radius:6px;font-family:var(--font);transition:all .12s;
+}
+.cal-nav-group .cal-nav-arrow{width:30px;padding:0}
+.cal-nav-group .cal-nav-today{padding:0 12px;font-size:12px;font-weight:600;white-space:nowrap}
+.cal-nav-group .cal-nav-arrow:hover,
+.cal-nav-group .cal-nav-today:hover{background:rgba(184,243,74,.12);color:var(--accent)}
+.cal-nav-group .cal-nav-arrow:active,
+.cal-nav-group .cal-nav-today:active{background:rgba(184,243,74,.20)}
 /* Группировка событий по датам */
 .evt-group-head{display:flex;align-items:baseline;justify-content:space-between;padding:14px 4px 8px;font-size:13px;border-bottom:1px solid var(--divider);margin-top:14px}
 .evt-group-head:first-child{margin-top:6px}
@@ -379,11 +785,19 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .cal-dots{display:flex;gap:2px;position:absolute;top:3px;right:3px}
 .cal-dot{width:5px;height:5px;border-radius:50%}
 .cal-day.today .cal-dot{background:#fff!important}
-.cal-popup{background:var(--surface);border-radius:var(--radius);padding:16px;margin-top:14px;display:none;border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.15)}
-.cal-popup.show{display:block}
-.cal-popup-title{font-weight:700;margin-bottom:10px;font-size:14px;display:flex;align-items:center;gap:6px}
-.cal-popup-event{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--divider)}
+/* Modern popup: card-style с тенью, плотные строки, акцент сверху */
+.cal-popup{background:var(--bg2);border-radius:var(--radius-md);padding:0;margin-top:16px;display:none;border:1px solid var(--border);box-shadow:var(--shadow-card);overflow:hidden}
+.cal-popup.show{display:block;animation:cal-pop .18s ease-out}
+@keyframes cal-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.cal-popup-title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(180deg,rgba(184,243,74,.06),transparent);border-bottom:1px solid var(--divider)}
+.cal-popup-title::before{content:'';width:3px;height:18px;background:var(--accent);border-radius:2px;flex-shrink:0}
+.cal-popup-events{padding:6px 18px 14px}
+.cal-popup-event{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--divider);font-size:13px}
 .cal-popup-event:last-child{border-bottom:none}
+.cal-popup-event-name{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.cal-popup-event-name b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:380px}
+.cal-popup-event-amount{font-family:var(--font-mono);font-weight:600;font-size:13px;color:var(--text);white-space:nowrap}
+.cal-popup-event-amount.up{color:var(--green)}
 /* Bond Ladder */
 .ladder{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow-card)}
 .ladder-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:6px}
@@ -403,6 +817,56 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .ladder-dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 .ladder-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:4px 8px;border-radius:6px;font-size:10px;white-space:nowrap;pointer-events:none;z-index:10;opacity:0;transition:opacity .15s}
 .ladder-marker:hover .ladder-tooltip{opacity:1}
+/* ── Лестница облигаций v2 ── */
+/* Режим "Визуально": распределение по срокам погашения (бакеты) */
+.ladder-buckets{display:flex;flex-direction:column;gap:13px;padding-top:4px}
+.lb-row{display:grid;grid-template-columns:96px 1fr auto;gap:14px;align-items:center;font-size:13px}
+.lb-label{color:var(--text);font-weight:600;white-space:nowrap}
+.lb-track{height:16px;background:var(--surface);border-radius:8px;overflow:hidden}
+.lb-bar{height:100%;border-radius:8px;min-width:6px;transition:width .35s ease}
+.lb-meta{white-space:nowrap;font-size:12px;color:var(--muted);font-family:var(--font-mono)}
+.lb-meta b{color:var(--text);font-weight:700;font-size:13px}
+.lb-offer{color:var(--orange);margin-left:6px}
+/* Визуально: раскрывающийся бакет со списком бумаг */
+.lb-group{border-radius:8px;transition:background .12s}
+.lb-group.open{background:rgba(255,255,255,.02)}
+body.light .lb-group.open{background:rgba(0,0,0,.02)}
+.lb-row{cursor:pointer;padding:4px 6px;border-radius:8px}
+.lb-row:hover{background:rgba(184,243,74,.05)}
+.lb-label{display:flex;align-items:center;gap:5px}
+.lb-chev{width:13px;height:13px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+.lb-group.open .lb-chev{transform:rotate(90deg)}
+.lb-items{display:none;flex-direction:column;padding:2px 6px 8px 6px}
+.lb-group.open .lb-items{display:flex}
+.lb-item{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:8px 8px 8px 24px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--divider);border-radius:6px;transition:background .12s}
+.lb-item:last-child{border-bottom:none}
+.lb-item:hover{background:rgba(184,243,74,.05)}
+.lb-item-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lb-item-meta{font-family:var(--font-mono);color:var(--muted);font-size:11px;white-space:nowrap;flex-shrink:0}
+.lb-offer-dot{color:var(--orange);font-size:9px;vertical-align:middle}
+.lb-offer-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--orange);background:rgba(251,146,60,.14);padding:1px 7px;border-radius:5px;margin-left:6px;white-space:nowrap;font-family:var(--font)}
+.lb-offer-badge svg{width:9px;height:9px}
+/* Подзаголовки групп в табличном режиме */
+.lt-group-head{padding:15px 4px 7px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;display:flex;align-items:center;gap:7px}
+.lt-group-head::before{content:'';width:8px;height:8px;border-radius:2px;background:currentColor;flex-shrink:0}
+
+/* Режим "В цифрах": таблица */
+.ladder-table{display:flex;flex-direction:column}
+.lt-head{display:grid;grid-template-columns:1fr 116px 66px 78px;gap:12px;padding:9px 4px;border-bottom:1px solid var(--divider);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:500}
+.lt-head .num{text-align:right}
+.lt-row{display:grid;grid-template-columns:1fr 116px 66px 78px;gap:12px;padding:11px 4px;border-bottom:1px solid var(--divider);align-items:center;cursor:pointer;font-size:13px;transition:background .12s}
+.lt-row:last-child{border-bottom:none}
+.lt-row:hover{background:rgba(184,243,74,.045);padding-left:8px;padding-right:8px}
+.lt-row .num{text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--text)}
+.lt-name{min-width:0}
+.lt-name-t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt-sub{font-size:11px;color:var(--muted);font-family:var(--font-mono)}
+.lt-row .term-soon{color:var(--orange)}
+@media(max-width:640px){
+  .lt-head,.lt-row{grid-template-columns:1fr 90px 60px}
+  .lt-head .col-qty,.lt-row .col-qty{display:none}
+  .lb-row{grid-template-columns:80px 1fr auto;gap:10px}
+}
 /* Skeleton */
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -418,8 +882,20 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 #mainContent{transition:opacity .3s}
 #mainContent.loading{opacity:0}
 /* Streamer mode */
-.streamer .big-value,.streamer .acc-total,.streamer .pos-price,.streamer .big-delta,.streamer .acc-dd-amount{filter:blur(12px);user-select:none}
+.streamer .big-value,.streamer .acc-total,.streamer .pos-price,.streamer .big-delta,.streamer #plToggle,.streamer .acc-dd-amount{filter:blur(12px);user-select:none}
 .streamer .big-eye{filter:none!important}
+/* Режим стримера: суммы в Выплатах (календарь/список) и Аналитике */
+.streamer .cal-popup-event-amount,
+.streamer .evt-row-amt,
+.streamer .evt-group-head-meta,
+.streamer #analyticsCards .card-value,
+.streamer #couponTotal,
+.streamer .an-card-extra,
+.streamer .mover-vals{filter:blur(9px);user-select:none}
+/* Денежные суммы по счетам + купонный график */
+.streamer .acct-val,
+.streamer .ct-val{filter:blur(9px)}
+.streamer #couponChart{filter:blur(10px)}
 </style>
 </head>
 <body>
@@ -436,7 +912,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
     </div>
     <div class="acc-dd" id="accDD">
       <button type="button" class="acc-dd-btn" id="accDDBtn" aria-expanded="false" aria-haspopup="listbox">
-        <span class="acc-avatar" id="accDDAvatar"><i data-lucide="folder-open"></i></span>
+        <span class="acc-avatar" id="accDDAvatar"><i data-lucide="layers"></i></span>
         <span class="acc-dd-text">
           <span class="acc-dd-name" id="accDDName">Все счета</span>
           <span class="acc-dd-sub" id="accDDSub">—</span>
@@ -508,6 +984,23 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
         <div class="overview-section-head">
           <div class="overview-section-title"><i data-lucide="trending-up" style="width:16px;height:16px;color:var(--accent)"></i> Топ позиции</div>
         </div>
+        <!-- Панель сортировки/фильтра — только в упрощённом дизайне -->
+        <div class="simple-pos-controls" id="simplePosControls">
+          <div class="chips" id="simpleSortChips">
+            <div class="chip active" data-ssort="value">Стоимость</div>
+            <div class="chip" data-ssort="pnl">P&amp;L</div>
+            <div class="chip" data-ssort="name">Название</div>
+            <div class="chip" data-ssort="qty">Кол-во</div>
+          </div>
+          <div class="qty-filter" id="qtyFilter2">
+            <button type="button" class="qty-filter-btn" id="qtyFilterBtn2"><i data-lucide="filter"></i><span id="qtyFilterLabel2">Кол-во</span></button>
+            <div class="qty-filter-menu" id="qtyFilterMenu2">
+              <div class="qf-title">Количество, шт.</div>
+              <div class="qf-inputs"><input type="number" id="qtyMin2" placeholder="от" min="0" inputmode="numeric"><span>–</span><input type="number" id="qtyMax2" placeholder="до" min="0" inputmode="numeric"></div>
+              <div class="qf-actions"><button type="button" id="qtyReset2">Сбросить</button></div>
+            </div>
+          </div>
+        </div>
         <div class="overview-table-head three-col"><span>Инструмент</span><span class="num">Стоимость</span><span class="num">P&amp;L</span></div>
         <div id="topPositions" class="overview-table-body three-col"></div>
         <a class="overview-link" id="topPosLink" href="#"><span>Смотреть все позиции</span> <i data-lucide="arrow-right" style="width:14px;height:14px"></i></a>
@@ -537,33 +1030,62 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
       <div class="chips" id="posChips" style="margin-bottom:0;flex:1"></div>
-      <select id="posSort" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer">
-        <option value="value">По стоимости</option>
-        <option value="price">По цене бумаги</option>
-        <option value="pnl">По P&L</option>
-        <option value="qty">По количеству</option>
-        <option value="name">По названию</option>
-        <option value="pct">По доле %</option>
-      </select>
-      <select id="selExport" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer">
-        <option value="" disabled selected>Экспорт</option>
-        <option value="excel">Excel</option>
-        <option value="xml">XML</option>
-      </select>
+      <div class="qty-filter" id="qtyFilter">
+        <button type="button" class="qty-filter-btn" id="qtyFilterBtn"><i data-lucide="filter"></i><span id="qtyFilterLabel">Кол-во</span></button>
+        <div class="qty-filter-menu" id="qtyFilterMenu">
+          <div class="qf-title">Количество, шт.</div>
+          <div class="qf-inputs"><input type="number" id="qtyMin" placeholder="от" min="0" inputmode="numeric"><span>–</span><input type="number" id="qtyMax" placeholder="до" min="0" inputmode="numeric"></div>
+          <div class="qf-actions"><button type="button" id="qtyReset">Сбросить</button></div>
+        </div>
+      </div>
+      <div id="posSort" class="stack-dd sm" data-value="value">
+        <button type="button" class="stack-dd-btn"><span class="stack-dd-label"></span><i data-lucide="chevron-down" class="stack-dd-chev" style="width:14px;height:14px"></i></button>
+        <div class="stack-dd-menu align-right">
+          <div class="stack-dd-item" data-value="value">По стоимости</div>
+          <div class="stack-dd-item" data-value="price">По цене бумаги</div>
+          <div class="stack-dd-item" data-value="pnl">По P&amp;L</div>
+          <div class="stack-dd-item" data-value="qty">По количеству</div>
+          <div class="stack-dd-item" data-value="name">По названию</div>
+          <div class="stack-dd-item" data-value="pct">По доле %</div>
+        </div>
+      </div>
     </div>
-    <div id="positionsList"></div>
-    <div id="posTotals" style="margin-top:10px;padding:10px 14px;background:var(--bg2);border-radius:10px;font-size:13px;display:none"></div>
+    <!-- 5-колоночная таблица позиций: Инструмент · Стоимость · Доля · P&L · P&L % -->
+    <div id="positionsWrap">
+      <div class="pos-table-head pos-cols">
+        <span class="sort-col sort-col-left" data-sort="name">Наименование<span class="sort-ind">⇅</span></span>
+        <span class="num sort-col" data-sort="value">Стоимость<span class="sort-ind">⇅</span></span>
+        <span class="num sort-col col-share" data-sort="pct">Доля<span class="sort-ind">⇅</span></span>
+        <span class="num sort-col" data-sort="pnl">P&amp;L<span class="sort-ind">⇅</span></span>
+        <span class="num sort-col col-pnlpct" data-sort="pnlpct">P&amp;L %<span class="sort-ind">⇅</span></span>
+      </div>
+      <div id="positionsList"></div>
+    </div>
+    <!-- Футер: Итого | P&L | Экспорт -->
+    <div class="pos-footer" id="posTotals" style="display:none">
+      <span class="pf-total">Итого: <b id="pfTotalVal">—</b> <span id="pfTotalCount" style="color:var(--muted)"></span></span>
+      <span class="pf-pnl" id="pfPnl"></span>
+      <span class="pf-spacer"></span>
+      <div id="selExport" class="stack-dd sm" data-value="" data-placeholder="Экспорт">
+        <button type="button" class="stack-dd-btn"><i data-lucide="download" style="width:14px;height:14px;margin-right:4px"></i><span class="stack-dd-label">Экспорт</span><i data-lucide="chevron-down" class="stack-dd-chev" style="width:14px;height:14px"></i></button>
+        <div class="stack-dd-menu align-right">
+          <div class="stack-dd-item" data-value="excel">Excel</div>
+          <div class="stack-dd-item" data-value="xml">XML</div>
+        </div>
+      </div>
+    </div>
   </div>
   <!-- TAB: Bonds -->
   <div class="tab-content" id="tab-bonds">
     <div class="cal" id="calendarWrap">
-      <div class="cal-nav" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="cal-nav" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <span class="cal-month" id="calTitle" style="flex:0 0 auto;font-size:16px;font-weight:700"></span>
-        <button id="calPrev" style="background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><i data-lucide="chevron-left" style="width:16px;height:16px"></i></button>
-        <button id="calToday" class="cal-day-today-btn" style="flex:0 0 auto">Сегодня</button>
-        <button id="calNext" style="background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><i data-lucide="chevron-right" style="width:16px;height:16px"></i></button>
-        <div style="flex:1"></div>
-        <div class="chips" id="bondChips" style="margin:0;flex:0 0 auto"></div>
+        <!-- Группа prev / today / next — без зазоров, единым контролом -->
+        <div class="cal-nav-group" style="display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:2px;gap:2px">
+          <button id="calPrev" class="cal-nav-arrow" type="button" aria-label="Предыдущий месяц"><i data-lucide="chevron-left" style="width:14px;height:14px"></i></button>
+          <button id="calToday" class="cal-nav-today" type="button">Сегодня</button>
+          <button id="calNext" class="cal-nav-arrow" type="button" aria-label="Следующий месяц"><i data-lucide="chevron-right" style="width:14px;height:14px"></i></button>
+        </div>
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-popup" id="calPopup"></div>
@@ -574,121 +1096,173 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
         <div class="cal-legend-item"><span class="cal-legend-dot" style="background:var(--teal)"></span>Дивиденд</div>
       </div>
     </div>
+    <!-- Список выплат + фильтр (рядом со списком, чтобы при фильтрации видеть результат) -->
+    <div class="bonds-list-head">
+      <div class="an-card-title"><i data-lucide="list" style="width:16px;height:16px;color:var(--accent)"></i> Список выплат</div>
+      <div class="chips" id="bondChips" style="margin:0"></div>
+    </div>
     <div id="bondsList"></div>
     <div class="evt-tz" id="evtTz"></div>
   </div>
   <!-- TAB: Analytics -->
   <div class="tab-content" id="tab-analytics">
-    <div class="chart-row">
-      <div class="chart-wrap">
-        <div class="chart-title"><i data-lucide="chart-pie" style="width:14px;height:14px;vertical-align:middle"></i> Аллокация</div>
-        <div class="chips" id="allocChips">
-          <div class="chip active" data-mode="types">По типам</div>
-          <div class="chip" data-mode="positions">По бумагам</div>
+    <!-- KPI-сводка сверху -->
+    <div class="cards" id="analyticsCards"></div>
+
+    <!-- Ряд 1: Аллокация + Купоны -->
+    <div class="an-grid">
+      <div class="an-card">
+        <div class="an-card-head">
+          <div class="an-card-title"><i data-lucide="chart-pie"></i> Аллокация</div>
+          <div class="chips" id="allocChips" style="margin:0">
+            <div class="chip active" data-mode="types">По типам</div>
+            <div class="chip" data-mode="positions">По бумагам</div>
+          </div>
         </div>
         <div class="chart-container"><canvas id="allocChart"></canvas></div>
       </div>
-      <div class="chart-wrap">
-        <div class="chart-title" id="couponChartTitle"><i data-lucide="coins" style="width:14px;height:14px;vertical-align:middle"></i> Купоны за 12 мес.</div>
-        <div class="chart-container"><canvas id="couponChart"></canvas></div>
+      <div class="an-card">
+        <div class="an-card-head">
+          <div class="an-card-title" id="couponChartTitle"><i data-lucide="coins"></i> Купоны за 12 мес.</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="chips" id="couponViewChips" style="margin:0">
+              <div class="chip active" data-cview="chart">График</div>
+              <div class="chip" data-cview="table">Цифры</div>
+            </div>
+            <div class="an-card-extra" id="couponTotal"></div>
+          </div>
+        </div>
+        <div class="chart-container" id="couponChartWrap"><canvas id="couponChart"></canvas></div>
+        <div id="couponTable" style="display:none"></div>
       </div>
     </div>
-    <div class="chart-row">
-      <div class="chart-wrap">
-        <div class="chart-title"><i data-lucide="bar-chart-3" style="width:14px;height:14px;vertical-align:middle"></i> Сравнение счетов</div>
-        <div class="chart-container"><canvas id="accountChart"></canvas></div>
+
+    <!-- Ряд 2: Сравнение счетов + Валютная экспозиция -->
+    <div class="an-grid">
+      <div class="an-card" id="accountCard">
+        <div class="an-card-head"><div class="an-card-title"><i data-lucide="bar-chart-3"></i> Сравнение счетов</div></div>
+        <div id="accountBars" class="acct-bars"></div>
       </div>
-      <div class="chart-wrap">
-        <div class="chart-title"><i data-lucide="globe" style="width:14px;height:14px;vertical-align:middle"></i> Валютная экспозиция</div>
+      <div class="an-card">
+        <div class="an-card-head"><div class="an-card-title"><i data-lucide="globe"></i> Валютная экспозиция</div></div>
         <div class="chart-container"><canvas id="currencyChart"></canvas></div>
       </div>
     </div>
-    <div class="ladder" id="ladderWrap" style="display:none">
-      <div class="ladder-title"><i data-lucide="git-branch" style="width:14px;height:14px"></i> Лестница облигаций</div>
+
+    <!-- Лестница облигаций -->
+    <div class="an-card" id="ladderWrap" style="display:none;margin-bottom:14px">
+      <div class="an-card-head">
+        <div class="an-card-title"><i data-lucide="git-branch"></i> Лестница облигаций</div>
+        <div class="chips" id="ladderModeChips" style="margin:0">
+          <div class="chip active" data-lmode="visual">Визуально</div>
+          <div class="chip" data-lmode="table">В цифрах</div>
+        </div>
+      </div>
       <div id="ladderBody"></div>
       <div class="ladder-legend" id="ladderLegend"></div>
     </div>
-    <div class="cards" id="analyticsCards"></div>
-    <div class="section"><div class="section-title"><i data-lucide="arrow-up-down" style="width:16px;height:16px"></i> Лучшие / худшие за день</div><div id="moversBlock"></div></div>
+
+    <!-- Топ-движение за день -->
+    <div class="an-card">
+      <div class="an-card-head"><div class="an-card-title"><i data-lucide="arrow-up-down"></i> Топ-движение за день</div></div>
+      <div id="moversBlock"></div>
+    </div>
   </div>
   <!-- TAB: Settings -->
   <div class="tab-content" id="tab-settings">
-    <div class="section-title"><i data-lucide="settings" style="width:16px;height:16px"></i> Настройки</div>
-    <div class="card" style="margin-bottom:12px">
-      <div style="font-weight:600;margin-bottom:6px">Название приложения</div>
-      <input type="text" id="inputAppName" placeholder="Stack" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font)">
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Оставьте пустым для названия по умолчанию</div>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" id="chkLogos" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
-        <div>
-          <div style="font-weight:600">Логотипы бумаг</div>
-          <div style="font-size:12px;color:var(--muted)">Показывать изображения бумаг вместо иконок</div>
+    <!-- Группа: Внешний вид -->
+    <div class="settings-group">
+      <div class="settings-group-title"><i data-lucide="palette"></i> Внешний вид</div>
+      <div class="settings-row column">
+        <div class="settings-row-main">
+          <div class="settings-row-title">Название приложения</div>
+          <div class="settings-row-desc">Оставьте пустым для названия по умолчанию</div>
         </div>
-      </label>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <div style="font-weight:600;flex:1">Тема оформления</div>
-        <select id="selTheme" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer">
-          <option value="system">Системная</option>
-          <option value="dark">Тёмная</option>
-          <option value="light">Светлая</option>
-        </select>
-      </label>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <div style="font-weight:600;flex:1">Дизайн<div style="font-size:11px;color:var(--muted);font-weight:400">Упрощённый — моноширинный, плотный (как code editor)</div></div>
-        <select id="selDesign" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer">
-          <option value="classic">Классический</option>
-          <option value="simple">Упрощённый</option>
-        </select>
-      </label>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <div style="font-weight:600;flex:1">Горизонт событий облигаций</div>
-        <select id="selHorizon" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer">
-          <option value="30">30 дней</option>
-          <option value="60">60 дней</option>
-          <option value="90">90 дней</option>
-          <option value="180">180 дней</option>
-          <option value="365">365 дней</option>
-        </select>
-      </label>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" id="chkHints" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
-        <div>
-          <div style="font-weight:600">Подсказки</div>
-          <div style="font-size:12px;color:var(--muted)">Показывать предупреждения о концентрации и другие советы</div>
+        <input type="text" id="inputAppName" placeholder="Stack" class="settings-input">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-main"><div class="settings-row-title">Тема оформления</div></div>
+        <div class="settings-row-control">
+          <div id="selTheme" class="stack-dd" data-value="system">
+            <button type="button" class="stack-dd-btn"><span class="stack-dd-label"></span><i data-lucide="chevron-down" class="stack-dd-chev" style="width:14px;height:14px"></i></button>
+            <div class="stack-dd-menu align-right">
+              <div class="stack-dd-item" data-value="system">Системная</div>
+              <div class="stack-dd-item" data-value="dark">Тёмная</div>
+              <div class="stack-dd-item" data-value="light">Светлая</div>
+            </div>
+          </div>
         </div>
-      </label>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" id="chkAutoUpdate" checked style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
-        <div>
-          <div style="font-weight:600">Автообновление</div>
-          <div style="font-size:12px;color:var(--muted)">Проверять обновления при запуске</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-main">
+          <div class="settings-row-title">Дизайн</div>
+          <div class="settings-row-desc">Классический · Упрощённый (mono) · Стеклянный (glass)</div>
         </div>
-      </label>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" id="chkStreamer" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
-        <div>
-          <div style="font-weight:600">Режим стримера</div>
-          <div style="font-size:12px;color:var(--muted)">Скрывает балансы и стоимости (размытие)</div>
+        <div class="settings-row-control">
+          <div id="selDesign" class="stack-dd" data-value="classic">
+            <button type="button" class="stack-dd-btn"><span class="stack-dd-label"></span><i data-lucide="chevron-down" class="stack-dd-chev" style="width:14px;height:14px"></i></button>
+            <div class="stack-dd-menu align-right">
+              <div class="stack-dd-item" data-value="classic">Классический</div>
+              <div class="stack-dd-item" data-value="simple">Упрощённый</div>
+              <div class="stack-dd-item" data-value="glass">Стеклянный</div>
+            </div>
+          </div>
         </div>
-      </label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-main">
+          <div class="settings-row-title">Логотипы бумаг</div>
+          <div class="settings-row-desc">Показывать изображения бумаг вместо иконок</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="chkLogos"><span class="tgl-track"></span></label>
+      </div>
     </div>
-    <!-- Подключения -->
-    <div class="section-title" style="margin-top:20px"><i data-lucide="plug" style="width:16px;height:16px"></i> Подключения</div>
-    <div class="card" style="margin-bottom:12px">
+
+    <!-- Группа: Данные и уведомления -->
+    <div class="settings-group">
+      <div class="settings-group-title"><i data-lucide="sliders-horizontal"></i> Данные и уведомления</div>
+      <div class="settings-row">
+        <div class="settings-row-main"><div class="settings-row-title">Горизонт событий облигаций</div></div>
+        <div class="settings-row-control">
+          <div id="selHorizon" class="stack-dd" data-value="365">
+            <button type="button" class="stack-dd-btn"><span class="stack-dd-label"></span><i data-lucide="chevron-down" class="stack-dd-chev" style="width:14px;height:14px"></i></button>
+            <div class="stack-dd-menu align-right">
+              <div class="stack-dd-item" data-value="30">30 дней</div>
+              <div class="stack-dd-item" data-value="60">60 дней</div>
+              <div class="stack-dd-item" data-value="90">90 дней</div>
+              <div class="stack-dd-item" data-value="180">180 дней</div>
+              <div class="stack-dd-item" data-value="365">365 дней</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-main">
+          <div class="settings-row-title">Подсказки</div>
+          <div class="settings-row-desc">Предупреждения о концентрации и другие советы</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="chkHints"><span class="tgl-track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-main">
+          <div class="settings-row-title">Автообновление</div>
+          <div class="settings-row-desc">Проверять обновления при запуске</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="chkAutoUpdate" checked><span class="tgl-track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-main">
+          <div class="settings-row-title">Режим стримера</div>
+          <div class="settings-row-desc">Скрывает балансы и стоимости (размытие)</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="chkStreamer"><span class="tgl-track"></span></label>
+      </div>
+    </div>
+
+    <!-- Группа: Подключения -->
+    <div class="settings-group">
+      <div class="settings-group-title"><i data-lucide="plug"></i> Подключения</div>
+      <div class="settings-row column">
       <div id="connList" style="margin-bottom:10px"></div>
       <button onclick="openAddConn()" id="btnAddConn"
         style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s"
@@ -699,9 +1273,12 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
       <div class="conn-add-form" id="connAddForm">
         <div style="font-weight:600;margin-bottom:10px;font-size:13px">Новое подключение</div>
         <input class="conn-input" id="connName" placeholder="Название (например: Т-Банк ИИС)">
-        <select id="connBroker" class="conn-input" style="cursor:pointer">
-          <option value="tbank">Т-Банк (Тинькофф Инвестиции)</option>
-        </select>
+        <div id="connBroker" class="stack-dd" data-value="tbank" style="width:100%;margin-bottom:8px;display:block">
+          <button type="button" class="stack-dd-btn" style="width:100%"><span class="stack-dd-label"></span><i data-lucide="chevron-down" class="stack-dd-chev" style="width:14px;height:14px"></i></button>
+          <div class="stack-dd-menu" style="left:0;right:0;min-width:0">
+            <div class="stack-dd-item" data-value="tbank">Т-Банк (Тинькофф Инвестиции)</div>
+          </div>
+        </div>
         <input class="conn-input" id="connToken" placeholder="API-токен" type="password" autocomplete="off">
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:10px;cursor:pointer">
           <input type="checkbox" id="connSandbox" style="accent-color:var(--accent)"> Sandbox-режим
@@ -718,21 +1295,28 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
         </div>
         <div id="connAddError" style="font-size:12px;color:var(--red);margin-top:8px"></div>
       </div>
-      <div id="connRestartBanner" style="display:none;margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.28);font-size:12px;color:var(--yellow);display:flex;align-items:center;gap:6px">
+      <div id="connRestartBanner" style="display:none;margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.28);font-size:12px;color:var(--yellow);align-items:center;gap:6px">
         <i data-lucide="rotate-cw" style="width:14px;height:14px"></i>
         Перезапустите приложение для применения изменений
       </div>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <div style="font-weight:600;margin-bottom:4px">Информация</div>
-      <div style="font-size:12px;color:var(--muted)">Данные обновляются каждые 60 сек.</div>
-      <div style="font-size:12px;color:var(--muted)" id="settingsInfo"></div>
-    </div>
-    <div class="card" style="margin-bottom:12px;text-align:center">
-      <div style="font-size:12px;color:var(--muted)">Разработчик</div>
-      <div style="font-weight:600;margin-top:4px">Гашук Дмитрий</div>
-      <div style="font-size:11px;color:var(--border);margin-top:8px" id="appVersion">Stack</div>
-      <div style="margin-top:10px"><a href="#" onclick="try{pywebview.api.open_url('https://pay.cloudtips.ru/p/789f174f')}catch(e){};return false" style="font-size:11px;color:var(--muted);opacity:.5;text-decoration:none;transition:opacity .2s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='.5'">&#x2764; Поддержать проект</a></div>
+      </div><!-- /settings-row column -->
+    </div><!-- /settings-group Подключения -->
+
+    <!-- Группа: О приложении -->
+    <div class="settings-group">
+      <div class="settings-group-title"><i data-lucide="info"></i> О приложении</div>
+      <div class="settings-row">
+        <div class="settings-row-main">
+          <div class="settings-row-title">Обновление данных</div>
+          <div class="settings-row-desc">Автоматически каждые 60 сек. <span id="settingsInfo"></span></div>
+        </div>
+      </div>
+      <div class="settings-about">
+        <div style="font-size:12px;color:var(--muted)">Разработчик</div>
+        <div class="sa-dev">Гашук Дмитрий</div>
+        <div class="sa-ver" id="appVersion">Stack</div>
+        <div style="margin-top:12px"><a href="#" onclick="try{pywebview.api.open_url('https://pay.cloudtips.ru/p/789f174f')}catch(e){};return false" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);text-decoration:none;padding:7px 16px;border:1px solid var(--border);border-radius:var(--radius-md);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(184,243,74,.08)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">&#x2764; Поддержать проект</a></div>
+      </div>
     </div>
   </div>
   </div><!-- /mainContent -->
@@ -742,6 +1326,8 @@ var TM={bond:'Облигации',share:'Акции',etf:'Фонды',currency:'
 var TL={coupon:'Купон',offer:'Оферта',call:'Колл-оферта',maturity:'Погашение',dividend:'Дивиденд'};
 var PC=['#60A5FA','#B8F34A','#4ADE80','#F87171','#C084FC','#5EEAD4','#FB923C','#FACC15'];
 var LI={bond:'landmark',share:'trending-up',etf:'layers',currency:'circle-dollar-sign',futures:'zap',sp:'box',option:'target'};
+var TYPE_SHORT={bond:'Облигация',share:'Акция',etf:'Фонд',currency:'Валюта',futures:'Фьючерс',sp:'СП',option:'Опцион'};
+var posQtyMin=null,posQtyMax=null; // фильтр по количеству (от/до)
 var allocChart=null,couponChart=null,historyChart=null,accountChart=null,currencyChart=null;
 var D=null,allocMode='types',selAcc='all',historyRange='1m';
 // Карта connection_name → broker (tbank/sber/alfa/bks). Заполняется при загрузке
@@ -773,6 +1359,11 @@ function getAccBroker(account){
 var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calSelectedDay=null;
 var posTypeFilter='all',bondTypeFilter='all';
 var posSortBy='value'; // value|price|pnl|qty|name|pct
+var posSortDir='desc'; // 'desc' | 'asc'
+var ladderMode='visual'; // 'visual' | 'table' — режим "Лестницы облигаций"
+var ladderOpen={}; // {label:true} — раскрытые бакеты в режиме "Визуально"
+var _chartsFresh=false; // true = графики Аналитики уже отрисованы и не требуют перерисовки (анти-мигание)
+var couponView='chart'; // 'chart' | 'table' — режим карточки "Купоны за 12 мес."
 var activeTab='overview';
 var useLogos=false;
 var plMode='alltime'; // 'alltime' | 'day'
@@ -790,6 +1381,150 @@ function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 function fmtQty(v){if(v==null)return'0';return v%1===0?String(v):v.toFixed(2)}
 function cs(){return getComputedStyle(document.body)}
 function ic(name,sz){sz=sz||16;return '<i data-lucide="'+name+'" style="width:'+sz+'px;height:'+sz+'px;vertical-align:middle"></i>';}
+
+// ── Custom dropdown (.stack-dd) — заменяет нативные <select>, чтобы можно было
+//    стилизовать выпадающее меню. После init у элемента работают .value / 'change'
+//    так же, как у нативного <select>.
+//    Меню при открытии физически переносится в <body> (position:fixed) — это
+//    обходит проблему stacking-context от backdrop-filter родительских карточек
+//    в glass-теме, где иначе меню уезжает ПОД соседние блоки.
+var _sddOpenEl=null; // текущий раскрытый портал-дропдаун (для репозиционирования при скролле)
+
+// Позиционирование выпорченного меню относительно кнопки (fixed).
+function _stackDDPosition(el){
+  var menu=el._sddMenu, btn=el._sddBtn;
+  if(!menu||!btn)return;
+  var rect=btn.getBoundingClientRect();
+  // сброс перед перерасчётом
+  menu.style.left=''; menu.style.right=''; menu.style.top=''; menu.style.bottom='';
+  menu.style.left = rect.left + 'px';
+  menu.style.top  = (rect.bottom + 6) + 'px';
+  menu.style.minWidth = rect.width + 'px';
+  var mw = menu.getBoundingClientRect().width;
+  if(rect.left + mw > window.innerWidth - 8){
+    menu.style.left  = '';
+    menu.style.right = (window.innerWidth - rect.right) + 'px';
+  }
+  var mh = menu.getBoundingClientRect().height;
+  if(rect.bottom + 6 + mh > window.innerHeight - 8 && rect.top - 6 - mh > 0){
+    menu.style.top    = '';
+    menu.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+  }
+}
+function _stackDDPortal(el, menu, btn){
+  el._sddOrigParent = menu.parentNode;
+  el._sddBtn = btn;
+  document.body.appendChild(menu);
+  menu.classList.add('stack-dd-menu-portal');
+  // В <body> CSS-правило .stack-dd.open .stack-dd-menu не применимо — показываем явно.
+  menu.style.display  = 'block';
+  menu.style.position = 'fixed';
+  menu.style.zIndex   = '99999';
+  menu.style.animation = 'stackDDPop .14s ease-out';
+  _stackDDPosition(el);
+  _sddOpenEl = el;
+}
+function _stackDDUnportal(el, menu){
+  if(el._sddOrigParent){
+    menu.style.cssText = '';
+    menu.classList.remove('stack-dd-menu-portal');
+    el._sddOrigParent.appendChild(menu);
+    el._sddOrigParent = null;
+  }
+  if(_sddOpenEl===el)_sddOpenEl=null;
+}
+function _stackDDInit(el){
+  if(el._sddReady)return;el._sddReady=true;
+  var btn   = el.querySelector('.stack-dd-btn');
+  var label = el.querySelector('.stack-dd-label');
+  var menu  = el.querySelector('.stack-dd-menu');
+  if(!btn||!label||!menu)return;
+  function paint(){
+    var v=el.dataset.value||'';
+    var found=null;
+    menu.querySelectorAll('.stack-dd-item').forEach(function(it){
+      var match=it.dataset.value===v;
+      it.classList.toggle('active',match);
+      if(match)found=it;
+    });
+    // Если ничего не подошло — используем placeholder из data-placeholder или первый элемент
+    label.textContent = found
+      ? (found.dataset.label || found.textContent.trim())
+      : (el.dataset.placeholder || '');
+  }
+  Object.defineProperty(el,'value',{
+    configurable:true,
+    get:function(){return el.dataset.value||''},
+    set:function(v){
+      // НЕ диспатчим 'change' при programmatic set — повторяем поведение нативного <select>,
+      // иначе initial render() триггерит backend-сейвы при каждой загрузке данных.
+      v=String(v==null?'':v);
+      el.dataset.value=v; paint();
+    }
+  });
+  // selectedIndex=0 совместимость (для selExport, который сбрасывается после клика)
+  Object.defineProperty(el,'selectedIndex',{
+    configurable:true,
+    get:function(){
+      var v=el.dataset.value;
+      var arr=Array.from(menu.querySelectorAll('.stack-dd-item'));
+      for(var i=0;i<arr.length;i++)if(arr[i].dataset.value===v)return i;
+      return -1;
+    },
+    set:function(i){
+      var arr=menu.querySelectorAll('.stack-dd-item');
+      if(arr[i]) el.value = arr[i].dataset.value;
+      else { el.dataset.value=''; paint(); }
+    }
+  });
+  // Меню всегда доступно через el._sddMenu (даже когда выпорчено в <body>)
+  el._sddMenu = menu;
+  function setOpen(state){
+    var isOpen = el.classList.contains('open');
+    if(state && !isOpen){
+      el.classList.add('open');
+      _stackDDPortal(el, menu, btn);
+    } else if(!state && isOpen){
+      el.classList.remove('open');
+      _stackDDUnportal(el, menu);
+    }
+  }
+  el._sddSetOpen = setOpen;
+
+  btn.addEventListener('click',function(e){
+    e.stopPropagation();
+    document.querySelectorAll('.stack-dd.open').forEach(function(x){if(x!==el && x._sddSetOpen)x._sddSetOpen(false)});
+    setOpen(!el.classList.contains('open'));
+  });
+  btn.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();btn.click()}
+    if(e.key==='Escape')setOpen(false);
+  });
+  menu.addEventListener('click',function(e){
+    e.stopPropagation();  // не даём глобальному обработчику закрыть до выбора
+    var t=e.target.closest('.stack-dd-item');if(!t)return;
+    var newVal=t.dataset.value;
+    setOpen(false);
+    if((el.dataset.value||'')===newVal)return;
+    el.dataset.value=newVal; paint();
+    el.dispatchEvent(new CustomEvent('change'));
+  });
+  paint();
+}
+// Глобальный закрыватель — учитываем как .stack-dd, так и выпорченное меню в <body>
+document.addEventListener('click',function(e){
+  document.querySelectorAll('.stack-dd.open').forEach(function(x){
+    var m=x._sddMenu;
+    if(x.contains(e.target))return;
+    if(m && m.contains(e.target))return;
+    if(x._sddSetOpen)x._sddSetOpen(false);
+  });
+});
+// При скролле/ресайзе НЕ закрываем меню, а перепозиционируем его относительно кнопки.
+window.addEventListener('scroll',function(){ if(_sddOpenEl)_stackDDPosition(_sddOpenEl); },true);
+window.addEventListener('resize',function(){ if(_sddOpenEl)_stackDDPosition(_sddOpenEl); });
+function stackDDInitAll(){document.querySelectorAll('.stack-dd').forEach(_stackDDInit)}
+stackDDInitAll();
 function openUrl(url){pywebview.api.open_url(url)}
 function openGitHubRelease(){
   try{pywebview.api.open_url('https://github.com/Damfler/Invest-Dekstop-Watcher/releases/latest')}catch(e){}
@@ -992,10 +1727,18 @@ document.addEventListener('keydown',function(e){
 });
 
 // Tabs
-document.getElementById('mainTabs').addEventListener('click',function(e){var t=e.target.closest('.tab');if(!t)return;activeTab=t.getAttribute('data-tab');setActiveTab(activeTab)});
+document.getElementById('mainTabs').addEventListener('click',function(e){var t=e.target.closest('.tab');if(!t)return;activeTab=t.getAttribute('data-tab');setActiveTab(activeTab);
+  // При открытии Аналитики рисуем графики свежими данными (один раз за открытие).
+  if(activeTab==='analytics'&&D){reCharts();_chartsFresh=true;lucide.createIcons();}
+  else if(activeTab!=='analytics'){_chartsFresh=false;}
+});
 function setActiveTab(tab){document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')===tab)});document.querySelectorAll('.tab-content').forEach(function(x){x.classList.toggle('active',x.id==='tab-'+tab)});var bs=document.getElementById('btnSettings');if(bs)bs.classList.toggle('active-btn',tab==='settings');if(tab==='settings')loadConnections();}
+// Возврат на главную вкладку (Обзор) — вызывается из Python при показе окна из трея.
+function goOverview(){activeTab='overview';setActiveTab('overview');try{window.scrollTo(0,0)}catch(e){}}
 document.getElementById('allocChips').addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;allocMode=c.getAttribute('data-mode');document.querySelectorAll('#allocChips .chip').forEach(function(x){x.classList.remove('active')});c.classList.add('active');renderAllocChart()});
 document.getElementById('historyChips').addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;historyRange=c.getAttribute('data-range');document.querySelectorAll('#historyChips .chip').forEach(function(x){x.classList.remove('active')});c.classList.add('active');renderHistoryChart()});
+(function(){var lc=document.getElementById('ladderModeChips');if(lc)lc.addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;ladderMode=c.getAttribute('data-lmode');renderBondLadder();lucide.createIcons();});})();
+(function(){var cc=document.getElementById('couponViewChips');if(cc)cc.addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;couponView=c.getAttribute('data-cview');cc.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-cview')===couponView)});renderCouponChart();});})();
 document.getElementById('calPrev').addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}calSelectedDay=null;renderCalendar()});
 document.getElementById('calNext').addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}calSelectedDay=null;renderCalendar()});
 var _calTodayBtn=document.getElementById('calToday');
@@ -1033,7 +1776,9 @@ document.getElementById('chkStreamer').addEventListener('change',function(){
 });
 document.getElementById('selDesign').addEventListener('change',function(){
   var v=this.value;
-  document.body.classList.toggle('simple',v==='simple');
+  // Эксклюзивные классы дизайна: simple ↔ glass ↔ classic
+  document.body.classList.toggle('simple', v==='simple');
+  document.body.classList.toggle('glass',  v==='glass');
   if(D)D.design=v; // фиксируем в памяти, чтобы render не откатил выбор
   try{pywebview.api.set_design(v)}catch(e){}
   if(D){renderSimpleStatus(D);reCharts();}
@@ -1154,24 +1899,21 @@ function render(data){
       var n=ports.length;
       ddSub.textContent= n+' '+(n%10===1&&n%100!==11?'счёт':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'счёта':'счетов'));
       // Если все счета T-Bank — показываем T-Bank icon, иначе layers (общий)
+      // "Все счета" — универсальная иконка (layers), не лого конкретного брокера.
+      // Совпадает с иконкой пункта "Все счета" в выпадающем меню.
       if(ddAvatar){
-        var brokers={};ports.forEach(function(p){brokers[getAccBroker(p)]=true});
-        if(Object.keys(brokers).length===1){
-          var only=Object.keys(brokers)[0];
-          ddAvatar.classList.add('bank');
-          ddAvatar.innerHTML='<img src="'+bankIconURL(only)+'" alt="'+esc(only)+'">';
-        } else {
-          ddAvatar.classList.remove('bank');
-          ddAvatar.innerHTML=ic('layers',16);
-        }
+        ddAvatar.classList.remove('bank');
+        ddAvatar.innerHTML=ic('layers',16);
       }
     } else {
       var ap=ports.find(function(p){return p.account_id===selAcc});
       ddName.textContent= ap?ap.name:'Счёт';
       ddSub.textContent = ap?fmt(ap.total||0):'—';
       if(ddAvatar && ap){
+        var brokAp=getAccBroker(ap);
+        var initAp=(brokAp||'?').charAt(0).toUpperCase();
         ddAvatar.classList.add('bank');
-        ddAvatar.innerHTML='<img src="'+bankIconURL(getAccBroker(ap))+'" alt="bank">';
+        ddAvatar.innerHTML='<img src="'+bankIconURL(brokAp)+'" alt="bank" onerror="this.parentElement.classList.remove(\'bank\');this.remove();this.parentElement.textContent=\''+initAp+'\'">';
       }
     }
   }
@@ -1197,8 +1939,13 @@ function render(data){
   ports.forEach(function(p,i){
     var broker = getAccBroker(p);
     var iconSrc = bankIconURL(broker);
+    var brokerInit = (broker||'?').charAt(0).toUpperCase();
+    // onerror: если SVG не загрузился (нет файла в .exe-сборке, оффлайн и т.п.) —
+    // <img> убираем, родительский div теряет класс .bank и показывает букву-инициал.
     mh+='<div class="acc-dd-item'+(selAcc===p.account_id?' active':'')+'" data-acc="'+esc(p.account_id)+'">'+
-        '<div class="acc-dd-item-avatar bank"><img src="'+iconSrc+'" alt="'+esc(broker)+'"></div>'+
+        '<div class="acc-dd-item-avatar bank" style="background:rgba(184,243,74,.14);color:var(--accent);font-weight:700">'+
+          '<img src="'+iconSrc+'" alt="'+esc(broker)+'" onerror="this.parentElement.classList.remove(\'bank\');this.remove();this.parentElement.textContent=\''+brokerInit+'\'">'+
+        '</div>'+
         '<div class="acc-dd-item-info">'+
           '<div class="acc-dd-name-row" title="'+esc(p.name)+'">'+esc(p.name)+'</div>'+
           '<div class="acc-dd-amount">'+fmt(p.total||0)+'</div>'+
@@ -1357,10 +2104,19 @@ function render(data){
   }
 
   // \u2500\u2500 Top positions: \u0442\u0430\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u0444\u043e\u0440\u043c\u0430\u0442 \u0441 \u0446\u0432\u0435\u0442\u043d\u043e\u0439 \u0438\u043a\u043e\u043d\u043a\u043e\u0439 \u0442\u0438\u043f\u0430 \u2500\u2500
-  var sorted=fPos.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});
-  // В simple-дизайне показываем ВСЕ позиции (без ограничения top-6) —
-  // упрощённый режим — это полный список без лишнего интерфейса.
-  var topItems=document.body.classList.contains('simple')?sorted:sorted.slice(0,6);
+  var _simple=document.body.classList.contains('simple');
+  var sorted;
+  if(_simple){
+    // В simple — фильтр по количеству + сортировка по выбранному критерию
+    var sbase=fPos.slice();
+    if(posQtyMin!=null)sbase=sbase.filter(function(p){return (p.qty||0)>=posQtyMin});
+    if(posQtyMax!=null)sbase=sbase.filter(function(p){return (p.qty||0)<=posQtyMax});
+    sorted=sortPositions(sbase,0);
+  }else{
+    sorted=fPos.slice().sort(function(a,b){return(b.current_value||0)-(a.current_value||0)});
+  }
+  // В simple показываем ВСЕ позиции (без ограничения top-6).
+  var topItems=_simple?sorted:sorted.slice(0,6);
   var totPosVal=sorted.reduce(function(s,p){return s+(p.current_value||0)},0);
   var th='';
   if(!topItems.length){
@@ -1410,7 +2166,10 @@ function render(data){
   renderBondsTab(fEvts,nkd);
   renderCalendar(fEvts);
   setActiveTab(activeTab); // восстанавливаем активную вкладку
-  reCharts();
+  // Графики Аналитики рисуем только при ОТКРЫТИИ вкладки (см. обработчик #mainTabs).
+  // Пока вкладка открыта, авто-refresh их НЕ перерисовывает — иначе инфографика мигает.
+  if(activeTab==='analytics'){ if(!_chartsFresh){reCharts();_chartsFresh=true;} }
+  else { _chartsFresh=false; }
   renderAnalyticsCards(fPos,ytm,tNkd);
   renderMovers(fPos);
   // Sync settings UI
@@ -1422,6 +2181,7 @@ function render(data){
   var sd=document.getElementById('selDesign');var design=data.design||'classic';
   if(sd)sd.value=design;
   document.body.classList.toggle('simple',design==='simple');
+  document.body.classList.toggle('glass', design==='glass');
   renderSimpleStatus(data);
   var sh=document.getElementById('selHorizon');if(sh)sh.value=String(data.bond_horizon_days||365);
   var an=document.getElementById('inputAppName');if(an&&!an.matches(':focus'))an.value=data.app_name||'';
@@ -1486,23 +2246,37 @@ function renderPosList(positions,totAll,showAcc){
     var accStr='';
     if(showAcc&&p.accounts&&p.accounts.length>0){accStr=' \u00b7 '+p.accounts.join(' \u2022 ');}
     var figi=p.figi||'',logo=p.logo_url||'',ticker=p.ticker||isin;
-    h+='<div class="pos-item" onclick="openInstr(\''+ticker+'\',\''+it+'\',\''+figi+'\')">';
-    if(useLogos&&logo){h+='<div class="pos-icon"><img src="'+esc(logo)+'" onerror="this.parentElement.className=\'pos-icon '+icCls+'\';this.parentElement.innerHTML=ic(\''+(LI[it]||'circle')+'\',20);lucide.createIcons()"></div>'}
-    else{h+='<div class="pos-icon '+icCls+'">'+ic(LI[it]||'circle',20)+'</div>'}
-    h+='<div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div><div class="pos-sub">'+(ticker?ticker+' \u00b7 ':'')+fmtQty(p.qty)+' шт.'+accStr+'</div></div>'+
-      '<div class="pos-right"><div class="pos-price">'+fmt(p.current_value)+'</div>'+(d!==0?'<div class="pos-delta '+cl+'">'+si+fmt(d)+'</div>':'')+'</div></div>'});
+    var dpct=p.current_value>0?(d/p.current_value*100):0;
+    var subParts=[];if(ticker)subParts.push(esc(ticker));if(p.qty)subParts.push(fmtQty(p.qty)+' шт.');
+    if(showAcc&&p.accounts&&p.accounts.length>0)subParts.push(p.accounts.join(' • '));
+    else if(showAcc&&p.account_name)subParts.push(esc(p.account_name));
+    var sub=subParts.join(' · ');
+    var iconHtml='<div class="overview-instr-icon '+icCls+'" style="position:relative">'+ic(LI[it]||'circle',14);
+    if(useLogos&&logo){iconHtml+='<img src="'+esc(logo)+'" style="position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;background:var(--bg2)" onerror="this.remove()">'}
+    iconHtml+='</div>';
+    h+='<div class="overview-row" onclick="openInstr(\''+ticker+'\',\''+it+'\',\''+figi+'\')">'+
+       '<div class="overview-instr">'+iconHtml+'<div class="overview-instr-text"><div class="overview-instr-name">'+esc(p.name)+'</div><div class="overview-instr-sub">'+sub+'</div></div></div>'+
+       '<div class="num">'+fmt(p.current_value||0)+'</div>'+
+       '<div><div class="num '+cl+'">'+(d!==0?si+fmt(d):'—')+'</div>'+(d!==0?'<div class="overview-pnl-pct '+cl+'">'+si+dpct.toFixed(2)+'%</div>':'')+'</div>'+
+       '</div>';
+  });
   return h;
 }
+// (legacy-разметка .pos-item полностью заменена выше на .overview-row)
 
 function sortPositions(list,totAll){
-  var s=posSortBy;
+  var s=posSortBy, asc=posSortDir==='asc';
+  function key(p){
+    if(s==='price')return p.current_price||0;
+    if(s==='pnl')return plMode==='day'?(p.day_delta||0):(p.alltime_delta||0);
+    if(s==='pnlpct'){var d=plMode==='day'?(p.day_delta||0):(p.alltime_delta||0);return p.current_value>0?d/p.current_value:0;}
+    if(s==='qty')return p.qty||0;
+    return p.current_value||0; // value, pct
+  }
   return list.slice().sort(function(a,b){
-    if(s==='price')return(b.current_price||0)-(a.current_price||0);
-    if(s==='pnl'){var da=plMode==='day'?(a.day_delta||0):(a.alltime_delta||0);var db=plMode==='day'?(b.day_delta||0):(b.alltime_delta||0);return db-da;}
-    if(s==='qty')return(b.qty||0)-(a.qty||0);
-    if(s==='name')return(a.name||'').localeCompare(b.name||'');
-    if(s==='pct')return(b.current_value||0)-(a.current_value||0);
-    return(b.current_value||0)-(a.current_value||0); // default: value
+    if(s==='name'){var r=(a.name||'').localeCompare(b.name||'');return asc?r:-r;}
+    var ka=key(a),kb=key(b);
+    return asc?(ka-kb):(kb-ka);
   });
 }
 
@@ -1520,7 +2294,7 @@ function renderPosTab(positions,totAll,showAcc){
   var ss=document.getElementById('posSort');
   if(ss){
     ss.value=posSortBy;
-    ss.onchange=function(){posSortBy=this.value;applyPosFilter(positions,totAll,showAcc);lucide.createIcons()};
+    ss.onchange=function(){posSortBy=this.value;posSortDir='desc';applyPosFilter(positions,totAll,showAcc);lucide.createIcons()};
   }
   // Восстанавливаем поиск
   var se=document.getElementById('posSearch');if(se&&!se.matches(':focus'))se.value=posSearchQuery;
@@ -1530,19 +2304,67 @@ function applyPosFilter(positions,totAll,showAcc){
   var f=posTypeFilter==='all'?positions:positions.filter(function(p){return p.instrumentType===posTypeFilter});
   // Поиск
   if(posSearchQuery){var q=posSearchQuery;f=f.filter(function(p){return(p.name||'').toLowerCase().indexOf(q)>=0||(p.ticker||'').toLowerCase().indexOf(q)>=0||(p.isin||'').toLowerCase().indexOf(q)>=0||(p.figi||'').toLowerCase().indexOf(q)>=0})}
+  // Фильтр по количеству (от/до)
+  if(posQtyMin!=null)f=f.filter(function(p){return(p.qty||0)>=posQtyMin});
+  if(posQtyMax!=null)f=f.filter(function(p){return(p.qty||0)<=posQtyMax});
   // Мёрджим по счетам ПЕРЕД сортировкой, затем сортируем смёрдженный список
   var merged=showAcc?mergePositions(f):f;
   var sorted=sortPositions(merged,totAll);
-  var plEl=document.getElementById('positionsList');if(plEl)plEl.innerHTML=renderPosList(sorted,totAll,false);
-  // Итого
+  var grandTotal=sorted.reduce(function(s,p){return s+(p.current_value||0)},0);
+  var plEl=document.getElementById('positionsList');if(plEl)plEl.innerHTML=renderPositionsRows(sorted,grandTotal);
+  // Подсветка активной колонки + стрелка направления (↑ asc / ↓ desc)
+  document.querySelectorAll('.pos-table-head .sort-col').forEach(function(s){
+    var active=s.getAttribute('data-sort')===posSortBy;
+    s.classList.toggle('active',active);
+    var ind=s.querySelector('.sort-ind');
+    if(ind)ind.textContent = active ? (posSortDir==='asc'?'↑':'↓') : '⇅';
+  });
+  // Футер: Итого | P&L | Экспорт
   var tEl=document.getElementById('posTotals');
   if(tEl&&sorted.length>0){
-    var tVal=sorted.reduce(function(s,p){return s+(p.current_value||0)},0);
     var tPnl=sorted.reduce(function(s,p){return s+(plMode==='day'?(p.day_delta||0):(p.alltime_delta||0))},0);
-    var pCl=tPnl>0?'up':tPnl<0?'dn':'zero';
+    var pCl=tPnl>0?'up':tPnl<0?'dn':'';
     tEl.style.display='';
-    tEl.innerHTML='<div style="display:flex;justify-content:space-between"><span>'+ic('sigma',14)+' Итого: <b>'+fmt(tVal)+'</b> ('+sorted.length+' шт.)</span><span class="'+pCl+'">P&L: '+(tPnl>0?'+':'')+fmt(tPnl)+'</span></div>';
+    var tv=document.getElementById('pfTotalVal');if(tv)tv.textContent=fmt(grandTotal);
+    var tc=document.getElementById('pfTotalCount');if(tc)tc.textContent='('+sorted.length+' шт.)';
+    var pp=document.getElementById('pfPnl');if(pp){pp.className='pf-pnl '+pCl;pp.textContent='P&L: '+(tPnl>0?'+':'')+fmt(tPnl);}
   }else if(tEl){tEl.style.display='none'}
+}
+
+// 5-колоночный рендер строк позиций (Инструмент · Стоимость · Доля · P&L · P&L %)
+function renderPositionsRows(list,grandTotal){
+  if(!list.length)return'<div class="empty" style="padding:28px;text-align:center;color:var(--muted);font-size:13px">Нет позиций</div>';
+  var h='';
+  list.forEach(function(p){
+    var dval=plMode==='day'?(p.day_delta||0):(p.alltime_delta||p.day_delta||0);
+    var dpct=p.current_value>0?(dval/p.current_value*100):0;
+    var cl=dval>0?'up':dval<0?'dn':'muted';
+    var sign=dval>0?'+':'';
+    var share=grandTotal>0?(p.current_value/grandTotal*100):0;
+    var it=p.instrumentType||'other';
+    var icCls={bond:'bond',share:'share',etf:'etf',currency:'currency'}[it]||'other';
+    var isin=p.isin||'',figi=p.figi||'',logo=p.logo_url||'',ticker=p.ticker||isin;
+    var subParts=[];
+    if(ticker)subParts.push(esc(ticker));
+    if(p.qty)subParts.push(fmtQty(p.qty)+' шт.');
+    // Счета, в которых есть бумага (при просмотре "Все счета" — после mergePositions)
+    if(p.accounts&&p.accounts.length)subParts.push(p.accounts.map(esc).join(' • '));
+    else if(p.account_name)subParts.push(esc(p.account_name));
+    var sub=subParts.join(' · ');
+    // Бейдж типа инструмента рядом с количеством
+    var typeBadge=TYPE_SHORT[it]?'<span class="pos-type-badge '+icCls+'">'+TYPE_SHORT[it]+'</span>':'';
+    var iconHtml='<div class="pos-instr-icon '+icCls+'">'+ic(LI[it]||'circle',16);
+    if(useLogos&&logo){iconHtml+='<img src="'+esc(logo)+'" style="position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;background:var(--bg2)" onerror="this.remove()">'}
+    iconHtml+='</div>';
+    h+='<div class="pos-row pos-cols" onclick="openInstr(\''+ticker+'\',\''+it+'\',\''+figi+'\')">'+
+        '<div class="pos-instr">'+iconHtml+'<div class="pos-instr-text"><div class="pos-instr-name">'+esc(p.name)+'</div><div class="pos-instr-sub">'+sub+typeBadge+'</div></div></div>'+
+        '<div class="num">'+fmt(p.current_value||0)+'</div>'+
+        '<div class="num muted col-share">'+share.toFixed(2)+'%</div>'+
+        '<div class="num '+cl+'">'+(dval!==0?sign+fmt(dval):'—')+'</div>'+
+        '<div class="num '+cl+' col-pnlpct">'+(dval!==0?sign+dpct.toFixed(2)+'%':'—')+'</div>'+
+      '</div>';
+  });
+  return h;
 }
 
 function renderBondsTab(events,nkd){
@@ -1652,23 +2474,46 @@ function renderCalendar(evts){
     g+='</div>';
   }
   var _g_calGrid=document.getElementById('calGrid');if(_g_calGrid)_g_calGrid.innerHTML=g
-  var _g_calPopup=document.getElementById('calPopup');if(_g_calPopup){_g_calPopup.className='cal-popup';_g_calPopup.innerHTML='';}
 
   // Восстанавливаем выделение
   if(calSelectedDay){var sel=document.querySelector('.cal-day[data-day="'+calSelectedDay+'"]');if(sel)sel.classList.add('selected')}
 
-  document.getElementById('calGrid').onclick=function(ev){
+  // Рендер popup для выбранного дня. Вынесли в общую функцию, чтобы вызывать
+  // её и по клику, и при refresh — иначе popup пропадает каждые 60 сек.
+  function renderCalPopup(key){
+    var pp=document.getElementById('calPopup');if(!pp)return;
+    var dayEvts=evByDay[key]||[];
+    if(!dayEvts.length){pp.className='cal-popup';pp.innerHTML='';return;}
+    var ph='<div class="cal-popup-title">'+fmtD(key)+'</div><div class="cal-popup-events">';
+    dayEvts.forEach(function(e){
+      var amt=e.amount||e.amount_est||0;var total=amt*(e.qty||1);
+      var pCls=e.type==='coupon'?'coupon':e.type==='dividend'?'dividend':e.type==='maturity'?'maturity':'offer';
+      ph+='<div class="cal-popup-event">'+
+            '<div class="cal-popup-event-name"><b>'+esc(e.name)+'</b><span class="pill pill-'+pCls+'">'+(TL[e.type]||e.type)+'</span></div>'+
+            (total>0?'<div class="cal-popup-event-amount up">'+fmt(total,2)+'</div>':'')+
+          '</div>';
+    });
+    ph+='</div>';
+    pp.innerHTML=ph;pp.className='cal-popup show';
+  }
+
+  // Если был выбран день — перерендерим popup со свежими данными (не теряем его при auto-refresh)
+  if(calSelectedDay && evByDay[calSelectedDay]){
+    renderCalPopup(calSelectedDay);
+  } else {
+    var pp0=document.getElementById('calPopup');if(pp0){pp0.className='cal-popup';pp0.innerHTML='';}
+    calSelectedDay=null;
+  }
+
+  var _calGridEl=document.getElementById('calGrid');
+  if(_calGridEl)_calGridEl.onclick=function(ev){
     var day=ev.target.closest('.cal-day.has-events');if(!day)return;
-    var key=day.getAttribute('data-day');var dayEvts=evByDay[key]||[];
+    var key=day.getAttribute('data-day');
     // Снимаем старое выделение, ставим новое
     document.querySelectorAll('.cal-day.selected').forEach(function(x){x.classList.remove('selected')});
     day.classList.add('selected');
     calSelectedDay=key;
-    var ph='<div class="cal-popup-title">'+fmtD(key)+'</div>';
-    dayEvts.forEach(function(e){var amt=e.amount||e.amount_est||0;var total=amt*(e.qty||1);
-      var pCls=e.type==='coupon'?'coupon':e.type==='dividend'?'dividend':e.type==='maturity'?'maturity':'offer';
-      ph+='<div class="cal-popup-event"><div>'+esc(e.name)+' <span class="pill pill-'+pCls+'">'+(TL[e.type]||e.type)+'</span></div>'+(total>0?'<div style="font-weight:600">'+fmt(total,2)+'</div>':'')+'</div>'});
-    var pp=document.getElementById('calPopup');if(pp){pp.innerHTML=ph;pp.className='cal-popup show';}
+    renderCalPopup(key);
   };
 }
 
@@ -1712,125 +2557,272 @@ function renderAllocChart(){
 
 function renderCouponChart(){
   if(!D)return;var evts=(D.bond_events||[]).filter(function(e){return e.type==='coupon'});var months={};var totalYear=0;
-  evts.forEach(function(e){if(!e.date)return;var d=new Date(e.date);var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');var l=d.toLocaleDateString('ru-RU',{month:'short',year:'2-digit'});if(!months[k])months[k]={label:l,sum:0};var a=(e.amount||e.amount_est||0)*(e.qty||1);months[k].sum+=a;totalYear+=a});
-  var sorted=Object.entries(months).sort(function(a,b){return a[0].localeCompare(b[0])});var labels=sorted.map(function(e){return e[1].label});var vals=sorted.map(function(e){return e[1].sum});var mx=Math.max.apply(null,vals.concat([0]));
-  var _g_couponChartTitle=document.getElementById('couponChartTitle');if(_g_couponChartTitle)_g_couponChartTitle.innerHTML=ic('coins',14)+' Купоны за 12 мес. ('+fmt(totalYear,0)+')'
+  evts.forEach(function(e){if(!e.date)return;var d=new Date(e.date);var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var mon=d.toLocaleDateString('ru-RU',{month:'short'}).replace('.','');
+    var full=d.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+    if(!months[k])months[k]={label:mon,full:full,sum:0};
+    var a=(e.amount||e.amount_est||0)*(e.qty||1);months[k].sum+=a;totalYear+=a});
+  var sorted=Object.entries(months).sort(function(a,b){return a[0].localeCompare(b[0])});
+  var labels=sorted.map(function(e){return e[1].label});var vals=sorted.map(function(e){return e[1].sum});
+  var fulls=sorted.map(function(e){return e[1].full});
+  var mx=Math.max.apply(null,vals.concat([0]));
+  var _g_couponChartTitle=document.getElementById('couponChartTitle');if(_g_couponChartTitle)_g_couponChartTitle.innerHTML=ic('coins',14)+' Купоны за 12 мес.';
+  var _g_couponTotal=document.getElementById('couponTotal');if(_g_couponTotal)_g_couponTotal.textContent=fmt(totalYear,0);
+
+  var wrap=document.getElementById('couponChartWrap');var tbl=document.getElementById('couponTable');
+  if(couponView==='table'){
+    if(wrap)wrap.style.display='none';
+    if(tbl){
+      tbl.style.display='';
+      var th='<div class="coupon-table">';
+      sorted.forEach(function(e,i){
+        var v=e[1].sum;var w=mx>0?Math.max(3,v/mx*100):0;var peak=(v===mx&&mx>0);
+        var mLabel=e[1].label+' '+e[0].split('-')[0]; // "май 2026"
+        th+='<div class="coupon-trow'+(peak?' peak':'')+'">'+
+            '<span class="ct-month">'+mLabel+'</span>'+
+            '<span class="ct-bar"><span style="width:'+w.toFixed(0)+'%"></span></span>'+
+            '<span class="ct-val">'+fmt(v,0)+'</span>'+
+            '</div>';
+      });
+      th+='</div>';
+      tbl.innerHTML=th;
+    }
+    return;
+  }
+  // Режим "График"
+  if(tbl)tbl.style.display='none';
+  if(wrap)wrap.style.display='';
   var ctx=document.getElementById('couponChart');if(couponChart)couponChart.destroy();
-  couponChart=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:vals.map(function(v){return v===mx&&mx>0?'rgba(184,243,74,.85)':'rgba(96,165,250,.55)'}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fmt(c.parsed.y,2)}}}},scales:{x:{ticks:{color:cs().getPropertyValue('--muted').trim(),font:{size:10}},grid:{display:false}},y:{ticks:{color:cs().getPropertyValue('--muted').trim(),callback:function(v){return fmt(v)}},grid:{color:'rgba(42,47,51,.5)'}}}}});
+  couponChart=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:vals.map(function(v){return v===mx&&mx>0?'rgba(184,243,74,.85)':'rgba(96,165,250,.55)'}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:function(c){return fulls[c[0].dataIndex]||''},label:function(c){return fmt(c.parsed.y,2)}}}},scales:{x:{ticks:{color:cs().getPropertyValue('--muted').trim(),font:{size:11},maxRotation:0,minRotation:0,autoSkip:false},grid:{display:false}},y:{ticks:{color:cs().getPropertyValue('--muted').trim(),callback:function(v){return fmt(v)}},grid:{color:'rgba(42,47,51,.5)'}}}}});
 }
 
 function renderAccountChart(){
-  if(!D)return;var ports=(D.portfolios||[]).filter(function(p){return p.total>0});
-  var wrap=document.getElementById('accountChart');
-  if(!wrap)return;
-  var container=wrap.parentElement.parentElement;
-  if(accountChart){accountChart.destroy();accountChart=null;}
-  if(ports.length<2){container.style.display='none';return}
-  container.style.display='';
-  var labels=ports.map(function(p){return p.name});var values=ports.map(function(p){return p.total});var colors=values.map(function(_,i){return PC[i%PC.length]});
-  accountChart=new Chart(wrap,{type:'bar',data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fmt(c.parsed.x)}}}},scales:{x:{ticks:{color:cs().getPropertyValue('--muted').trim(),callback:function(v){return fmt(v)}},grid:{color:'rgba(42,47,51,.5)'}},y:{ticks:{color:cs().getPropertyValue('--muted').trim()},grid:{display:false}}}}});
+  if(!D)return;
+  var ports=(D.portfolios||[]).filter(function(p){return p.total>0});
+  var card=document.getElementById('accountCard');
+  var box=document.getElementById('accountBars');
+  if(!box)return;
+  if(ports.length<2){if(card)card.style.display='none';return}
+  if(card)card.style.display='';
+  ports=ports.slice().sort(function(a,b){return b.total-a.total});
+  var mx=ports[0].total||1;
+  var h='';
+  ports.forEach(function(p,i){
+    var w=Math.max(4,p.total/mx*100);
+    h+='<div class="acct-row">'+
+       '<div class="acct-top"><span class="acct-name">'+esc(p.name)+'</span><span class="acct-val">'+fmt(p.total)+'</span></div>'+
+       '<div class="acct-track"><div class="acct-bar" style="width:'+w.toFixed(1)+'%;background:'+PC[i%PC.length]+'"></div></div>'+
+       '</div>';
+  });
+  box.innerHTML=h;
 }
 
+// Классификация позиции по валюте/металлу (для экспозиции).
+// Акции/облигации РФ → RUB, наличный доллар → USD, золото → Золото, и т.д.
+function _assetCurrency(p){
+  var t=(p.ticker||'').toUpperCase();
+  var n=(p.name||'');
+  if(/GLD|GOLD/.test(t)||/золот/i.test(n))return'Золото';
+  if(/SLV|SILV/.test(t)||/серебр/i.test(n))return'Серебро';
+  if(/PLT|PLZL.*платин/i.test(t)||/платин/i.test(n))return'Платина';
+  if(/паллад/i.test(n))return'Палладий';
+  if(/^USD/.test(t)||/доллар/i.test(n))return'USD';
+  if(/^EUR/.test(t)||/евро/i.test(n))return'EUR';
+  if(/^CNY/.test(t)||/юан/i.test(n))return'CNY';
+  var m=t.match(/^(GBP|CHF|JPY|HKD|TRY|KZT|BYN|AED)/);if(m)return m[1];
+  return'RUB';
+}
 function renderCurrencyChart(){
   if(!D)return;var pos=D.positions_extra||[];var fPos=selAcc==='all'?pos:pos.filter(function(p){return p.account_id===selAcc});
-  var buckets={};fPos.forEach(function(p){var cur='RUB';if(p.instrumentType==='currency'&&p.name){var m=p.name.match(/^([A-Z]{3})/);if(m)cur=m[1]}buckets[cur]=(buckets[cur]||0)+(p.current_value||0)});
+  var buckets={};fPos.forEach(function(p){var cur=_assetCurrency(p);buckets[cur]=(buckets[cur]||0)+(p.current_value||0)});
   var entries=Object.entries(buckets).filter(function(e){return e[1]>0}).sort(function(a,b){return b[1]-a[1]});
   if(entries.length<1)return;
-  var labels=entries.map(function(e){return e[0]});var values=entries.map(function(e){return e[1]});var colors=values.map(function(_,i){return PC[i%PC.length]});
+  var CMAP={'RUB':'#60A5FA','USD':'#4ADE80','EUR':'#818CF8','CNY':'#F87171','Золото':'#FACC15','Серебро':'#CBD5E1','Платина':'#94A3B8','Палладий':'#A78BFA'};
+  var labels=entries.map(function(e){return e[0]});var values=entries.map(function(e){return e[1]});
+  var colors=labels.map(function(l,i){return CMAP[l]||PC[i%PC.length]});
   var ctx=document.getElementById('currencyChart');if(currencyChart)currencyChart.destroy();
   currencyChart=new Chart(ctx,{type:'doughnut',data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right',labels:{color:cs().getPropertyValue('--muted').trim(),font:{size:11},padding:6,boxWidth:10}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(s,v){return s+v},0);return c.label+': '+fmt(c.parsed)+' ('+(t>0?(c.parsed/t*100).toFixed(1):0)+'%)';}}}}}});
 }
 
 function renderAnalyticsCards(positions,ytm,tNkd){
-  var _g_analyticsCards=document.getElementById('analyticsCards');if(_g_analyticsCards)_g_analyticsCards.innerHTML='<div class="card"><div class="card-label">'+ic('coins',14)+' НКД</div><div class="card-value">'+(tNkd>0?fmt(tNkd,2):'\u2014')+'</div></div>'+
-    '<div class="card"><div class="card-label">'+ic('percent',14)+' YTM</div><div class="card-value">'+(ytm!=null?ytm.toFixed(2)+'%':'\u2014')+'</div></div>'+
-    '<div class="card"><div class="card-label">'+ic('briefcase',14)+' Позиций</div><div class="card-value">'+positions.length+'</div></div>'
+  var el=document.getElementById('analyticsCards');if(!el)return;
+  var ba=(D&&D.bond_analytics)||[];
+  var evts=(D&&D.bond_events)||[];
+  var now=Date.now();
+  var bondCount=positions.filter(function(p){return p.instrumentType==='bond'}).length;
+  var wSum=0,wYears=0;
+  ba.forEach(function(b){if(!b.maturity_date)return;var y=(new Date(b.maturity_date)-now)/(365.25*864e5);if(y<=0)return;var w=(b.qty||0)*(b.current_price||b.face_value||1000);wSum+=w;wYears+=y*w});
+  var avgYears=wSum>0?wYears/wSum:null;
+  var avgStr=avgYears==null?'—':(avgYears<1?Math.round(avgYears*12)+' мес':avgYears.toFixed(1)+' лет');
+  var future=evts.filter(function(e){return (e.type==='coupon'||e.type==='dividend')&&e.date&&new Date(e.date).getTime()>=now-864e5}).sort(function(a,b){return new Date(a.date)-new Date(b.date)});
+  var nextStr='—';
+  if(future.length){var d=dU(future[0].date);nextStr=(d<=0?'сегодня':d===1?'завтра':'через '+d+' дн.');}
+  el.innerHTML=
+    '<div class="card"><div class="card-label">'+ic('landmark',14)+' Облигаций</div><div class="card-value">'+bondCount+'</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('hourglass',14)+' Средний срок</div><div class="card-value">'+avgStr+'</div></div>'+
+    '<div class="card"><div class="card-label">'+ic('calendar-clock',14)+' Ближайшая выплата</div><div class="card-value">'+nextStr+'</div></div>';
 }
+
+function _ladderPlural(n){var a=Math.abs(n)%100,b=a%10;if(a>10&&a<20)return'бумаг';if(b>1&&b<5)return'бумаги';if(b===1)return'бумага';return'бумаг';}
 
 function renderBondLadder(){
   if(!D)return;
   var ba=D.bond_analytics||[];
   var evts=D.bond_events||[];
-  // Фильтруем облигации с датой погашения
+  var wrap=document.getElementById('ladderWrap');
   var bonds=ba.filter(function(b){return b.maturity_date});
-  if(!bonds.length){document.getElementById('ladderWrap').style.display='none';return}
-  document.getElementById('ladderWrap').style.display='';
+  if(!bonds.length){if(wrap)wrap.style.display='none';return}
 
-  // Собираем оферты/call для каждой облигации
+  // Оферты по бумаге (ближайшая будущая)
   var offers={};
   evts.forEach(function(e){
-    if(e.type==='offer'||e.type==='call'){
-      var k=e.figi||e.isin;
-      if(!offers[k])offers[k]=[];
-      offers[k].push({type:e.type,date:new Date(e.date)});
-    }
+    if(e.type==='offer'||e.type==='call'){var k=e.figi||e.isin;(offers[k]=offers[k]||[]).push(new Date(e.date));}
   });
 
   var now=Date.now();
-  // Считаем годы до погашения, сортируем
   bonds=bonds.map(function(b){
     var mat=new Date(b.maturity_date);
     var years=Math.max(0,(mat-now)/(365.25*864e5));
-    return {name:b.name,isin:b.isin,figi:b.figi,ticker:b.ticker||'',qty:b.qty,face:b.face_value||1000,maturity:mat,years:years,
-            offers:offers[b.figi]||offers[b.isin]||[]};
+    var val=(b.qty||0)*(b.current_price||b.face_value||1000);
+    var offs=(offers[b.figi]||offers[b.isin]||[]).filter(function(d){var oy=(d-now)/(365.25*864e5);return oy>0&&oy<years}).sort(function(a,b){return a-b});
+    return {name:b.name,isin:b.isin,figi:b.figi,ticker:b.ticker||'',qty:b.qty,maturity:mat,years:years,value:val,nextOffer:offs.length?offs[0]:null};
   }).filter(function(b){return b.years>0}).sort(function(a,b){return a.maturity-b.maturity});
 
-  if(!bonds.length){document.getElementById('ladderWrap').style.display='none';return}
+  if(!bonds.length){if(wrap)wrap.style.display='none';return}
+  if(wrap)wrap.style.display='';
 
-  var maxYears=Math.max.apply(null,bonds.map(function(b){return b.years}));
-  if(maxYears<0.1)maxYears=1;
-
-  var h='';
-  bonds.forEach(function(b){
-    var pct=Math.min(100,b.years/maxYears*100);
-    var cls=b.years<=2?'short':b.years<=5?'medium':'long';
-    var matStr=b.maturity.toLocaleDateString('ru-RU',{month:'short',year:'numeric'});
-    var yStr=b.years<1?(Math.round(b.years*12))+' мес':b.years.toFixed(1)+' лет';
-
-    var ticker=b.ticker||b.isin||'';
-    h+='<div class="ladder-row">';
-    h+='<div class="ladder-label" title="'+esc(b.name)+' ('+esc(ticker)+')" onclick="openInstr(\''+esc(ticker)+'\',\'bond\',\''+esc(b.figi)+'\')">'+esc(b.name)+'</div>';
-    h+='<div class="ladder-track">';
-    h+='<div class="ladder-bar '+cls+'" style="width:'+pct+'%"></div>';
-
-    // Маркеры оферт
-    b.offers.forEach(function(o){
-      var oYears=Math.max(0,(o.date-now)/(365.25*864e5));
-      if(oYears>0&&oYears<b.years){
-        var oPct=oYears/maxYears*100;
-        var oType=o.type==='offer'?'Оферта':'Колл-оферта';
-        var oDate=o.date.toLocaleDateString('ru-RU',{day:'2-digit',month:'short',year:'numeric'});
-        h+='<div class="ladder-marker" style="left:'+oPct+'%"><div class="ladder-tooltip">'+oType+': '+oDate+'</div></div>';
-      }
-    });
-
-    h+='</div>';
-    h+='<div class="ladder-years">'+matStr+'<br><span style="font-size:10px;opacity:.6">'+yStr+'</span></div>';
-    h+='</div>';
+  var body=document.getElementById('ladderBody');
+  var legend=document.getElementById('ladderLegend');
+  if(ladderMode==='table'){
+    if(body)body.innerHTML=renderLadderTable(bonds);
+    if(legend)legend.innerHTML='';
+  }else{
+    if(body)body.innerHTML=renderLadderBuckets(bonds);
+    if(legend)legend.innerHTML='';
+  }
+  // Активный чип
+  document.querySelectorAll('#ladderModeChips .chip').forEach(function(c){
+    c.classList.toggle('active',c.getAttribute('data-lmode')===ladderMode);
   });
+}
 
-  var _g_ladderBody=document.getElementById('ladderBody');if(_g_ladderBody)_g_ladderBody.innerHTML=h
-  var _g_ladderLegend=document.getElementById('ladderLegend');if(_g_ladderLegend)_g_ladderLegend.innerHTML='<div class="ladder-legend-item"><span class="ladder-dot" style="background:#4ADE80"></span> до 2 лет</div>'+
-    '<div class="ladder-legend-item"><span class="ladder-dot" style="background:#60A5FA"></span> 2–5 лет</div>'+
-    '<div class="ladder-legend-item"><span class="ladder-dot" style="background:#C084FC"></span> 5+ лет</div>'+
-    '<div class="ladder-legend-item"><span class="ladder-dot" style="background:var(--orange)width:3px;height:12px;border-radius:1px"></span> Оферта</div>';
+// Общий разбор бумаг по бакетам сроков (используется обоими режимами).
+function _ladderBuckets(bonds){
+  var defs=[
+    {label:'до 1 года',max:1,      color:'#4ADE80'},
+    {label:'1–2 года', max:2,      color:'#34D399'},
+    {label:'2–3 года', max:3,      color:'#60A5FA'},
+    {label:'3–5 лет',  max:5,      color:'#818CF8'},
+    {label:'5+ лет',   max:Infinity,color:'#C084FC'}
+  ];
+  defs.forEach(function(d){d.bonds=[]});
+  bonds.forEach(function(b){for(var i=0;i<defs.length;i++){if(b.years<=defs[i].max){defs[i].bonds.push(b);break;}}});
+  return defs;
+}
+
+// Переключение раскрытия бакета (раскрывает список бумаг под полосой).
+window.toggleLadderBucket=function(label,headEl){
+  ladderOpen[label]=!ladderOpen[label];
+  var g=headEl.closest('.lb-group');if(g)g.classList.toggle('open',ladderOpen[label]);
+};
+
+// Режим "Визуально": распределение по срокам + раскрывающийся список бумаг.
+function renderLadderBuckets(bonds){
+  var buckets=_ladderBuckets(bonds);
+  var maxVal=1;
+  buckets.forEach(function(bk){var v=bk.bonds.reduce(function(s,b){return s+b.value},0);if(v>maxVal)maxVal=v;});
+  var h='<div class="ladder-buckets">';
+  buckets.forEach(function(bk){
+    if(!bk.bonds.length)return;
+    var val=bk.bonds.reduce(function(s,b){return s+b.value},0);
+    var pct=Math.max(4,val/maxVal*100);
+    var nOffers=bk.bonds.filter(function(b){return b.nextOffer}).length;
+    var open=!!ladderOpen[bk.label];
+    h+='<div class="lb-group'+(open?' open':'')+'">';
+    h+='<div class="lb-row" onclick="toggleLadderBucket(\''+bk.label+'\',this)">'+
+       '<div class="lb-label"><i data-lucide="chevron-right" class="lb-chev"></i>'+bk.label+'</div>'+
+       '<div class="lb-track"><div class="lb-bar" style="width:'+pct.toFixed(1)+'%;background:'+bk.color+'"></div></div>'+
+       '<div class="lb-meta"><b>'+bk.bonds.length+'</b> '+_ladderPlural(bk.bonds.length)+
+         (nOffers?'<span class="lb-offer" title="С офертой">'+ic('alert-triangle',11)+nOffers+'</span>':'')+
+       '</div>'+
+       '</div>';
+    h+='<div class="lb-items">';
+    bk.bonds.forEach(function(b){
+      var ticker=b.ticker||b.isin||'';
+      var matStr=b.maturity.toLocaleDateString('ru-RU',{day:'2-digit',month:'short',year:'numeric'});
+      var yStr=b.years<1?Math.round(b.years*12)+' мес':b.years.toFixed(1)+' г';
+      var offerBadge='';
+      if(b.nextOffer){
+        var od=b.nextOffer.toLocaleDateString('ru-RU',{day:'2-digit',month:'short',year:'2-digit'});
+        offerBadge=' <span class="lb-offer-badge" title="Дата оферты">'+ic('alert-triangle',9)+' оферта '+od+'</span>';
+      }
+      h+='<div class="lb-item" onclick="openInstr(\''+esc(ticker)+'\',\'bond\',\''+esc(b.figi)+'\')">'+
+         '<span class="lb-item-name">'+esc(b.name)+offerBadge+'</span>'+
+         '<span class="lb-item-meta">'+esc(ticker)+' · '+matStr+' · '+yStr+'</span>'+
+         '</div>';
+    });
+    h+='</div></div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+// Режим "В цифрах": таблица, сгруппированная по срокам.
+function renderLadderTable(bonds){
+  var buckets=_ladderBuckets(bonds);
+  var h='<div class="ladder-table">';
+  h+='<div class="lt-head"><span>Облигация</span><span class="num">Погашение</span><span class="num">Срок</span><span class="num col-qty">Кол-во</span></div>';
+  buckets.forEach(function(bk){
+    if(!bk.bonds.length)return;
+    h+='<div class="lt-group-head" style="color:'+bk.color+'">'+bk.label+' · '+bk.bonds.length+' '+_ladderPlural(bk.bonds.length)+'</div>';
+    bk.bonds.forEach(function(b){
+      var ticker=b.ticker||b.isin||'';
+      var matStr=b.maturity.toLocaleDateString('ru-RU',{day:'2-digit',month:'short',year:'numeric'});
+      var soon=b.years<1;
+      var yStr=soon?Math.round(b.years*12)+' мес':b.years.toFixed(1)+' г';
+      var offerBadge=b.nextOffer?' <span class="pill pill-offer" style="font-size:9px;padding:1px 6px">оферта</span>':'';
+      h+='<div class="lt-row" onclick="openInstr(\''+esc(ticker)+'\',\'bond\',\''+esc(b.figi)+'\')">'+
+         '<div class="lt-name"><div class="lt-name-t">'+esc(b.name)+offerBadge+'</div><div class="lt-sub">'+esc(ticker)+'</div></div>'+
+         '<div class="num">'+matStr+'</div>'+
+         '<div class="num'+(soon?' term-soon':'')+'">'+yStr+'</div>'+
+         '<div class="num col-qty">'+fmtQty(b.qty)+' шт.</div>'+
+         '</div>';
+    });
+  });
+  h+='</div>';
+  return h;
 }
 
 function renderMovers(positions){
   var wd=positions.filter(function(p){return p.day_delta!=null&&p.day_delta!==0}).sort(function(a,b){return b.day_delta-a.day_delta});
-  var g=wd.filter(function(p){return p.day_delta>0}).slice(0,3);var l=wd.filter(function(p){return p.day_delta<0}).slice(-3).reverse();
-  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div>';
-  g.forEach(function(p){h+='<div class="pos-item" onclick="openInstr(\''+esc(p.isin)+'\',\''+p.instrumentType+'\',\''+esc(p.figi||'')+'\')"><div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div></div><div class="pos-right"><div class="pos-delta up">+'+fmt(p.day_delta)+'</div></div></div>'});
-  if(!g.length)h+='<div class="empty" style="padding:16px">\u2014</div>';
-  h+='</div><div>';
-  l.forEach(function(p){h+='<div class="pos-item" onclick="openInstr(\''+esc(p.isin)+'\',\''+p.instrumentType+'\',\''+esc(p.figi||'')+'\')"><div class="pos-info"><div class="pos-name">'+esc(p.name)+'</div></div><div class="pos-right"><div class="pos-delta dn">'+fmt(p.day_delta)+'</div></div></div>'});
-  if(!l.length)h+='<div class="empty" style="padding:16px">\u2014</div>';
-  var _g_moversBlock=document.getElementById('moversBlock');h+='</div></div>';if(_g_moversBlock)_g_moversBlock.innerHTML=h
+  var g=wd.filter(function(p){return p.day_delta>0}).slice(0,5);
+  var l=wd.filter(function(p){return p.day_delta<0}).slice(-5).reverse();
+  function row(p,cls){
+    var pct=p.current_value>0?(p.day_delta/p.current_value*100):0;
+    var sign=p.day_delta>0?'+':'';
+    return '<div class="mover-row" onclick="openInstr(\''+esc(p.ticker||p.isin)+'\',\''+p.instrumentType+'\',\''+esc(p.figi||'')+'\')">'+
+      '<span class="mover-name">'+esc(p.name)+'</span>'+
+      '<span class="mover-vals '+cls+'"><span class="v">'+sign+fmt(p.day_delta)+'</span><span class="p">'+sign+pct.toFixed(2)+'%</span></span>'+
+      '</div>';
+  }
+  var h='<div class="movers-grid"><div>'+
+    '<div class="movers-col-title up">'+ic('trending-up',13)+' \u041b\u0443\u0447\u0448\u0438\u0435</div>';
+  h+= g.length?g.map(function(p){return row(p,'up')}).join(''):'<div class="empty" style="padding:14px 0;color:var(--muted);font-size:13px">\u041d\u0435\u0442 \u0440\u043e\u0441\u0442\u0430</div>';
+  h+='</div><div>'+
+    '<div class="movers-col-title dn">'+ic('trending-down',13)+' \u0425\u0443\u0434\u0448\u0438\u0435</div>';
+  h+= l.length?l.map(function(p){return row(p,'dn')}).join(''):'<div class="empty" style="padding:14px 0;color:var(--muted);font-size:13px">\u041d\u0435\u0442 \u043f\u0430\u0434\u0435\u043d\u0438\u0439</div>';
+  h+='</div></div>';
+  var _g_moversBlock=document.getElementById('moversBlock');if(_g_moversBlock)_g_moversBlock.innerHTML=h;
 }
 
 function calcYTM(ba){var wS=0,wY=0;ba.forEach(function(b){if(!b.maturity_date||!b.face_value)return;var y=(new Date(b.maturity_date)-Date.now())/(365.25*864e5);if(y<=0)return;var v=(b.annual_coupon+(b.face_value-b.current_price)/y)/((b.face_value+b.current_price)/2)*100;var w=b.qty*b.current_price;wS+=w;wY+=v*w});return wS>0?wY/wS:null}
 
-function loadData(){pywebview.api.get_data().then(function(raw){render(JSON.parse(raw))}).catch(function(err){document.querySelector('.app').innerHTML='<div class="empty">Ошибка: '+err+'</div>'})}
+function loadData(){pywebview.api.get_data().then(function(raw){render(JSON.parse(raw))}).catch(function(err){
+  // Показываем стек ошибки — помогает локализовать проблему (строку), а не только тип
+  console.error('render/loadData error:', err, err&&err.stack);
+  var msg=(err&&err.stack)?err.stack:(''+err);
+  document.querySelector('.app').innerHTML='<div class="empty" style="padding:24px;white-space:pre-wrap;text-align:left;font-family:var(--font-mono);font-size:11px;color:var(--muted)">Ошибка рендера:\n'+msg+'</div>';
+})}
 var _dataLoaded=false;
 function startLoading(){
   if(_dataLoaded)return;
@@ -1858,9 +2850,88 @@ document.getElementById('posSearch').addEventListener('input',function(){
   if(D&&D._lastPosArgs)applyPosFilter(D._lastPosArgs[0],D._lastPosArgs[1],D._lastPosArgs[2]);
   lucide.createIcons();
 });
+// Фильтр по количеству (от/до) — popover в панели управления Позиций
+(function(){
+  var fw=document.getElementById('qtyFilter');if(!fw)return;
+  var btn=document.getElementById('qtyFilterBtn');
+  var minI=document.getElementById('qtyMin');
+  var maxI=document.getElementById('qtyMax');
+  var lbl=document.getElementById('qtyFilterLabel');
+  var reset=document.getElementById('qtyReset');
+  function apply(){
+    var mn=minI.value.trim()===''?null:Math.max(0,parseFloat(minI.value));
+    var mx=maxI.value.trim()===''?null:Math.max(0,parseFloat(maxI.value));
+    posQtyMin=(mn==null||isNaN(mn))?null:mn;
+    posQtyMax=(mx==null||isNaN(mx))?null:mx;
+    var active=posQtyMin!=null||posQtyMax!=null;
+    fw.classList.toggle('active',active);
+    if(lbl)lbl.textContent=active?((posQtyMin!=null?posQtyMin:'')+'–'+(posQtyMax!=null?posQtyMax:'')):'Кол-во';
+    if(D&&D._lastPosArgs)applyPosFilter(D._lastPosArgs[0],D._lastPosArgs[1],D._lastPosArgs[2]);
+    lucide.createIcons();
+  }
+  btn.addEventListener('click',function(e){e.stopPropagation();fw.classList.toggle('open')});
+  minI.addEventListener('input',apply);
+  maxI.addEventListener('input',apply);
+  reset.addEventListener('click',function(){minI.value='';maxI.value='';apply();fw.classList.remove('open')});
+  document.addEventListener('click',function(e){if(!fw.contains(e.target))fw.classList.remove('open')});
+})();
+// Упрощённый дизайн: чипы сортировки + фильтр количества для списка позиций.
+(function(){
+  var sc=document.getElementById('simpleSortChips');
+  if(sc)sc.addEventListener('click',function(e){
+    var c=e.target.closest('.chip');if(!c)return;
+    var f=c.getAttribute('data-ssort');
+    if(posSortBy===f){posSortDir=(posSortDir==='desc')?'asc':'desc';}
+    else{posSortBy=f;posSortDir=(f==='name')?'asc':'desc';}
+    sc.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-ssort')===posSortBy)});
+    if(D)render(D);
+  });
+  var fw=document.getElementById('qtyFilter2');
+  if(fw){
+    var btn=document.getElementById('qtyFilterBtn2');
+    var minI=document.getElementById('qtyMin2');
+    var maxI=document.getElementById('qtyMax2');
+    var lbl=document.getElementById('qtyFilterLabel2');
+    var reset=document.getElementById('qtyReset2');
+    function apply(){
+      var mn=minI.value.trim()===''?null:Math.max(0,parseFloat(minI.value));
+      var mx=maxI.value.trim()===''?null:Math.max(0,parseFloat(maxI.value));
+      posQtyMin=(mn==null||isNaN(mn))?null:mn;
+      posQtyMax=(mx==null||isNaN(mx))?null:mx;
+      var active=posQtyMin!=null||posQtyMax!=null;
+      fw.classList.toggle('active',active);
+      if(lbl)lbl.textContent=active?((posQtyMin!=null?posQtyMin:'')+'–'+(posQtyMax!=null?posQtyMax:'')):'Кол-во';
+      if(D)render(D);
+    }
+    btn.addEventListener('click',function(e){e.stopPropagation();fw.classList.toggle('open')});
+    minI.addEventListener('input',apply);
+    maxI.addEventListener('input',apply);
+    reset.addEventListener('click',function(){minI.value='';maxI.value='';apply();fw.classList.remove('open')});
+    document.addEventListener('click',function(e){if(!fw.contains(e.target))fw.classList.remove('open')});
+  }
+})();
+// Сортировка кликом по заголовку колонки (Стоимость / Доля / P&L).
+// Клик по той же колонке — переключает направление (по убыв. ↓ ↔ по возр. ↑).
+(function(){
+  var head=document.querySelector('.pos-table-head');
+  if(!head)return;
+  head.addEventListener('click',function(e){
+    var col=e.target.closest('.sort-col');if(!col)return;
+    var field=col.getAttribute('data-sort');
+    if(posSortBy===field){
+      posSortDir=(posSortDir==='desc')?'asc':'desc'; // та же колонка → меняем направление
+    }else{
+      posSortBy=field;posSortDir='desc'; // новая колонка → по убыванию
+    }
+    var ss=document.getElementById('posSort');if(ss)ss.value=posSortBy; // синхроним дропдаун
+    if(D&&D._lastPosArgs)applyPosFilter(D._lastPosArgs[0],D._lastPosArgs[1],D._lastPosArgs[2]);
+    lucide.createIcons();
+  });
+})();
 // Export
 document.getElementById('selExport').addEventListener('change',function(){
-  var v=this.value;this.selectedIndex=0;
+  // После клика сбрасываем .value в пустой — лейбл вернётся в placeholder ("Экспорт").
+  var v=this.value;this.value='';
   if(!D)return;
   if(v==='excel'){
     pywebview.api.export_xlsx().then(function(r){

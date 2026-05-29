@@ -109,6 +109,7 @@ def make_icon(size: int, fg: tuple, bg: tuple) -> Image.Image:
 
 
 # ── Пресеты ──────────────────────────────────────────────────────────────────
+# Под ТЁМНЫЙ taskbar Windows (default) — цветной squircle + чёрный логотип
 PRESETS: dict[str, dict] = {
     "icon":     {"bg": LIME,   "fg": BLACK},  # бренд
     "positive": {"bg": GREEN,  "fg": BLACK},
@@ -118,15 +119,30 @@ PRESETS: dict[str, dict] = {
     "crit":     {"bg": RED,    "fg": WHITE},
 }
 
+# Под СВЕТЛЫЙ taskbar Windows — тёмный squircle + цветной логотип
+# (так иконка остаётся читаемой, не сливается с белым фоном таскбара)
+PRESETS_LIGHT: dict[str, dict] = {
+    "icon":     {"bg": DARK,   "fg": LIME},
+    "positive": {"bg": DARK,   "fg": GREEN},
+    "negative": {"bg": DARK,   "fg": RED},
+    "neutral":  {"bg": DARK,   "fg": GREY},
+    "warn":     {"bg": DARK,   "fg": ORANGE},
+    "crit":     {"bg": DARK,   "fg": RED},
+}
+
 STATE_NAMES = ("positive", "negative", "neutral", "warn", "crit")
 
 
-def generate(names: list[str]) -> list[Path]:
+def generate(names: list[str], variant: str = "dark") -> list[Path]:
+    """variant: 'dark' — для тёмного taskbar (без суффикса);
+               'light' — для светлого taskbar (суффикс -light)."""
     out = []
+    presets = PRESETS_LIGHT if variant == "light" else PRESETS
+    suffix  = "-light" if variant == "light" else ""
     for name in names:
-        preset = PRESETS[name]
+        preset = presets[name]
         img = make_icon(ICON_SIZE, fg=preset["fg"], bg=preset["bg"])
-        path = ICONS / f"{name}.png"
+        path = ICONS / f"{name}{suffix}.png"
         img.save(path, "PNG")
         out.append(path)
     return out
@@ -155,12 +171,14 @@ def main():
     do_all = not (args.ico or args.brand or args.states)
 
     if args.brand or do_all:
-        for p in generate(["icon"]):
-            print(f"  [ok] {p.relative_to(ROOT)}")
+        for variant in ("dark", "light"):
+            for p in generate(["icon"], variant=variant):
+                print(f"  [ok] {p.relative_to(ROOT)}")
 
     if args.states or do_all:
-        for p in generate(list(STATE_NAMES)):
-            print(f"  [ok] {p.relative_to(ROOT)}")
+        for variant in ("dark", "light"):
+            for p in generate(list(STATE_NAMES), variant=variant):
+                print(f"  [ok] {p.relative_to(ROOT)}")
 
     if args.ico or args.brand or do_all:
         ico = regenerate_ico()

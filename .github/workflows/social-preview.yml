@@ -24,21 +24,39 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install Pillow
-        run: pip install --quiet Pillow
+      - name: Install Python deps
+        # Pillow — рендеринг; resvg-py — нативный SVG-рендерер для logo.svg.
+        # Без resvg-py логотип Stack рисуется fallback-полигонами (некрасиво).
+        run: pip install --quiet Pillow resvg-py
 
       - name: Download fonts (Inter + JetBrains Mono)
+        # -f: упасть на HTTP-ошибке (раньше curl молча писал 404-страницу в .ttf
+        #     и Pillow откатывался на load_default() — отсюда мелкий текст).
+        # -S: показать ошибку  -L: следовать редиректам  -o: вывод в файл.
         run: |
+          set -euo pipefail
           mkdir -p assets/fonts
-          # Inter
-          curl -sL -o assets/fonts/Inter-Regular.ttf https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Regular.ttf
-          curl -sL -o assets/fonts/Inter-Medium.ttf  https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Medium.ttf
-          curl -sL -o assets/fonts/Inter-Bold.ttf    https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Bold.ttf
-          curl -sL -o assets/fonts/Inter-Black.ttf   https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Black.ttf
-          # JetBrains Mono
-          curl -sL -o assets/fonts/JetBrainsMono-Regular.ttf https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsMono-Regular.ttf
-          curl -sL -o assets/fonts/JetBrainsMono-Bold.ttf    https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsMono-Bold.ttf
-          ls -la assets/fonts/
+          # Inter — фиксированный релиз v4.1 (а не master, который может двигаться)
+          INTER_BASE="https://github.com/rsms/inter/raw/v4.1/docs/font-files"
+          curl -fSL -o assets/fonts/Inter-Regular.ttf "$INTER_BASE/Inter-Regular.ttf"
+          curl -fSL -o assets/fonts/Inter-Medium.ttf  "$INTER_BASE/Inter-Medium.ttf"
+          curl -fSL -o assets/fonts/Inter-Bold.ttf    "$INTER_BASE/Inter-Bold.ttf"
+          curl -fSL -o assets/fonts/Inter-Black.ttf   "$INTER_BASE/Inter-Black.ttf"
+          # JetBrains Mono — фиксированный релиз v2.304
+          JBM_BASE="https://github.com/JetBrains/JetBrainsMono/raw/v2.304/fonts/ttf"
+          curl -fSL -o assets/fonts/JetBrainsMono-Regular.ttf "$JBM_BASE/JetBrainsMono-Regular.ttf"
+          curl -fSL -o assets/fonts/JetBrainsMono-Bold.ttf    "$JBM_BASE/JetBrainsMono-Bold.ttf"
+          # Sanity-check: настоящий TTF должен весить хотя бы 50 КБ.
+          # Если меньше — это 404 HTML или редирект, заваливаем сборку явно.
+          for f in assets/fonts/*.ttf; do
+            size=$(stat -c%s "$f")
+            if [ "$size" -lt 50000 ]; then
+              echo "::error::$f is only $size bytes — download likely failed"
+              head -c 200 "$f"
+              exit 1
+            fi
+            printf "  %-50s %s bytes\n" "$f" "$size"
+          done
 
       - name: Generate previews (default + all locales)
         run: |

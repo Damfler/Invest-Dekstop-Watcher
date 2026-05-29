@@ -245,7 +245,14 @@ class DataStore:
             figi = pos.get("figi", "")
             if not figi or figi in self._instrument_cache:
                 continue
-            needs = not pos.get("isin") or pos.get("name") == figi or self._cfg.get("use_logos")
+            # Обогащаем, если не хватает любого из: ISIN, имени, logo_url.
+            # use_logos тут НЕ участвует — URL логотипа достаём всегда (один раз,
+            # кэшируется), а покажет его JS или нет — решает фронт по своему флагу.
+            needs = (
+                not pos.get("isin")
+                or pos.get("name") == figi
+                or not pos.get("logo_url")
+            )
             if not needs:
                 continue
 

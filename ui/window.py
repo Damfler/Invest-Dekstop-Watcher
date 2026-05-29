@@ -504,7 +504,12 @@ class DashboardWindow:
                 self._visible = True
                 self._window.show()
                 try:
-                    self._window.evaluate_js("if(typeof loadData==='function')loadData();")
+                    # Обновляем данные И возвращаемся на главную вкладку (Обзор),
+                    # чтобы при повторном открытии не показывались, например, Настройки.
+                    self._window.evaluate_js(
+                        "if(typeof loadData==='function')loadData();"
+                        "if(typeof goOverview==='function')goOverview();"
+                    )
                 except Exception:
                     pass
         except Exception:
