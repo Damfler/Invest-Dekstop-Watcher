@@ -36,12 +36,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p assets/fonts
-          # Inter — фиксированный релиз v4.1 (а не master, который может двигаться)
-          INTER_BASE="https://github.com/rsms/inter/raw/v4.1/docs/font-files"
-          curl -fSL -o assets/fonts/Inter-Regular.ttf "$INTER_BASE/Inter-Regular.ttf"
-          curl -fSL -o assets/fonts/Inter-Medium.ttf  "$INTER_BASE/Inter-Medium.ttf"
-          curl -fSL -o assets/fonts/Inter-Bold.ttf    "$INTER_BASE/Inter-Bold.ttf"
-          curl -fSL -o assets/fonts/Inter-Black.ttf   "$INTER_BASE/Inter-Black.ttf"
+          # Inter v4.1: в git остались только .woff2; статические .ttf — в release zip
+          curl -fSL -o /tmp/Inter-4.1.zip "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip"
+          for f in Inter-Regular Inter-Medium Inter-Bold Inter-Black; do
+            unzip -p /tmp/Inter-4.1.zip "extras/ttf/${f}.ttf" > "assets/fonts/${f}.ttf"
+          done
+          rm -f /tmp/Inter-4.1.zip
           # JetBrains Mono — фиксированный релиз v2.304
           JBM_BASE="https://github.com/JetBrains/JetBrainsMono/raw/v2.304/fonts/ttf"
           curl -fSL -o assets/fonts/JetBrainsMono-Regular.ttf "$JBM_BASE/JetBrainsMono-Regular.ttf"
