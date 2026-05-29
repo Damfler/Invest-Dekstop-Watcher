@@ -12,9 +12,30 @@ from utils.formatting import money_value, parse_ts, days_until, alert_key
 import time as _time
 from core.cache import save_cache, load_cache, save_history, load_history
 from core.config import load_dismissed, save_dismissed
-from constants import ALERT_NONE, ALERT_WARN, ALERT_CRIT
+from constants import ALERT_NONE, ALERT_WARN, ALERT_CRIT, API_BOND_PAUSE_SEC
 
 log = logging.getLogger("tbank.data")
+
+
+def _annual_coupon_from_bond(bond: dict) -> float:
+    """Годовой купонный доход на 1 облигацию (₽)."""
+    per_year = float(bond.get("couponQuantityPerYear", 0) or 0)
+    per_coupon = money_value(bond.get("coupon"))
+    if per_coupon > 0 and per_year > 0:
+        return per_coupon * per_year
+    nominal = money_value(bond.get("nominal")) or money_value(bond.get("initialNominal"))
+    rate = bond.get("couponRate")
+    if nominal > 0 and rate is not None:
+        r = money_value(rate) if isinstance(rate, dict) else float(rate)
+        if r > 1:
+            r /= 100.0
+        return nominal * r * (per_year or 1.0)
+    return 0.0
+
+
+def _event_on_or_after_today(dt: datetime) -> bool:
+    """Событие сегодня или в будущем (локальный календарь, как days_until)."""
+    return days_until(dt) >= 0
 
 
 class DataStore:
@@ -27,6 +48,7 @@ class DataStore:
     def __init__(self, apis: list, cfg: dict):
         # apis: list of (connection_name: str, api_instance)
         self._apis = apis
+        self._api_by_name = {name: api for name, api in apis}
         self._cfg  = cfg
         self._lock = threading.Lock()
 
@@ -170,17 +192,25 @@ class DataStore:
 
                         if itype == "bond" and figi and qty > 0:
                             if figi in bond_pos:
-                                bond_pos[figi]["qty"]       += qty
-                                bond_nkd[figi]["qty"]       += qty
+                                bond_pos[figi]["qty"] += qty
+                                bond_nkd[figi]["qty"] += qty
                                 bond_nkd[figi]["nkd_total"] += nkd * qty
+                                if cur_p > 0:
+                                    bond_nkd[figi]["clean_price"] = cur_p
                             else:
-                                bond_pos[figi] = {"name": name, "isin": isin, "qty": qty}
+                                bond_pos[figi] = {
+                                    "name":            name,
+                                    "isin":            isin,
+                                    "qty":             qty,
+                                    "connection_name": conn_name,
+                                }
                                 bond_nkd[figi] = {
-                                    "name":      name,
-                                    "isin":      isin,
-                                    "nkd_per":   nkd,
-                                    "nkd_total": nkd * qty,
-                                    "qty":       qty,
+                                    "name":        name,
+                                    "isin":        isin,
+                                    "nkd_per":     nkd,
+                                    "nkd_total":   nkd * qty,
+                                    "qty":         qty,
+                                    "clean_price": cur_p,
                                 }
 
                     result.append({
@@ -195,7 +225,8 @@ class DataStore:
                 # Быстрое обогащение из кэша (без API-запросов)
                 for pos in positions_all:
                     figi = pos.get("figi", "")
-                    cached = self._instrument_cache.get(figi) if figi else None
+                    with self._lock:
+                        cached = self._instrument_cache.get(figi) if figi else None
                     if cached:
                         if not pos["isin"]:
                             pos["isin"] = cached.get("isin", "")
@@ -219,7 +250,7 @@ class DataStore:
             self.bond_nkd        = bond_nkd
             self.positions_extra = positions_all
             self.last_update     = datetime.now().strftime("%H:%M:%S")
-            self.error           = "; ".join(errors) if errors and not result else None
+            self.error           = "; ".join(errors) if errors else None
 
             # Записываем точку истории (раз в 5 минут)
             total_val = sum(p["total"] for p in result)
@@ -231,20 +262,20 @@ class DataStore:
                 })
                 self._last_history_ts = now_ts
 
-        # Фоновое обогащение (ISIN, имена, логотипы) — после сохранения данных
-        self._enrich_positions()
-
     def _enrich_positions(self):
-        """Обогащает позиции данными инструментов (ISIN, тикер, логотип).
-        Вызывается ПОСЛЕ сохранения портфеля, не блокирует отображение."""
+        """Обогащает акции/ETF/валюту (ISIN, тикер, логотип).
+        Облигации — только в fetch_bond_events (один BondBy на бумагу)."""
         with self._lock:
             positions = list(self.positions_extra)
 
         changed = False
         for pos in positions:
             figi = pos.get("figi", "")
-            if not figi or figi in self._instrument_cache:
+            if not figi:
                 continue
+            with self._lock:
+                if figi in self._instrument_cache:
+                    continue
             # Обогащаем, если не хватает любого из: ISIN, имени, logo_url.
             # use_logos тут НЕ участвует — URL логотипа достаём всегда (один раз,
             # кэшируется), а покажет его JS или нет — решает фронт по своему флагу.
@@ -256,19 +287,16 @@ class DataStore:
             if not needs:
                 continue
 
-            _time.sleep(0.2)
-            # Берём первый API из списка
-            if not self._apis:
-                break
-            _, api = self._apis[0]
-
             itype = pos.get("instrumentType", "")
+            if itype == "bond":
+                continue
+
+            conn_name = pos.get("connection_name", "")
+            api = self._api_by_name.get(conn_name) or self._apis[0][1]
+
             info = None
             try:
-                if itype == "bond":
-                    info = api.get_bond_by_figi(figi)
-                if not info:
-                    info = api.get_instrument_by_figi(figi)
+                info = api.get_instrument_by_figi(figi)
             except Exception:
                 continue
             if not info:
@@ -288,10 +316,11 @@ class DataStore:
                 logo_url = LOGO_CDN.format(logo_id=logo_id)
                 pos["logo_url"] = logo_url
 
-            self._instrument_cache[figi] = {
-                "isin": pos.get("isin", ""), "name": pos.get("name", ""),
-                "ticker": pos.get("ticker", ""), "logo_url": logo_url,
-            }
+            with self._lock:
+                self._instrument_cache[figi] = {
+                    "isin": pos.get("isin", ""), "name": pos.get("name", ""),
+                    "ticker": pos.get("ticker", ""), "logo_url": logo_url,
+                }
             changed = True
 
         if changed:
@@ -321,16 +350,15 @@ class DataStore:
             name = info["name"]
             qty  = info["qty"]
             isin = info.get("isin", "")
-            nkd_per = bond_nkd.get(figi, {}).get("nkd_per", 0)
 
-            # Пауза между запросами (rate limit)
             if i > 0:
-                _time.sleep(0.3)
+                _time.sleep(API_BOND_PAUSE_SEC)
 
-            api = self._apis[0][1]
+            conn_name = info.get("connection_name", "")
+            api = self._api_by_name.get(conn_name) or self._apis[0][1]
 
-            # Сначала проверяем кэш инструментов
-            cached = self._instrument_cache.get(figi)
+            with self._lock:
+                cached = self._instrument_cache.get(figi)
             bond = api.get_bond_by_figi(figi)
             if bond:
                 # Всегда берём настоящее имя и ticker из API
@@ -345,21 +373,20 @@ class DataStore:
                 if logo:
                     logo_id = logo.replace(".png", "").replace(".jpg", "")
                     logo_url = LOGO_CDN.format(logo_id=logo_id)
-                self._instrument_cache[figi] = {
-                    "isin": isin, "name": real_name,
-                    "ticker": bond_ticker, "logo_url": logo_url,
-                }
+                with self._lock:
+                    self._instrument_cache[figi] = {
+                        "isin": isin, "name": real_name,
+                        "ticker": bond_ticker, "logo_url": logo_url,
+                    }
                 name = real_name
 
                 # Для YTM
                 face_val = money_value(bond.get("nominal"))
                 mat_ts   = parse_ts(bond.get("maturityDate"))
-                ann_coupon = money_value(bond.get("initialNominal")) * \
-                             float(bond.get("couponQuantityPerYear", 0) or 0) * \
-                             money_value(bond.get("couponRate"))
+                ann_coupon = _annual_coupon_from_bond(bond)
 
                 nkd_data = bond_nkd.get(figi, {})
-                cur_price = nkd_data.get("nkd_per", 0)
+                cur_price = nkd_data.get("clean_price", 0) or nkd_data.get("nkd_per", 0)
 
                 analytics.append({
                     "name":           name,
@@ -394,29 +421,29 @@ class DataStore:
                             "amount_est": None, "qty": qty,
                         })
 
-            # Купоны
-            _time.sleep(0.2)
-            for c in api.get_bond_coupons(figi, today_start, horizon_dt):
-                dt     = parse_ts(c.get("couponDate"))
+            coupons_raw = api.get_bond_coupons(figi, today_start, horizon_dt)
+            known_pay = [money_value(c.get("payOneBond")) for c in coupons_raw
+                         if money_value(c.get("payOneBond")) > 0]
+            typical_pay = sum(known_pay) / len(known_pay) if known_pay else None
+            for c in coupons_raw:
+                dt = parse_ts(c.get("couponDate"))
+                if not dt or not _event_on_or_after_today(dt):
+                    continue
                 amount = money_value(c.get("payOneBond"))
-                if dt and dt.date() >= now.date():
-                    # Если сумма купона неизвестна — оцениваем через НКД
-                    amount_est = None
-                    is_est     = False
-                    if not amount and nkd_per > 0:
-                        amount_est = nkd_per
-                        is_est     = True
-                    events.append({
-                        "type":       "coupon",
-                        "name":       name,
-                        "isin":       isin,
-                        "figi":       figi,
-                        "ticker":     bond_ticker,
-                        "date":       dt,
-                        "amount":     amount if not is_est else None,
-                        "amount_est": amount_est,
-                        "qty":        qty,
-                    })
+                amount_est = None
+                if not amount and typical_pay:
+                    amount_est = typical_pay
+                events.append({
+                    "type":       "coupon",
+                    "name":       name,
+                    "isin":       isin,
+                    "figi":       figi,
+                    "ticker":     bond_ticker,
+                    "date":       dt,
+                    "amount":     amount or None,
+                    "amount_est": amount_est,
+                    "qty":        qty,
+                })
 
         # ── Дивиденды по акциям ──────────────────────────
         with self._lock:
@@ -430,17 +457,17 @@ class DataStore:
                 continue
             seen_shares.add(figi)
             _time.sleep(0.2)
-            # Берём API из первого подключения
             if not self._apis:
                 break
-            _, api = self._apis[0]
+            conn_name = pos.get("connection_name", "")
+            api = self._api_by_name.get(conn_name) or self._apis[0][1]
             try:
                 divs = api.get_dividends(figi, today_start, horizon_dt)
                 for d in divs:
                     dt = parse_ts(d.get("paymentDate"))
                     if not dt:
                         dt = parse_ts(d.get("recordDate"))
-                    if dt and dt.date() >= now.date():
+                    if dt and _event_on_or_after_today(dt):
                         amount = money_value(d.get("dividendNet"))
                         events.append({
                             "type":       "dividend",

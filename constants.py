@@ -25,6 +25,14 @@ REFRESH_SECONDS    = 60    # интервал обновления портфе�
 BOND_REFRESH_HOURS = 6     # интервал полного обновления облигаций (ч)
 BLINK_INTERVAL     = 0.6   # интервал мигания иконки при ALERT_CRIT (сек)
 
+# T-Bank API — защита от 429
+API_MIN_INTERVAL_SEC   = 0.5   # мин. пауза между любыми запросами (на токен)
+API_BOND_PAUSE_SEC     = 0.55  # доп. пауза между облигациями в fetch_bond_events
+API_MAX_ATTEMPTS       = 8     # попыток на один вызов _post (включая 429)
+API_RATE_LIMIT_BASE    = 5     # начальная пауза при 429 (сек), далее ×2
+API_RATE_LIMIT_MAX     = 60    # макс. пауза при 429 (сек)
+API_BOND_FAIL_COOLDOWN = 120   # не повторять BondBy для figi после сбоя (сек)
+
 # ── Win32: обработка ЛКМ по иконке трея ──────────────────────────────────────
 # pystray Win32: monkey-patch _message_handlers для перехвата левого клика
 WM_LBUTTONUP = 0x0202   # Win32 WM_LBUTTONUP

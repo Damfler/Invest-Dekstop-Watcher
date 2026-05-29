@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 
 from utils.formatting import days_until, fmt_money, fmt_total, fmt_delta, fmt_date, alert_key
+from version import APP_NAME
 
 log = logging.getLogger("tbank.notify")
 
@@ -21,7 +22,7 @@ def toast(title: str, message: str):
         return
     try:
         _plyer.notify(title=title, message=message,
-                      app_name="T-Bank Invest", timeout=8)
+                      app_name=APP_NAME, timeout=8)
     except Exception as e:
         log.debug("toast failed: %s", e)
 
@@ -31,7 +32,6 @@ class NotificationManager:
         self._cfg      = cfg.get("notifications", {})
         self._move_pct = float(cfg.get("notify_move_pct", 1.0))
         self._notified: set = set()
-        self._prev_total    = 0.0
 
     def fire(self, bond_events: list, dismissed: set,
              portfolios: list, offer_warn_days: int):
@@ -74,19 +74,17 @@ class NotificationManager:
                               f"{e['name']}\n{fmt_money(payout)} → ваш счёт")
                         notified.add(key)
 
-        # 4. Крупное движение портфеля
-        if (self._cfg.get("portfolio_move")
-                and self._prev_total > 0 and curr_total > 0):
-            pct = abs(curr_total - self._prev_total) / self._prev_total * 100
+        # 4. Крупное дневное движение портфеля (% от текущей стоимости)
+        if self._cfg.get("portfolio_move") and curr_total > 0:
+            day_delta = sum(p["day_delta"] for p in portfolios)
+            pct = abs(day_delta) / curr_total * 100
             if pct >= self._move_pct:
-                day_delta = sum(p["day_delta"] for p in portfolios)
                 direction = "вырос" if day_delta >= 0 else "упал"
-                key       = f"move_{datetime.now().strftime('%Y%m%d%H')}"
+                key = f"move_{datetime.now().strftime('%Y%m%d%H')}"
                 if key not in notified:
-                    toast(f"📊 Портфель {direction} на {pct:.1f}%",
+                    toast(f"📊 Портфель {direction} на {pct:.1f}% за день",
                           f"Итого: {fmt_total(curr_total)}\n"
                           f"За день: {fmt_delta(day_delta)}")
                     notified.add(key)
 
-        self._notified  = notified
-        self._prev_total = curr_total
+        self._notified = notified

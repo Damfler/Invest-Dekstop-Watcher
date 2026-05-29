@@ -122,6 +122,9 @@ class StackTrayApp:
         if need_bond:
             self._store.fetch_bond_events()
 
+        # Обогащение акций/ETF — после облигаций, без дублирования BondBy
+        self._store._enrich_positions()
+
         # Обновляем уровень алерта
         al = self._store.compute_alert()
         with self._store._lock:

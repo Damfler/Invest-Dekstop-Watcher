@@ -162,8 +162,8 @@ def load_config() -> dict:
     if cfg.get("bond_sort") not in ("date", "amount"):
         cfg["bond_sort"] = "date"
 
-    # .env — перезаписывает токен из config.json (для разработки)
-    _env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    # .env — перезаписывает токен первого подключения (для разработки)
+    _env_file = os.path.join(BASE_DIR, ".env")
     if os.path.exists(_env_file):
         try:
             with open(_env_file, encoding="utf-8") as f:
@@ -172,18 +172,26 @@ def load_config() -> dict:
                     if line and not line.startswith("#") and "=" in line:
                         key, val = line.split("=", 1)
                         if key.strip() == "TBANK_TOKEN" and val.strip():
-                            cfg["token"] = val.strip()
+                            _apply_env_token(cfg, val.strip())
         except Exception:
             pass
 
     return cfg
 
 
+def _apply_env_token(cfg: dict, token: str):
+    """Подставляет токен в connections[0] (формат v2.4+)."""
+    conns = cfg.get("connections")
+    if not conns:
+        cfg["connections"] = [dict(DEFAULT_CONFIG["connections"][0])]
+    cfg["connections"][0]["token"] = token
+
+
 def _write_default(token: str | None = None):
     """Записывает дефолтный конфиг, опционально подставляя токен."""
     cfg = dict(DEFAULT_CONFIG)
     if token:
-        cfg["token"] = token
+        _apply_env_token(cfg, token)
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2, ensure_ascii=False)
 

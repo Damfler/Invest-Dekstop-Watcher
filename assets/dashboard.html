@@ -2542,7 +2542,7 @@ function renderHistoryChart(){
     }
   });
   var ch=((values[values.length-1]-values[0])/values[0]*100).toFixed(2);
-  var _g_historyTitle=document.getElementById('historyTitle');if(_g_historyTitle)_g_historyTitle.innerHTML=ic('chart-line',14)+' Портфель <span class="'+(isUp?'up':'dn')+'" style="font-size:12pxmargin-left:6px">'+(isUp?'+':'')+ch+'%</span>';
+  var _g_historyTitle=document.getElementById('historyTitle');if(_g_historyTitle)_g_historyTitle.innerHTML=ic('chart-line',14)+' Портфель <span class="'+(isUp?'up':'dn')+'" style="font-size:12px;margin-left:6px">'+(isUp?'+':'')+ch+'%</span>';
 }
 
 function renderAllocChart(){

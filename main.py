@@ -131,7 +131,11 @@ def main():
             from api.client import TBankAPI
             apis.append((
                 conn.get("name", "Т-Банк"),
-                TBankAPI(token, use_sandbox=conn.get("use_sandbox", False)),
+                TBankAPI(
+                    token,
+                    use_sandbox=conn.get("use_sandbox", False),
+                    label=conn.get("name", "Т-Банк"),
+                ),
             ))
         else:
             log.warning("Неизвестный брокер '%s' в подключении '%s' — пропускаем",
