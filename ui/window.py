@@ -13,7 +13,7 @@ from datetime import datetime
 
 import webview as _webview
 
-log = logging.getLogger("tbank.window")
+log = logging.getLogger("stack.window")
 
 # PyInstaller onefile: ресурсы в sys._MEIPASS, иначе рядом со скриптом
 import sys as _sys

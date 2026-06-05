@@ -8,9 +8,8 @@ import json
 import logging
 import webbrowser
 import threading
-from tkinter import filedialog
 
-log = logging.getLogger("tbank.wizard")
+log = logging.getLogger("stack.wizard")
 
 from version import APP_VERSION, APP_NAME
 from constants import TOKEN_STUB, BROKERS, BROKER_INFO, GITHUB_REPO
@@ -335,44 +334,7 @@ def run_wizard() -> str | None:
         m.tk_popup(e.x_root, e.y_root),
     ))
 
-    # ── Импорт конфига ───────────────────────────────────────────────────────
-    def _import_config():
-        path = filedialog.askopenfilename(title="Импорт config.json",
-                                          filetypes=[("JSON", "*.json"), ("All", "*.*")])
-        if not path:
-            return
-        try:
-            with open(path, encoding="utf-8") as f:
-                cfg = json.load(f)
-            import shutil
-            shutil.copy2(path, CONFIG_FILE)
-            # Извлекаем токен
-            conns = cfg.get("connections", [])
-            if conns:
-                tok = conns[0].get("token", "")
-                if tok and tok != TOKEN_STUB:
-                    token_var.set(tok)
-                    status_var.set("Конфиг импортирован!")
-                    status_lbl.config(fg=GREEN)
-                    return
-            # Старый формат
-            tok = cfg.get("token", "")
-            if tok and tok != TOKEN_STUB:
-                token_var.set(tok)
-                status_var.set("Конфиг импортирован!")
-                status_lbl.config(fg=GREEN)
-                return
-            status_var.set("Конфиг импортирован, но токен не найден")
-            status_lbl.config(fg=C("MUTED"))
-        except Exception as e:
-            status_var.set(f"Ошибка импорта: {e}")
-            status_lbl.config(fg=RED)
-
-    # TODO: раскомментировать когда будет готов полноценный импорт/экспорт
-    # import_link = tk.Label(wrap, text="Уже есть config.json? Импортировать",
-    #                        fg=BLUE, bg=C("BG"), cursor="hand2", font=("Segoe UI", 9, "underline"))
-    # import_link.pack(anchor="w", pady=(6, 0))
-    # import_link.bind("<Button-1>", lambda e: _import_config())
+    # (Импорт config.json через визард не реализован — токен вводится вручную.)
 
     # ── Автозапуск ───────────────────────────────────────────────────────────
     auto_var = tk.BooleanVar(value=True)

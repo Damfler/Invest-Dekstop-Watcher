@@ -97,7 +97,7 @@ TBANK_TOKEN=t.your_token_here
 | Parameter | Description |
 |----------|----------|
 | `theme` | Dashboard theme: `system` / `dark` / `light` |
-| `design` | Layout: `classic` / `simple` (compact mono mode) |
+| `design` | Layout: `classic` / `simple` (compact mono) / `glass` (frosted-glass theme) |
 | `bond_horizon_days` | Bond event horizon (30–365 days) |
 | `notify_offer_days` | Days before an offer to warn |
 | `notify_move_pct` | Portfolio move threshold (%) for notifications |
@@ -295,7 +295,7 @@ TBANK_TOKEN=t.твой_токен
 | Параметр | Описание |
 |----------|----------|
 | `theme` | Тема дашборда: `system` / `dark` / `light` |
-| `design` | Дизайн: `classic` / `simple` (компактный mono-режим) |
+| `design` | Дизайн: `classic` / `simple` (компактный mono) / `glass` (стеклянный) |
 | `bond_horizon_days` | Горизонт событий облигаций (30–365 дней) |
 | `notify_offer_days` | За сколько дней до оферты предупреждать |
 | `notify_move_pct` | Порог % движения портфеля для уведомления |

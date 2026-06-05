@@ -11,7 +11,7 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(BASE_DIR, exist_ok=True)
-LOG_FILE = os.path.join(BASE_DIR, "tbank_errors.log")
+LOG_FILE = os.path.join(BASE_DIR, "stack.log")
 
 
 def setup_logging():
@@ -19,7 +19,7 @@ def setup_logging():
     Ротирующий лог: макс 1 МБ, хранится 3 файла.
     INFO+ в файл, WARNING+ в консоль.
     """
-    root = logging.getLogger("tbank")
+    root = logging.getLogger("stack")
     root.setLevel(logging.DEBUG)
 
     # Файл — ротирующий
@@ -39,7 +39,7 @@ def setup_logging():
     ch.setFormatter(logging.Formatter("[%(levelname)s] %(name)s: %(message)s"))
     root.addHandler(ch)
 
-    return logging.getLogger("tbank.main")
+    return logging.getLogger("stack.main")
 
 
 def reset_config():

@@ -563,21 +563,8 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .card-span2{grid-column:span 2}
 .section{margin-bottom:20px}
 .section-title{font-size:16px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.pos-item{display:flex;align-items:center;padding:12px 14px;background:var(--bg2);border-radius:12px;margin-bottom:6px;cursor:pointer;transition:background .1s}
-.pos-item:hover{background:var(--surface)}
-.pos-icon{width:36px;height:36px;border-radius:50%;margin-right:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
-.pos-icon img{width:100%;height:100%;object-fit:contain}
-.pos-icon.bond{background:rgba(96,165,250,.14);color:var(--blue)}
-.pos-icon.share{background:rgba(74,222,128,.14);color:var(--green)}
-.pos-icon.etf{background:rgba(192,132,252,.14);color:var(--purple)}
-.pos-icon.currency{background:rgba(250,204,21,.14);color:var(--yellow)}
-.pos-icon.other{background:var(--surface);color:var(--muted)}
-.pos-info{flex:1;min-width:0}
-.pos-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pos-sub{font-size:12px;color:var(--muted)}
-.pos-right{text-align:right;flex-shrink:0}
-.pos-price{font-weight:600;font-size:14px}
-.pos-delta{font-size:12px}
+/* (Legacy-классы .pos-item / .pos-icon / .pos-name / .pos-sub / .pos-right / .pos-price / .pos-delta
+    удалены — список позиций теперь рендерится через .overview-row / .pos-row.) */
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
 .tab{padding:10px 18px;cursor:pointer;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;user-select:none}
 .tab:hover{color:var(--text)}
@@ -882,7 +869,7 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
 #mainContent{transition:opacity .3s}
 #mainContent.loading{opacity:0}
 /* Streamer mode */
-.streamer .big-value,.streamer .acc-total,.streamer .pos-price,.streamer .big-delta,.streamer #plToggle,.streamer .acc-dd-amount{filter:blur(12px);user-select:none}
+.streamer .big-value,.streamer .acc-total,.streamer .big-delta,.streamer #plToggle,.streamer .acc-dd-amount{filter:blur(12px);user-select:none}
 .streamer .big-eye{filter:none!important}
 /* Режим стримера: суммы в Выплатах (календарь/список) и Аналитике */
 .streamer .cal-popup-event-amount,
@@ -1328,7 +1315,7 @@ var PC=['#60A5FA','#B8F34A','#4ADE80','#F87171','#C084FC','#5EEAD4','#FB923C','#
 var LI={bond:'landmark',share:'trending-up',etf:'layers',currency:'circle-dollar-sign',futures:'zap',sp:'box',option:'target'};
 var TYPE_SHORT={bond:'Облигация',share:'Акция',etf:'Фонд',currency:'Валюта',futures:'Фьючерс',sp:'СП',option:'Опцион'};
 var posQtyMin=null,posQtyMax=null; // фильтр по количеству (от/до)
-var allocChart=null,couponChart=null,historyChart=null,accountChart=null,currencyChart=null;
+var allocChart=null,couponChart=null,historyChart=null,currencyChart=null;
 var D=null,allocMode='types',selAcc='all',historyRange='1m';
 // Карта connection_name → broker (tbank/sber/alfa/bks). Заполняется при загрузке
 // через pywebview.api.get_connections(). Используется для иконок банков в dropdown.

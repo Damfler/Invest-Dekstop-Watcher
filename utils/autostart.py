@@ -5,7 +5,7 @@ import sys
 import os
 import logging
 
-log = logging.getLogger("tbank.autostart")
+log = logging.getLogger("stack.autostart")
 
 try:
     import winreg

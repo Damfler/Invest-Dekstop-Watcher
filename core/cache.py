@@ -9,7 +9,7 @@ import sys
 import logging
 from datetime import datetime, timezone
 
-log = logging.getLogger("tbank.cache")
+log = logging.getLogger("stack.cache")
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.join(os.environ.get("APPDATA", os.path.dirname(sys.executable)), "Stack")

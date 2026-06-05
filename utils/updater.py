@@ -11,7 +11,7 @@ import requests
 import subprocess
 import tempfile
 
-log = logging.getLogger("tbank.updater")
+log = logging.getLogger("stack.updater")
 
 from version import APP_VERSION
 from constants import GITHUB_REPO

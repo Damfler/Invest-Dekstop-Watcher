@@ -79,7 +79,7 @@ invest-desktop-watcher/
 ```
 cache.json         # Кэш последних данных
 dismissed.json     # Скрытые предупреждения об офертах
-tbank_errors.log   # Лог ошибок (ротация 1МБ × 3 файла)
+stack.log          # Лог приложения (ротация 1МБ × 3 файла)
 config.json.bak    # Бэкап при повреждении конфига
 ```
 

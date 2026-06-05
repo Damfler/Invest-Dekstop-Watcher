@@ -14,7 +14,7 @@ from core.cache import save_cache, load_cache, save_history, load_history
 from core.config import load_dismissed, save_dismissed
 from constants import ALERT_NONE, ALERT_WARN, ALERT_CRIT, API_BOND_PAUSE_SEC
 
-log = logging.getLogger("tbank.data")
+log = logging.getLogger("stack.data")
 
 
 def _annual_coupon_from_bond(bond: dict) -> float:
