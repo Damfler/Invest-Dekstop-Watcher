@@ -514,7 +514,8 @@ def draw_left_panel(draw: ImageDraw.ImageDraw, img: Image.Image, loc: dict):
     draw.text((pad_l, sub_y), loc["subtitle"], font=f_sub, fill=MUTED)
 
     # ── 3. Список фич (точки строго центрируем по cap-height текста) ──
-    feature_colors = [GREEN, BLUE, YELLOW, ORANGE, PURPLE]
+    # Все точки одного цвета — фирменный лайм, без радуги.
+    feature_colors = [LIME, LIME, LIME, LIME, LIME]
     f_feat_b = fnt(13, bold=True, mono=True)
     f_feat_n = fnt(13, mono=True)
 

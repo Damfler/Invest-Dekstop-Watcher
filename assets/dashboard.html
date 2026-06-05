@@ -498,10 +498,40 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 
 /* ── Overview: 2-колоночная сетка (Топ позиции + Ближайшие события) ── */
 .overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+/* Свободные средства (рубль-кэш) по счетам — мини-карточки */
+.fc-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px 18px;box-shadow:var(--shadow-card);margin-bottom:14px;overflow:hidden}
+/* Лаймовая полоса-акцент слева сверху */
+.fc-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),rgba(184,243,74,0));border-radius:0 2px 2px 0}
+.fc-head{margin-bottom:14px}
+.fc-eyebrow{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
+.fc-summary{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.fc-total{font-family:var(--font-mono);font-weight:800;font-size:26px;color:var(--text);letter-spacing:-.6px;line-height:1}
+.fc-count{font-size:12px;color:var(--muted);font-weight:500;font-family:var(--font-mono)}
+.fc-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fc-row{position:relative;background:linear-gradient(135deg,rgba(184,243,74,.06),rgba(184,243,74,.015));border:1px solid var(--border);border-radius:10px;padding:11px 13px 12px;transition:all .15s;cursor:default}
+.fc-row:hover{border-color:rgba(184,243,74,.40);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.fc-acc-name{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-acc-amount{font-family:var(--font-mono);font-weight:700;font-size:15px;color:var(--text);letter-spacing:-.3px;display:flex;align-items:baseline;justify-content:space-between;gap:6px;white-space:nowrap}
+.fc-acc-pct{font-size:10px;color:var(--accent);font-weight:700;font-family:var(--font-mono);flex-shrink:0}
+.fc-bar{margin-top:8px;height:3px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden}
+.fc-bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),rgba(184,243,74,.4));border-radius:2px;transition:width .4s ease}
+.streamer .fc-total,.streamer .fc-acc-amount,.streamer .fc-acc-pct{filter:blur(9px)}
+body.light .fc-row{background:linear-gradient(135deg,rgba(184,243,74,.10),rgba(184,243,74,.02))}
+body.light .fc-bar{background:rgba(0,0,0,.04)}
+/* В упрощённом дизайне блок скрываем — там минимализм */
+body.simple #freeCashWrap{display:none!important}
+/* Glass: frosted */
+body.glass .fc-card{background:var(--glass-bg)!important;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border)!important;box-shadow:var(--glass-shadow)}
+body.glass .fc-row{background:linear-gradient(135deg,rgba(184,243,74,.10),rgba(184,243,74,.02))!important;border-color:var(--glass-border)!important}
 @media(max-width:900px){.overview-grid{grid-template-columns:1fr}}
-.overview-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column}
+.overview-section{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;overflow:hidden}
+/* Лаймовая полоса-акцент слева (как у карточки "Свободные средства") */
+.overview-section::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),rgba(184,243,74,0));border-radius:0 2px 2px 0;pointer-events:none}
 .overview-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
-.overview-section-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.overview-section-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.overview-section-title i,.overview-section-title svg{color:var(--accent);width:14px!important;height:14px!important}
+/* Мета-инфо рядом с заголовком (count / total) */
+.overview-section-meta{font-size:12px;color:var(--muted);font-family:var(--font-mono);font-weight:500}
 .overview-table-head{display:grid;gap:10px;padding:10px 4px;border-bottom:1px solid var(--divider);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:500}
 .overview-table-head.three-col{grid-template-columns:1fr 110px 110px}
 .overview-table-head.four-col{grid-template-columns:96px 1fr 100px 90px}
@@ -965,11 +995,23 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
     </div>
     <div class="cards" id="statCards" style="display:none"></div>
     <div id="riskBanner"></div>
+    <!-- Свободные средства (рубль-кэш) по счетам -->
+    <div class="fc-card" id="freeCashWrap" style="display:none">
+      <div class="fc-head">
+        <div class="fc-eyebrow"><i data-lucide="wallet" style="width:14px;height:14px;color:var(--accent)"></i> Свободно на счетах</div>
+        <div class="fc-summary">
+          <div class="fc-total" id="fcTotal"></div>
+          <div class="fc-count" id="fcCount"></div>
+        </div>
+      </div>
+      <div class="fc-list" id="fcList"></div>
+    </div>
     <!-- 2-колоночный обзор: Топ позиции слева | Ближайшие события справа -->
     <div class="overview-grid">
       <div class="overview-section" id="topPosWrap">
         <div class="overview-section-head">
-          <div class="overview-section-title"><i data-lucide="trending-up" style="width:16px;height:16px;color:var(--accent)"></i> Топ позиции</div>
+          <div class="overview-section-title"><i data-lucide="trending-up"></i> Топ позиции</div>
+          <div class="overview-section-meta" id="topPosMeta"></div>
         </div>
         <!-- Панель сортировки/фильтра — только в упрощённом дизайне -->
         <div class="simple-pos-controls" id="simplePosControls">
@@ -994,7 +1036,8 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
       </div>
       <div class="overview-section" id="upcomingWrap">
         <div class="overview-section-head">
-          <div class="overview-section-title"><i data-lucide="calendar-clock" style="width:16px;height:16px;color:var(--accent)"></i> Ближайшие события</div>
+          <div class="overview-section-title"><i data-lucide="calendar-clock"></i> Ближайшие события</div>
+          <div class="overview-section-meta" id="upcomingMeta" style="margin-right:auto;margin-left:6px"></div>
           <div class="up-filter" id="upFilterWrap">
             <button type="button" class="up-filter-btn" id="upFilterBtn" aria-haspopup="listbox" aria-expanded="false">
               <span id="upFilterLabel">Все типы</span>
@@ -2089,6 +2132,9 @@ function render(data){
   } else if(ul) {
     ul.innerHTML='<div class="empty" style="padding:24px;color:var(--muted);font-size:13px">\u041d\u0435\u0442 \u0441\u043e\u0431\u044b\u0442\u0438\u0439</div>';
   }
+  // \u041c\u0435\u0442\u0430: \u0432\u0441\u0435\u0433\u043e N \u0441\u043e\u0431\u044b\u0442\u0438\u0439 \u0432\u043f\u0435\u0440\u0435\u0434\u0438
+  var umEl=document.getElementById('upcomingMeta');
+  if(umEl){var ne=futEvts.length;umEl.textContent=ne+' '+(ne%10===1&&ne%100!==11?'\u0441\u043e\u0431\u044b\u0442\u0438\u0435':(ne%10>=2&&ne%10<=4&&(ne%100<10||ne%100>=20)?'\u0441\u043e\u0431\u044b\u0442\u0438\u044f':'\u0441\u043e\u0431\u044b\u0442\u0438\u0439'));}
 
   // \u2500\u2500 Top positions: \u0442\u0430\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u0444\u043e\u0440\u043c\u0430\u0442 \u0441 \u0446\u0432\u0435\u0442\u043d\u043e\u0439 \u0438\u043a\u043e\u043d\u043a\u043e\u0439 \u0442\u0438\u043f\u0430 \u2500\u2500
   var _simple=document.body.classList.contains('simple');
@@ -2136,6 +2182,9 @@ function render(data){
     });
   }
   var tpEl=document.getElementById('topPositions');if(tpEl)tpEl.innerHTML=th;
+  // Мета: всего N позиций
+  var tmEl=document.getElementById('topPosMeta');
+  if(tmEl){var fn=fPos.length;tmEl.textContent=fn+' '+(fn%10===1&&fn%100!==11?'позиция':(fn%10>=2&&fn%10<=4&&(fn%100<10||fn%100>=20)?'позиции':'позиций'));}
   // \u041b\u0438\u043d\u043a\u0438 "\u0421\u043c\u043e\u0442\u0440\u0435\u0442\u044c \u0432\u0441\u0435" / "\u041a\u0430\u043b\u0435\u043d\u0434\u0430\u0440\u044c"
   var tpL=document.getElementById('topPosLink');
   if(tpL)tpL.onclick=function(e){e.preventDefault();activeTab='positions';setActiveTab(activeTab)};
@@ -2159,6 +2208,7 @@ function render(data){
   else { _chartsFresh=false; }
   renderAnalyticsCards(fPos,ytm,tNkd);
   renderMovers(fPos);
+  renderFreeCash(fPos);
   // Sync settings UI
   var cl=document.getElementById('chkLogos');if(cl)cl.checked=useLogos;
   var cau=document.getElementById('chkAutoUpdate');if(cau)cau.checked=!!(data.auto_update!==false);
@@ -2800,6 +2850,42 @@ function renderMovers(positions){
   h+= l.length?l.map(function(p){return row(p,'dn')}).join(''):'<div class="empty" style="padding:14px 0;color:var(--muted);font-size:13px">\u041d\u0435\u0442 \u043f\u0430\u0434\u0435\u043d\u0438\u0439</div>';
   h+='</div></div>';
   var _g_moversBlock=document.getElementById('moversBlock');if(_g_moversBlock)_g_moversBlock.innerHTML=h;
+}
+
+// Свободные средства (рубль-кэш) по счетам — мини-карточки с долей.
+function renderFreeCash(positions){
+  var wrap=document.getElementById('freeCashWrap');
+  if(!wrap)return;
+  var byAcc={};
+  positions.forEach(function(p){
+    if(p.instrumentType!=='currency')return;
+    if(_assetCurrency(p)!=='RUB')return;
+    var key=p.account_id||p.account_name||'?';
+    if(!byAcc[key])byAcc[key]={name:p.account_name||'Счёт',sum:0};
+    byAcc[key].sum+=(p.current_value||0);
+  });
+  var rows=Object.values(byAcc).filter(function(a){return a.sum>0.5}).sort(function(a,b){return b.sum-a.sum});
+  if(!rows.length){wrap.style.display='none';return}
+  wrap.style.display='';
+  var total=rows.reduce(function(s,a){return s+a.sum},0);
+  var tEl=document.getElementById('fcTotal');if(tEl)tEl.textContent=fmt(total);
+  var cEl=document.getElementById('fcCount');
+  if(cEl){
+    var n=rows.length;
+    var word=(n%10===1&&n%100!==11)?'счёт':((n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?'счёта':'счетов');
+    cEl.textContent='на '+n+' '+word;
+  }
+  var listEl=document.getElementById('fcList');
+  if(listEl){
+    listEl.innerHTML=rows.map(function(a){
+      var pct=total>0?(a.sum/total*100):0;
+      return '<div class="fc-row">'+
+        '<div class="fc-acc-name">'+esc(a.name)+'</div>'+
+        '<div class="fc-acc-amount">'+fmt(a.sum)+'<span class="fc-acc-pct">'+pct.toFixed(0)+'%</span></div>'+
+        '<div class="fc-bar"><span style="width:'+pct.toFixed(1)+'%"></span></div>'+
+        '</div>';
+    }).join('');
+  }
 }
 
 function calcYTM(ba){var wS=0,wY=0;ba.forEach(function(b){if(!b.maturity_date||!b.face_value)return;var y=(new Date(b.maturity_date)-Date.now())/(365.25*864e5);if(y<=0)return;var v=(b.annual_coupon+(b.face_value-b.current_price)/y)/((b.face_value+b.current_price)/2)*100;var w=b.qty*b.current_price;wS+=w;wY+=v*w});return wS>0?wY/wS:null}
