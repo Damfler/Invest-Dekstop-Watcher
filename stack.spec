@@ -11,6 +11,12 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 block_cipher = None
 BASE = os.path.abspath('.')
 
+# ── version_info.txt из version.py ──────────────────────────────────────────
+_gen = os.path.join(BASE, 'tools', 'gen_version_info.py')
+if os.path.exists(_gen):
+    import subprocess
+    subprocess.run([sys.executable, _gen], check=True, cwd=BASE)
+
 # ── Конвертация icon.png → icon.ico ─────────────────────────────────────────
 _icon_png = os.path.join(BASE, 'assets', 'icons', 'icon.png')
 _icon_ico = os.path.join(BASE, 'assets', 'icons', 'icon.ico')

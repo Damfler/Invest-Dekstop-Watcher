@@ -5,10 +5,6 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version (e.g. 2.3)'
-        required: true
 
 permissions:
   contents: write
@@ -24,25 +20,31 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Verify version (version.py = source of truth)
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(python -c "from version import APP_VERSION; print(APP_VERSION)")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "$VERSION" != "$TAG" ]; then
+              echo "::error::version.py ($VERSION) != git tag ($TAG). Обновите version.py перед созданием тега."
+              exit 1
+            fi
+          fi
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install pyinstaller>=6.0
 
+      - name: Generate version_info.txt
+        run: python tools/gen_version_info.py
+
       - name: Build .exe
         run: python -m PyInstaller stack.spec --noconfirm --clean
-
-      - name: Get version
-        id: version
-        shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-            echo "TAG=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          else
-            echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-            echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

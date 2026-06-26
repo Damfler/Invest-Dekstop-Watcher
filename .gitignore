@@ -2,6 +2,7 @@
 dist/
 build/
 *.spec.bak
+version_info.txt
 
 # Python
 __pycache__/
@@ -20,6 +21,7 @@ history.json
 dismissed.json
 *.log
 *.log.*
+bcs_api_dump/
 
 # IDE
 .vscode/

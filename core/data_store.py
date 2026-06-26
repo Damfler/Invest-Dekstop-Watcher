@@ -7,6 +7,7 @@ import threading
 from datetime import datetime, timezone, timedelta
 
 from api.client import TBankAPIError
+from api.bcs_client import BCSAPIError
 from api.endpoints import LOGO_CDN
 from utils.formatting import money_value, parse_ts, days_until, alert_key
 import time as _time
@@ -14,7 +15,7 @@ from core.cache import save_cache, load_cache, save_history, load_history
 from core.config import load_dismissed, save_dismissed
 from constants import ALERT_NONE, ALERT_WARN, ALERT_CRIT, API_BOND_PAUSE_SEC
 
-log = logging.getLogger("stack.data")
+log = logging.getLogger("tbank.data")
 
 
 def _annual_coupon_from_bond(bond: dict) -> float:
@@ -164,13 +165,20 @@ class DataStore:
                         name   = pos.get("name") or isin or figi
                         ticker = pos.get("ticker", "")
                         qty_raw = money_value(pos.get("quantity"))
-                        qty     = qty_raw if itype == "currency" else int(qty_raw)
+                        if itype == "currency":
+                            qty = qty_raw
+                        elif qty_raw == int(qty_raw):
+                            qty = int(qty_raw)
+                        else:
+                            qty = qty_raw
                         cur_p   = money_value(pos.get("currentPrice"))
                         nkd     = money_value(pos.get("currentNkd"))
                         pos_pnl = money_value(pos.get("expectedYield"))
                         pos_day = money_value(pos.get("dailyYield"))
 
-                        pos_value = cur_p * qty if cur_p else 0
+                        pos_value = money_value(pos.get("currentValue"))
+                        if not pos_value and cur_p:
+                            pos_value = cur_p * qty
                         alltime_delta += pos_pnl
 
                         positions_all.append({
@@ -237,7 +245,7 @@ class DataStore:
                         if cached.get("logo_url"):
                             pos["logo_url"] = cached["logo_url"]
 
-            except TBankAPIError as e:
+            except (TBankAPIError, BCSAPIError) as e:
                 errors.append(f"[{conn_name}] {str(e)[:60]}")
                 log.error("fetch_portfolio [%s]: %s", conn_name, e)
             except Exception as e:

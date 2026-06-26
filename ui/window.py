@@ -327,16 +327,19 @@ class _DashboardAPI:
         save_config(self._cfg)
 
     def apply_update(self):
-        """Скачать и применить обновление."""
+        """Скачать и применить обновление. Возвращает статус для JS."""
         import os
-        from utils.updater import download_update, apply_update
+        from utils.updater import download_update, apply_update as do_apply
         info = self._store.update_info
-        if not info or not info.get("url"):
+        if not info or not info.get("available"):
             return "no_update"
+        log.info("Скачивание обновления v%s...", info.get("version", "?"))
         exe_path = download_update(info["url"], info.get("asset_name", "Stack.exe"))
         if not exe_path:
             return "download_failed"
-        apply_update(exe_path)
+        log.info("Применение обновления, перезапуск...")
+        self._store.save_to_cache()
+        do_apply(exe_path)
         os._exit(0)
 
     def set_auto_update(self, val: bool):
@@ -403,23 +406,34 @@ class _DashboardAPI:
         return json.dumps(safe, ensure_ascii=False)
 
     def add_connection(self, name: str, broker: str, token: str,
-                       use_sandbox: bool = False) -> bool:
+                       use_sandbox: bool = False) -> dict:
         """Добавляет новое подключение. Требует перезапуска."""
         from core.config import save_config
-        from constants import TOKEN_STUB
-        if not token or token == TOKEN_STUB or len(token) < 10:
-            return False
+        from api.factory import verify_connection
+        from constants import BROKERS
+        broker = (broker or "tbank").strip().lower()
+        token = (token or "").strip().strip('"').strip("'")
+        if not token or len(token) < 10:
+            return {"ok": False, "error": "Токен слишком короткий (минимум 10 символов)"}
+        try:
+            verify_connection(
+                broker, token,
+                use_sandbox=bool(use_sandbox) and broker == "tbank",
+            )
+        except Exception as e:
+            log.warning("add_connection verify failed [%s]: %s", broker, e)
+            return {"ok": False, "error": str(e)[:160]}
         conns = self._cfg.get("connections", [])
         conns.append({
-            "name":        name.strip() or broker,
+            "name":        name.strip() or BROKERS.get(broker, broker),
             "broker":      broker,
-            "token":       token.strip(),
+            "token":       token,
             "enabled":     True,
-            "use_sandbox": bool(use_sandbox),
+            "use_sandbox": bool(use_sandbox) and broker == "tbank",
         })
         self._cfg["connections"] = conns
         save_config(self._cfg)
-        return True
+        return {"ok": True}
 
     def remove_connection(self, index: int) -> bool:
         """Удаляет подключение по индексу. Требует перезапуска."""

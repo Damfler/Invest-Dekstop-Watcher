@@ -11,7 +11,7 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(BASE_DIR, exist_ok=True)
-LOG_FILE = os.path.join(BASE_DIR, "stack.log")
+LOG_FILE = os.path.join(BASE_DIR, "tbank_errors.log")
 
 
 def setup_logging():
@@ -19,7 +19,7 @@ def setup_logging():
     Ротирующий лог: макс 1 МБ, хранится 3 файла.
     INFO+ в файл, WARNING+ в консоль.
     """
-    root = logging.getLogger("stack")
+    root = logging.getLogger("tbank")
     root.setLevel(logging.DEBUG)
 
     # Файл — ротирующий
@@ -39,7 +39,7 @@ def setup_logging():
     ch.setFormatter(logging.Formatter("[%(levelname)s] %(name)s: %(message)s"))
     root.addHandler(ch)
 
-    return logging.getLogger("stack.main")
+    return logging.getLogger("tbank.main")
 
 
 def reset_config():
@@ -118,6 +118,7 @@ def main():
 
     # Создаём API для каждого активного подключения
     from constants import TOKEN_STUB
+    from api.factory import create_api
     connections = cfg.get("connections", [])
     apis = []
     for conn in connections:
@@ -127,19 +128,13 @@ def main():
         token  = conn.get("token", "")
         if not token or token == TOKEN_STUB:
             continue
-        if broker == "tbank":
-            from api.client import TBankAPI
+        try:
             apis.append((
-                conn.get("name", "Т-Банк"),
-                TBankAPI(
-                    token,
-                    use_sandbox=conn.get("use_sandbox", False),
-                    label=conn.get("name", "Т-Банк"),
-                ),
+                conn.get("name", broker),
+                create_api(conn),
             ))
-        else:
-            log.warning("Неизвестный брокер '%s' в подключении '%s' — пропускаем",
-                        broker, conn.get("name", "?"))
+        except ValueError as e:
+            log.warning("Подключение '%s': %s", conn.get("name", "?"), e)
 
     if not apis:
         log.error("Нет активных подключений с токеном. Проверьте config.json.")

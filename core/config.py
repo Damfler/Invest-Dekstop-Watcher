@@ -172,19 +172,32 @@ def load_config() -> dict:
                     if line and not line.startswith("#") and "=" in line:
                         key, val = line.split("=", 1)
                         if key.strip() == "TBANK_TOKEN" and val.strip():
-                            _apply_env_token(cfg, val.strip())
+                            _apply_env_token(cfg, val.strip(), broker="tbank")
+                        elif key.strip() == "BCS_REFRESH_TOKEN" and val.strip():
+                            _apply_env_token(cfg, val.strip(), broker="bcs")
         except Exception:
             pass
 
     return cfg
 
 
-def _apply_env_token(cfg: dict, token: str):
-    """Подставляет токен в connections[0] (формат v2.4+)."""
+def _apply_env_token(cfg: dict, token: str, broker: str = "tbank"):
+    """Подставляет токен в connections (первое совпадение broker или [0])."""
     conns = cfg.get("connections")
     if not conns:
-        cfg["connections"] = [dict(DEFAULT_CONFIG["connections"][0])]
-    cfg["connections"][0]["token"] = token
+        from constants import BROKERS
+        name = BROKERS.get(broker, broker)
+        cfg["connections"] = [{
+            "name": name, "broker": broker, "token": token,
+            "enabled": True, "use_sandbox": False,
+        }]
+        return
+    for c in conns:
+        if c.get("broker") == broker:
+            c["token"] = token
+            return
+    conns[0]["token"] = token
+    conns[0]["broker"] = broker
 
 
 def _write_default(token: str | None = None):

@@ -56,6 +56,11 @@ if exist build rmdir /s /q build
 :: Build
 echo.
 echo [3/3] Building (1-2 minutes)...
+python tools\gen_version_info.py
+if errorlevel 1 (
+    echo [ERROR] Failed to generate version_info.txt
+    pause & exit /b 1
+)
 python -m PyInstaller stack.spec --noconfirm --clean
 
 if errorlevel 1 (

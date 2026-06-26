@@ -81,9 +81,10 @@ BROKER_INFO: dict = {
         "token_label": "API-токен Альфа (скоро)",
     },
     "bcs": {
-        "api_url":     "https://www.bcs.ru/",
-        "api_label":   "БКС Мир Инвестиций (скоро)",
-        "hint":        "Поддержка БКС в разработке",
-        "token_label": "API-токен БКС (скоро)",
+        "api_url":     "https://trade-api.bcs.ru/",
+        "api_label":   "Документация BCS Trade API",
+        "hint":        "ЛК БКС Мир инвестиций → Профиль → счёт → Токены API\n"
+                       "Выпустите токен «Только для чтения», скопируйте refresh-токен",
+        "token_label": "Refresh-токен BCS Trade API (только чтение)",
     },
 }

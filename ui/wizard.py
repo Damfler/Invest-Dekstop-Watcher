@@ -192,7 +192,7 @@ def run_wizard() -> str | None:
     bc.pack(fill="x", pady=(0, 10))
 
     COLS = 3
-    supported = {"tbank"}
+    supported = {"tbank", "bcs"}
 
     def _sel_broker(key):
         broker_var.set(key)
@@ -212,7 +212,7 @@ def run_wizard() -> str | None:
     if getattr(sys, 'frozen', False):
         items = [(k, v) for k, v in BROKERS.items() if k in supported]
     else:
-        items = list(BROKERS.items())
+        items = [(k, v) for k, v in BROKERS.items() if k in supported]
 
     _tooltip_win = [None]
 
@@ -383,19 +383,20 @@ def run_wizard() -> str | None:
 
         def _check():
             try:
-                from api.client import TBankAPI
-                api = TBankAPI(tok)
-                accounts = api.get_accounts()
+                from api.factory import verify_connection
+                bro = broker_var.get()
+                n = verify_connection(
+                    bro,
+                    token_var.get().strip(),
+                    use_sandbox=bro == "tbank" and False,
+                )
                 spinner["active"] = False
-                if not accounts:
-                    root.after(0, lambda: (status_var.set("Токен принят, но счета не найдены"),
-                                           status_lbl.config(fg=RED), start_btn.config(text="Начать работу", bg=PINK, fg="#fff")))
-                    return
-                root.after(0, lambda: _save(tok, len(accounts)))
+                root.after(0, lambda: _save(token_var.get().strip(), n))
             except Exception as e:
                 spinner["active"] = False
                 root.after(0, lambda: (status_var.set(f"Ошибка: {str(e)[:80]}"),
-                                       status_lbl.config(fg=RED), start_btn.config(text="Начать работу", bg=PINK, fg="#fff")))
+                                       status_lbl.config(fg=RED),
+                                       start_btn.config(text="Начать работу", bg=PINK, fg="#fff")))
 
         threading.Thread(target=_check, daemon=True).start()
 

@@ -7,7 +7,7 @@ from datetime import datetime
 from utils.formatting import days_until, fmt_money, fmt_total, fmt_delta, fmt_date, alert_key
 from version import APP_NAME
 
-log = logging.getLogger("stack.notify")
+log = logging.getLogger("tbank.notify")
 
 try:
     from plyer import notification as _plyer

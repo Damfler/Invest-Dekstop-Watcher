@@ -498,40 +498,10 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 
 /* ── Overview: 2-колоночная сетка (Топ позиции + Ближайшие события) ── */
 .overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
-/* Свободные средства (рубль-кэш) по счетам — мини-карточки */
-.fc-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px 18px;box-shadow:var(--shadow-card);margin-bottom:14px;overflow:hidden}
-/* Лаймовая полоса-акцент слева сверху */
-.fc-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),rgba(184,243,74,0));border-radius:0 2px 2px 0}
-.fc-head{margin-bottom:14px}
-.fc-eyebrow{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
-.fc-summary{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.fc-total{font-family:var(--font-mono);font-weight:800;font-size:26px;color:var(--text);letter-spacing:-.6px;line-height:1}
-.fc-count{font-size:12px;color:var(--muted);font-weight:500;font-family:var(--font-mono)}
-.fc-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.fc-row{position:relative;background:linear-gradient(135deg,rgba(184,243,74,.06),rgba(184,243,74,.015));border:1px solid var(--border);border-radius:10px;padding:11px 13px 12px;transition:all .15s;cursor:default}
-.fc-row:hover{border-color:rgba(184,243,74,.40);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
-.fc-acc-name{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fc-acc-amount{font-family:var(--font-mono);font-weight:700;font-size:15px;color:var(--text);letter-spacing:-.3px;display:flex;align-items:baseline;justify-content:space-between;gap:6px;white-space:nowrap}
-.fc-acc-pct{font-size:10px;color:var(--accent);font-weight:700;font-family:var(--font-mono);flex-shrink:0}
-.fc-bar{margin-top:8px;height:3px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden}
-.fc-bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),rgba(184,243,74,.4));border-radius:2px;transition:width .4s ease}
-.streamer .fc-total,.streamer .fc-acc-amount,.streamer .fc-acc-pct{filter:blur(9px)}
-body.light .fc-row{background:linear-gradient(135deg,rgba(184,243,74,.10),rgba(184,243,74,.02))}
-body.light .fc-bar{background:rgba(0,0,0,.04)}
-/* В упрощённом дизайне блок скрываем — там минимализм */
-body.simple #freeCashWrap{display:none!important}
-/* Glass: frosted */
-body.glass .fc-card{background:var(--glass-bg)!important;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border)!important;box-shadow:var(--glass-shadow)}
-body.glass .fc-row{background:linear-gradient(135deg,rgba(184,243,74,.10),rgba(184,243,74,.02))!important;border-color:var(--glass-border)!important}
 @media(max-width:900px){.overview-grid{grid-template-columns:1fr}}
-.overview-section{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;overflow:hidden}
-/* Лаймовая полоса-акцент слева (как у карточки "Свободные средства") */
-.overview-section::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),rgba(184,243,74,0));border-radius:0 2px 2px 0;pointer-events:none}
+.overview-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column}
 .overview-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
-.overview-section-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
-.overview-section-title i,.overview-section-title svg{color:var(--accent);width:14px!important;height:14px!important}
-/* Мета-инфо рядом с заголовком (count / total) */
-.overview-section-meta{font-size:12px;color:var(--muted);font-family:var(--font-mono);font-weight:500}
+.overview-section-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
 .overview-table-head{display:grid;gap:10px;padding:10px 4px;border-bottom:1px solid var(--divider);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:500}
 .overview-table-head.three-col{grid-template-columns:1fr 110px 110px}
 .overview-table-head.four-col{grid-template-columns:96px 1fr 100px 90px}
@@ -593,8 +563,21 @@ body.glass .fc-row{background:linear-gradient(135deg,rgba(184,243,74,.10),rgba(1
 .card-span2{grid-column:span 2}
 .section{margin-bottom:20px}
 .section-title{font-size:16px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-/* (Legacy-классы .pos-item / .pos-icon / .pos-name / .pos-sub / .pos-right / .pos-price / .pos-delta
-    удалены — список позиций теперь рендерится через .overview-row / .pos-row.) */
+.pos-item{display:flex;align-items:center;padding:12px 14px;background:var(--bg2);border-radius:12px;margin-bottom:6px;cursor:pointer;transition:background .1s}
+.pos-item:hover{background:var(--surface)}
+.pos-icon{width:36px;height:36px;border-radius:50%;margin-right:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.pos-icon img{width:100%;height:100%;object-fit:contain}
+.pos-icon.bond{background:rgba(96,165,250,.14);color:var(--blue)}
+.pos-icon.share{background:rgba(74,222,128,.14);color:var(--green)}
+.pos-icon.etf{background:rgba(192,132,252,.14);color:var(--purple)}
+.pos-icon.currency{background:rgba(250,204,21,.14);color:var(--yellow)}
+.pos-icon.other{background:var(--surface);color:var(--muted)}
+.pos-info{flex:1;min-width:0}
+.pos-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-sub{font-size:12px;color:var(--muted)}
+.pos-right{text-align:right;flex-shrink:0}
+.pos-price{font-weight:600;font-size:14px}
+.pos-delta{font-size:12px}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
 .tab{padding:10px 18px;cursor:pointer;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;user-select:none}
 .tab:hover{color:var(--text)}
@@ -675,6 +658,11 @@ body.glass .fc-row{background:linear-gradient(135deg,rgba(184,243,74,.10),rgba(1
 .update-btn{background:var(--accent)!important;color:var(--accent-ink)!important;position:relative;box-shadow:var(--accent-glow)}
 .update-btn:hover{background:var(--accent-h)!important}
 .update-btn::after{content:'';position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--accent-ink);border-radius:50%;animation:pulse 1.5s infinite}
+.update-btn.updating{opacity:.7;pointer-events:none}
+.update-btn.updating::after{animation:spin .8s linear infinite;top:50%;right:50%;margin:-4px -4px 0 0;width:10px;height:10px;border:2px solid var(--accent-ink);border-top-color:transparent;background:transparent;border-radius:50%}
+.settings-update-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:var(--radius-md);border:none;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:700;cursor:pointer;box-shadow:var(--accent-glow);transition:opacity .15s}
+.settings-update-btn:hover{opacity:.9}
+.settings-update-btn:disabled{opacity:.6;cursor:wait}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 .risk-banner{padding:10px 14px;border-radius:var(--radius-md);margin-bottom:10px;background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.28);font-size:13px;display:flex;align-items:center;gap:8px;color:var(--yellow)}
 .event-alert{padding:12px 14px;border-radius:var(--radius);margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;transition:opacity .15s}
@@ -899,7 +887,7 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
 #mainContent{transition:opacity .3s}
 #mainContent.loading{opacity:0}
 /* Streamer mode */
-.streamer .big-value,.streamer .acc-total,.streamer .big-delta,.streamer #plToggle,.streamer .acc-dd-amount{filter:blur(12px);user-select:none}
+.streamer .big-value,.streamer .acc-total,.streamer .pos-price,.streamer .big-delta,.streamer #plToggle,.streamer .acc-dd-amount{filter:blur(12px);user-select:none}
 .streamer .big-eye{filter:none!important}
 /* Режим стримера: суммы в Выплатах (календарь/список) и Аналитике */
 .streamer .cal-popup-event-amount,
@@ -940,7 +928,7 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
     </div>
     <div id="simpleStatus"></div>
     <div class="header-btns">
-      <button class="icon-btn update-btn" id="btnUpdate" title="Доступно обновление" style="display:none" onclick="openGitHubRelease()"><i data-lucide="arrow-up-circle" style="width:18px;height:18px"></i></button>
+      <button class="icon-btn update-btn" id="btnUpdate" title="Доступно обновление" style="display:none" onclick="startAppUpdate()"><i data-lucide="arrow-up-circle" style="width:18px;height:18px"></i></button>
       <button class="icon-btn" id="btnScreenshot" title="Сохранить скриншот текущего экрана (dev-режим)" style="display:none"><i data-lucide="camera" style="width:18px;height:18px"></i></button>
       <div class="theme-seg" id="themeSeg" role="group" aria-label="Тема">
         <button type="button" class="theme-btn" data-theme="light" title="Светлая тема"><i data-lucide="sun" style="width:14px;height:14px"></i></button>
@@ -995,23 +983,11 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
     </div>
     <div class="cards" id="statCards" style="display:none"></div>
     <div id="riskBanner"></div>
-    <!-- Свободные средства (рубль-кэш) по счетам -->
-    <div class="fc-card" id="freeCashWrap" style="display:none">
-      <div class="fc-head">
-        <div class="fc-eyebrow"><i data-lucide="wallet" style="width:14px;height:14px;color:var(--accent)"></i> Свободно на счетах</div>
-        <div class="fc-summary">
-          <div class="fc-total" id="fcTotal"></div>
-          <div class="fc-count" id="fcCount"></div>
-        </div>
-      </div>
-      <div class="fc-list" id="fcList"></div>
-    </div>
     <!-- 2-колоночный обзор: Топ позиции слева | Ближайшие события справа -->
     <div class="overview-grid">
       <div class="overview-section" id="topPosWrap">
         <div class="overview-section-head">
-          <div class="overview-section-title"><i data-lucide="trending-up"></i> Топ позиции</div>
-          <div class="overview-section-meta" id="topPosMeta"></div>
+          <div class="overview-section-title"><i data-lucide="trending-up" style="width:16px;height:16px;color:var(--accent)"></i> Топ позиции</div>
         </div>
         <!-- Панель сортировки/фильтра — только в упрощённом дизайне -->
         <div class="simple-pos-controls" id="simplePosControls">
@@ -1036,8 +1012,7 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
       </div>
       <div class="overview-section" id="upcomingWrap">
         <div class="overview-section-head">
-          <div class="overview-section-title"><i data-lucide="calendar-clock"></i> Ближайшие события</div>
-          <div class="overview-section-meta" id="upcomingMeta" style="margin-right:auto;margin-left:6px"></div>
+          <div class="overview-section-title"><i data-lucide="calendar-clock" style="width:16px;height:16px;color:var(--accent)"></i> Ближайшие события</div>
           <div class="up-filter" id="upFilterWrap">
             <button type="button" class="up-filter-btn" id="upFilterBtn" aria-haspopup="listbox" aria-expanded="false">
               <span id="upFilterLabel">Все типы</span>
@@ -1307,10 +1282,11 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
           <button type="button" class="stack-dd-btn" style="width:100%"><span class="stack-dd-label"></span><i data-lucide="chevron-down" class="stack-dd-chev" style="width:14px;height:14px"></i></button>
           <div class="stack-dd-menu" style="left:0;right:0;min-width:0">
             <div class="stack-dd-item" data-value="tbank">Т-Банк (Тинькофф Инвестиции)</div>
+            <div class="stack-dd-item" data-value="bcs">БКС Мир инвестиций</div>
           </div>
         </div>
         <input class="conn-input" id="connToken" placeholder="API-токен" type="password" autocomplete="off">
-        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:10px;cursor:pointer">
+        <label id="connSandboxWrap" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:10px;cursor:pointer">
           <input type="checkbox" id="connSandbox" style="accent-color:var(--accent)"> Sandbox-режим
         </label>
         <div style="display:flex;gap:8px">
@@ -1345,6 +1321,12 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
         <div style="font-size:12px;color:var(--muted)">Разработчик</div>
         <div class="sa-dev">Гашук Дмитрий</div>
         <div class="sa-ver" id="appVersion">Stack</div>
+        <div id="settingsUpdateRow" style="display:none;margin-top:14px">
+          <button class="settings-update-btn" id="btnSettingsUpdate" onclick="startAppUpdate()">
+            <i data-lucide="download" style="width:16px;height:16px"></i>
+            Установить v<span id="settingsUpdateVer">?</span>
+          </button>
+        </div>
         <div style="margin-top:12px"><a href="#" onclick="try{pywebview.api.open_url('https://pay.cloudtips.ru/p/789f174f')}catch(e){};return false" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);text-decoration:none;padding:7px 16px;border:1px solid var(--border);border-radius:var(--radius-md);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(184,243,74,.08)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">&#x2764; Поддержать проект</a></div>
       </div>
     </div>
@@ -1358,7 +1340,7 @@ var PC=['#60A5FA','#B8F34A','#4ADE80','#F87171','#C084FC','#5EEAD4','#FB923C','#
 var LI={bond:'landmark',share:'trending-up',etf:'layers',currency:'circle-dollar-sign',futures:'zap',sp:'box',option:'target'};
 var TYPE_SHORT={bond:'Облигация',share:'Акция',etf:'Фонд',currency:'Валюта',futures:'Фьючерс',sp:'СП',option:'Опцион'};
 var posQtyMin=null,posQtyMax=null; // фильтр по количеству (от/до)
-var allocChart=null,couponChart=null,historyChart=null,currencyChart=null;
+var allocChart=null,couponChart=null,historyChart=null,accountChart=null,currencyChart=null;
 var D=null,allocMode='types',selAcc='all',historyRange='1m';
 // Карта connection_name → broker (tbank/sber/alfa/bks). Заполняется при загрузке
 // через pywebview.api.get_connections(). Используется для иконок банков в dropdown.
@@ -1555,9 +1537,51 @@ window.addEventListener('scroll',function(){ if(_sddOpenEl)_stackDDPosition(_sdd
 window.addEventListener('resize',function(){ if(_sddOpenEl)_stackDDPosition(_sddOpenEl); });
 function stackDDInitAll(){document.querySelectorAll('.stack-dd').forEach(_stackDDInit)}
 stackDDInitAll();
+
+var BROKER_NAMES={'tbank':'Т-Банк','bcs':'БКС'};
+function defaultConnName(broker){return BROKER_NAMES[broker]||broker||'Т-Банк'}
+function syncConnNameField(){
+  var cb=document.getElementById('connBroker');
+  var el=document.getElementById('connName');
+  var tok=document.getElementById('connToken');
+  var b=(cb&&cb.value)||'tbank';
+  if(el) el.value=defaultConnName(b);
+  if(tok) tok.placeholder=b==='bcs'?'Refresh-токен BCS (только чтение)':'API-токен';
+}
+(function(){
+  var cb=document.getElementById('connBroker');
+  if(cb) cb.addEventListener('change',syncConnNameField);
+})();
 function openUrl(url){pywebview.api.open_url(url)}
-function openGitHubRelease(){
-  try{pywebview.api.open_url('https://github.com/Damfler/Invest-Dekstop-Watcher/releases/latest')}catch(e){}
+var _updateInProgress=false;
+function _setUpdateUiState(busy,version){
+  var title=busy?'Скачивание и установка...':('Доступно обновление v'+(version||'?')+' — нажмите для установки');
+  ['btnUpdate','btnSettingsUpdate'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.disabled=!!busy;
+    el.classList.toggle('updating',!!busy);
+    if(id==='btnUpdate')el.title=title;
+  });
+}
+function resetUpdateBtn(version){
+  _updateInProgress=false;
+  _setUpdateUiState(false,version);
+}
+function startAppUpdate(){
+  if(_updateInProgress)return;
+  _updateInProgress=true;
+  var ver=(window._lastUpdateInfo&&window._lastUpdateInfo.version)||'?';
+  _setUpdateUiState(true,ver);
+  setTimeout(function(){
+    pywebview.api.apply_update().then(function(res){
+      if(res==='no_update'){alert('Обновление недоступно');resetUpdateBtn(ver);}
+      else if(res==='download_failed'){alert('Не удалось скачать обновление. Проверьте подключение к интернету.');resetUpdateBtn(ver);}
+    }).catch(function(){
+      alert('Ошибка при обновлении');
+      resetUpdateBtn(ver);
+    });
+  },50);
 }
 function updateTitle(name){
   var el=document.getElementById('appTitle');
@@ -1832,7 +1856,6 @@ document.getElementById('selTheme').addEventListener('change',function(){
 });
 
 // ── Управление подключениями ──────────────────────────────────────────────────
-var BROKER_NAMES={'tbank':'Т-Банк'};
 function loadConnections(){
   try{
     pywebview.api.get_connections().then(function(r){
@@ -1871,6 +1894,7 @@ function openAddConn(){
   document.getElementById('connAddForm').classList.add('open');
   document.getElementById('btnAddConn').style.display='none';
   (function(){var __e=document.getElementById('connAddError');if(__e)__e.textContent='';})();
+  syncConnNameField();
   lucide.createIcons();
 }
 function closeAddConn(){
@@ -1883,15 +1907,15 @@ function closeAddConn(){
 }
 function submitAddConn(){
   var name=document.getElementById('connName').value.trim();
-  var broker=document.getElementById('connBroker').value;
+  var broker=document.getElementById('connBroker').value||'tbank';
   var token=document.getElementById('connToken').value.trim();
-  var sandbox=document.getElementById('connSandbox').checked;
+  if(!name) name=defaultConnName(broker);
   if(!token||token.length<10){(function(){var __e=document.getElementById('connAddError');if(__e)__e.textContent='Введите токен (минимум 10 символов)';})();return}
   try{
-    pywebview.api.add_connection(name,broker,token,sandbox).then(function(ok){
-      if(ok){closeAddConn();loadConnections();showConnRestart()}
-      else{(function(){var __e=document.getElementById('connAddError');if(__e)__e.textContent='Ошибка: проверьте токен';})()}
-    }).catch(function(e){(function(){var __e=document.getElementById('connAddError');if(__e)__e.textContent='Ошибка: ';})()+e});
+    pywebview.api.add_connection(name,broker,token,false).then(function(res){
+      if(res&&res.ok){closeAddConn();loadConnections();showConnRestart()}
+      else{(function(){var __e=document.getElementById('connAddError');if(__e)__e.textContent=(res&&res.error)?res.error:'Ошибка: проверьте токен';})()}
+    }).catch(function(e){(function(){var __e=document.getElementById('connAddError');if(__e)__e.textContent='Ошибка: '+(e&&e.message?e.message:String(e));})()});
   }catch(e){(function(){var __e=document.getElementById('connAddError');if(__e)__e.textContent='Ошибка API';})()}
 }
 function showConnRestart(){
@@ -2045,16 +2069,23 @@ function render(data){
   var oldCards=document.getElementById('statCards');
   if(oldCards) oldCards.style.display='none';
 
-  // Update icon in header
+  // Update icon in header + settings
   var ubEl=document.getElementById('btnUpdate');
   var uInfo=data.update_info||{};
+  window._lastUpdateInfo=uInfo;
   if(ubEl){
     if(uInfo.available){
       ubEl.style.display='';
-      ubEl.title='Доступно обновление v'+(uInfo.version||'?')+' — нажмите для скачивания';
+      if(!_updateInProgress)ubEl.title='Доступно обновление v'+(uInfo.version||'?')+' — нажмите для установки';
     }else{
       ubEl.style.display='none';
     }
+  }
+  var sur=document.getElementById('settingsUpdateRow');
+  var suv=document.getElementById('settingsUpdateVer');
+  if(sur){
+    if(uInfo.available){sur.style.display='';if(suv)suv.textContent=uInfo.version||'?';}
+    else sur.style.display='none';
   }
 
   // Screenshot button — только в dev-режиме
@@ -2132,9 +2163,6 @@ function render(data){
   } else if(ul) {
     ul.innerHTML='<div class="empty" style="padding:24px;color:var(--muted);font-size:13px">\u041d\u0435\u0442 \u0441\u043e\u0431\u044b\u0442\u0438\u0439</div>';
   }
-  // \u041c\u0435\u0442\u0430: \u0432\u0441\u0435\u0433\u043e N \u0441\u043e\u0431\u044b\u0442\u0438\u0439 \u0432\u043f\u0435\u0440\u0435\u0434\u0438
-  var umEl=document.getElementById('upcomingMeta');
-  if(umEl){var ne=futEvts.length;umEl.textContent=ne+' '+(ne%10===1&&ne%100!==11?'\u0441\u043e\u0431\u044b\u0442\u0438\u0435':(ne%10>=2&&ne%10<=4&&(ne%100<10||ne%100>=20)?'\u0441\u043e\u0431\u044b\u0442\u0438\u044f':'\u0441\u043e\u0431\u044b\u0442\u0438\u0439'));}
 
   // \u2500\u2500 Top positions: \u0442\u0430\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u0444\u043e\u0440\u043c\u0430\u0442 \u0441 \u0446\u0432\u0435\u0442\u043d\u043e\u0439 \u0438\u043a\u043e\u043d\u043a\u043e\u0439 \u0442\u0438\u043f\u0430 \u2500\u2500
   var _simple=document.body.classList.contains('simple');
@@ -2182,9 +2210,6 @@ function render(data){
     });
   }
   var tpEl=document.getElementById('topPositions');if(tpEl)tpEl.innerHTML=th;
-  // Мета: всего N позиций
-  var tmEl=document.getElementById('topPosMeta');
-  if(tmEl){var fn=fPos.length;tmEl.textContent=fn+' '+(fn%10===1&&fn%100!==11?'позиция':(fn%10>=2&&fn%10<=4&&(fn%100<10||fn%100>=20)?'позиции':'позиций'));}
   // \u041b\u0438\u043d\u043a\u0438 "\u0421\u043c\u043e\u0442\u0440\u0435\u0442\u044c \u0432\u0441\u0435" / "\u041a\u0430\u043b\u0435\u043d\u0434\u0430\u0440\u044c"
   var tpL=document.getElementById('topPosLink');
   if(tpL)tpL.onclick=function(e){e.preventDefault();activeTab='positions';setActiveTab(activeTab)};
@@ -2208,7 +2233,6 @@ function render(data){
   else { _chartsFresh=false; }
   renderAnalyticsCards(fPos,ytm,tNkd);
   renderMovers(fPos);
-  renderFreeCash(fPos);
   // Sync settings UI
   var cl=document.getElementById('chkLogos');if(cl)cl.checked=useLogos;
   var cau=document.getElementById('chkAutoUpdate');if(cau)cau.checked=!!(data.auto_update!==false);
@@ -2850,42 +2874,6 @@ function renderMovers(positions){
   h+= l.length?l.map(function(p){return row(p,'dn')}).join(''):'<div class="empty" style="padding:14px 0;color:var(--muted);font-size:13px">\u041d\u0435\u0442 \u043f\u0430\u0434\u0435\u043d\u0438\u0439</div>';
   h+='</div></div>';
   var _g_moversBlock=document.getElementById('moversBlock');if(_g_moversBlock)_g_moversBlock.innerHTML=h;
-}
-
-// Свободные средства (рубль-кэш) по счетам — мини-карточки с долей.
-function renderFreeCash(positions){
-  var wrap=document.getElementById('freeCashWrap');
-  if(!wrap)return;
-  var byAcc={};
-  positions.forEach(function(p){
-    if(p.instrumentType!=='currency')return;
-    if(_assetCurrency(p)!=='RUB')return;
-    var key=p.account_id||p.account_name||'?';
-    if(!byAcc[key])byAcc[key]={name:p.account_name||'Счёт',sum:0};
-    byAcc[key].sum+=(p.current_value||0);
-  });
-  var rows=Object.values(byAcc).filter(function(a){return a.sum>0.5}).sort(function(a,b){return b.sum-a.sum});
-  if(!rows.length){wrap.style.display='none';return}
-  wrap.style.display='';
-  var total=rows.reduce(function(s,a){return s+a.sum},0);
-  var tEl=document.getElementById('fcTotal');if(tEl)tEl.textContent=fmt(total);
-  var cEl=document.getElementById('fcCount');
-  if(cEl){
-    var n=rows.length;
-    var word=(n%10===1&&n%100!==11)?'счёт':((n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?'счёта':'счетов');
-    cEl.textContent='на '+n+' '+word;
-  }
-  var listEl=document.getElementById('fcList');
-  if(listEl){
-    listEl.innerHTML=rows.map(function(a){
-      var pct=total>0?(a.sum/total*100):0;
-      return '<div class="fc-row">'+
-        '<div class="fc-acc-name">'+esc(a.name)+'</div>'+
-        '<div class="fc-acc-amount">'+fmt(a.sum)+'<span class="fc-acc-pct">'+pct.toFixed(0)+'%</span></div>'+
-        '<div class="fc-bar"><span style="width:'+pct.toFixed(1)+'%"></span></div>'+
-        '</div>';
-    }).join('');
-  }
 }
 
 function calcYTM(ba){var wS=0,wY=0;ba.forEach(function(b){if(!b.maturity_date||!b.face_value)return;var y=(new Date(b.maturity_date)-Date.now())/(365.25*864e5);if(y<=0)return;var v=(b.annual_coupon+(b.face_value-b.current_price)/y)/((b.face_value+b.current_price)/2)*100;var w=b.qty*b.current_price;wS+=w;wY+=v*w});return wS>0?wY/wS:null}
