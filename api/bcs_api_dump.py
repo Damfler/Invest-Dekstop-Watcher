@@ -19,6 +19,15 @@ log = logging.getLogger("stack.bcs.dump")
 _lock = threading.Lock()
 _dump_dir: str | None = None
 
+
+def enabled() -> bool:
+    """
+    В боевой среде дампы по умолчанию выключены.
+    Включение: set BCS_API_DUMP=1  (или STACK_API_DUMP=1 как общий флаг)
+    """
+    v = (os.environ.get("BCS_API_DUMP") or os.environ.get("STACK_API_DUMP") or "").strip().lower()
+    return v in ("1", "true", "yes", "on")
+
 _README = """\
 BCS Trade API — дампы ответов
 =============================
@@ -46,6 +55,8 @@ def _base_dir() -> str:
 
 def dump_dir() -> str:
     global _dump_dir
+    if not enabled():
+        return ""
     if _dump_dir is None:
         _dump_dir = os.path.join(_base_dir(), "bcs_api_dump")
         os.makedirs(_dump_dir, exist_ok=True)
@@ -117,6 +128,8 @@ def dump_api_response(
     """
     Сохраняет ответ в JSON-файл. Возвращает путь к файлу.
     """
+    if not enabled():
+        return ""
     body = _parse_body(body_text)
     if redact_tokens:
         body = _redact(body)
@@ -133,7 +146,10 @@ def dump_api_response(
     }
 
     fname = _safe_name(label, method, url, params) + ".json"
-    path = os.path.join(dump_dir(), fname)
+    base = dump_dir()
+    if not base:
+        return ""
+    path = os.path.join(base, fname)
 
     with _lock:
         with open(path, "w", encoding="utf-8") as f:

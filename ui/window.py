@@ -39,6 +39,7 @@ class _DashboardAPI:
         s["show_hints"] = self._cfg.get("show_hints", False)
         s["auto_update"] = self._cfg.get("auto_update", True)
         s["design"] = self._cfg.get("design", "classic")
+        s["primary_color"] = self._cfg.get("primary_color", "#B8F34A")
         # dev-режим = запуск из исходников (python main.py).
         # В собранном .exe (sys.frozen=True) кнопка скриншота скрыта.
         s["dev_mode"] = not getattr(_sys, "frozen", False)
@@ -309,6 +310,18 @@ class _DashboardAPI:
     def set_design(self, design: str):
         from core.config import save_config
         self._cfg["design"] = design
+        save_config(self._cfg)
+
+    def set_primary_color(self, color: str):
+        """Меняет базовый акцент приложения (используется в dashboard.html)."""
+        from core.config import save_config
+        color = (color or "").strip()
+        # Ожидаем формат #RRGGBB
+        if not color.startswith("#"):
+            return
+        if len(color) not in (4, 7):
+            return
+        self._cfg["primary_color"] = color
         save_config(self._cfg)
 
     def set_use_logos(self, val: bool):

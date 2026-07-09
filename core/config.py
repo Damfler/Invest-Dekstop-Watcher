@@ -51,6 +51,9 @@ DEFAULT_CONFIG: dict = {
     # Дизайн дашборда: "classic" | "simple" (моноширинный, плотный)
     "design": "classic",
 
+    # Основной цвет (используется как --accent в dashboard.html)
+    "primary_color": "#B8F34A",
+
     # Показывать логотипы инструментов (True) или иконки (False)
     "use_logos": False,
 

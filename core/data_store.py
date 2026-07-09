@@ -10,6 +10,7 @@ from api.client import TBankAPIError
 from api.bcs_client import BCSAPIError
 from api.endpoints import LOGO_CDN
 from utils.formatting import money_value, parse_ts, days_until, alert_key
+from utils.api_dump import dump_call as _dump_call, enabled as _dump_enabled
 import time as _time
 from core.cache import save_cache, load_cache, save_history, load_history
 from core.config import load_dismissed, save_dismissed
@@ -37,6 +38,26 @@ def _annual_coupon_from_bond(bond: dict) -> float:
 def _event_on_or_after_today(dt: datetime) -> bool:
     """Событие сегодня или в будущем (локальный календарь, как days_until)."""
     return days_until(dt) >= 0
+
+
+def _portfolio_available(portfolio: dict, currency_cash: float = 0.0) -> float:
+    """Доступные средства на счёте (валютные позиции портфеля, ₽)."""
+    total = money_value(portfolio.get("totalAmountCurrencies"))
+    if total > 0:
+        return total
+    if currency_cash > 0:
+        return currency_cash
+    amount = 0.0
+    for pos in portfolio.get("positions", []):
+        if pos.get("instrumentType", "").lower() != "currency":
+            continue
+        value = money_value(pos.get("currentValue"))
+        if value <= 0:
+            qty = money_value(pos.get("quantity"))
+            price = money_value(pos.get("currentPrice")) or 1.0
+            value = qty * price
+        amount += value
+    return amount
 
 
 class DataStore:
@@ -146,17 +167,34 @@ class DataStore:
         errors        = []
 
         for conn_name, api in self._apis:
+            broker = getattr(api, "__class__", type("x", (), {})).__name__.lower()
             try:
                 accounts = api.get_accounts()
+                if _dump_enabled():
+                    _dump_call(
+                        broker=str(broker),
+                        connection=str(conn_name),
+                        op="get_accounts",
+                        body=accounts,
+                    )
 
                 for acc in accounts:
                     acc_id   = acc.get("id", "")
                     acc_name = acc.get("name") or acc.get("type", "Счёт")
                     p        = api.get_portfolio(acc_id)
+                    if _dump_enabled():
+                        _dump_call(
+                            broker=str(broker),
+                            connection=str(conn_name),
+                            op="get_portfolio",
+                            args={"account_id": acc_id, "account_name": acc_name},
+                            body=p,
+                        )
 
                     total         = money_value(p.get("totalAmountPortfolio"))
                     day_delta     = money_value(p.get("dailyYield"))
                     alltime_delta = 0.0
+                    currency_cash = 0.0
 
                     for pos in p.get("positions", []):
                         itype  = pos.get("instrumentType", "").lower()
@@ -179,6 +217,8 @@ class DataStore:
                         pos_value = money_value(pos.get("currentValue"))
                         if not pos_value and cur_p:
                             pos_value = cur_p * qty
+                        if itype == "currency":
+                            currency_cash += pos_value if pos_value > 0 else qty * (cur_p or 1.0)
                         alltime_delta += pos_pnl
 
                         positions_all.append({
@@ -195,7 +235,7 @@ class DataStore:
                             "account_id":      acc_id,
                             "account_name":    acc_name,
                             "connection_name": conn_name,
-                            "logo_url":        "",
+                            "logo_url":        pos.get("logo_url") or "",
                         })
 
                         if itype == "bond" and figi and qty > 0:
@@ -224,6 +264,7 @@ class DataStore:
                     result.append({
                         "name":            acc_name,
                         "total":           total,
+                        "available":       _portfolio_available(p, currency_cash),
                         "day_delta":       day_delta,
                         "alltime_delta":   alltime_delta,
                         "account_id":      acc_id,
@@ -246,9 +287,23 @@ class DataStore:
                             pos["logo_url"] = cached["logo_url"]
 
             except (TBankAPIError, BCSAPIError) as e:
+                if _dump_enabled():
+                    _dump_call(
+                        broker=str(broker),
+                        connection=str(conn_name),
+                        op="fetch_portfolio_error",
+                        error=str(e),
+                    )
                 errors.append(f"[{conn_name}] {str(e)[:60]}")
                 log.error("fetch_portfolio [%s]: %s", conn_name, e)
             except Exception as e:
+                if _dump_enabled():
+                    _dump_call(
+                        broker=str(broker),
+                        connection=str(conn_name),
+                        op="fetch_portfolio_unexpected",
+                        error=str(e),
+                    )
                 errors.append(f"[{conn_name}] {str(e)[:60]}")
                 log.exception("fetch_portfolio [%s] unexpected:", conn_name)
 

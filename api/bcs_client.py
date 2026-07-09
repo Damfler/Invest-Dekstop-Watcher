@@ -23,6 +23,11 @@ from constants import (
     API_RATE_LIMIT_BASE, API_RATE_LIMIT_MAX,
 )
 from api.bcs_api_dump import dump_api_response, dump_dir
+from utils.moex_iss import (
+    bond_coupons as _moex_bond_coupons,
+    dividends as _moex_dividends,
+    bond_static as _moex_bond_static,
+)
 from version import APP_VERSION
 
 log = logging.getLogger("stack.bcs")
@@ -33,7 +38,7 @@ _USER_AGENT  = f"Stack/{APP_VERSION}"
 
 
 def _is_position_dict(obj: dict) -> bool:
-    return any(k in obj for k in ("ticker", "secCode", "classCode", "marketValue", "quantity"))
+    return any(k in obj for k in ("ticker", "secCode", "classCode", "board", "marketValue", "currentValue", "quantity"))
 
 
 def _is_currency_ticker(ticker: str) -> bool:
@@ -65,22 +70,50 @@ def _merge_bcs_positions(rows: list) -> list[dict]:
     for p in rows:
         if not isinstance(p, dict):
             continue
-        cc = (p.get("classCode") or "").upper()
+        cc = (p.get("classCode") or p.get("board") or "").upper()
         ticker = (p.get("ticker") or p.get("secCode") or "").upper()
         if not ticker:
             continue
         key = (cc, ticker)
-        mv = float(p.get("marketValue") or 0)
+        mv = float(
+            p.get("marketValue")
+            or p.get("currentValueRub")
+            or p.get("currentValue")
+            or p.get("balanceValueRub")
+            or p.get("balanceValue")
+            or 0
+        )
         if key not in by_key:
             by_key[key] = dict(p)
             continue
         prev = by_key[key]
-        prev_mv = float(prev.get("marketValue") or 0)
+        prev_mv = float(
+            prev.get("marketValue")
+            or prev.get("currentValueRub")
+            or prev.get("currentValue")
+            or prev.get("balanceValueRub")
+            or prev.get("balanceValue")
+            or 0
+        )
         if abs(mv - prev_mv) < 0.01 and mv > 0:
             continue
+        # Складываем в marketValue, чтобы остальная логика (summary и т.п.) не ломалась.
         prev["marketValue"] = prev_mv + mv
-        prev["profitLoss"] = float(prev.get("profitLoss") or 0) + float(p.get("profitLoss") or 0)
-        prev["quantity"] = float(prev.get("quantity") or 0) + float(p.get("quantity") or 0)
+        prev_pl = float(prev.get("profitLoss") or prev.get("unrealizedPL") or 0)
+        cur_pl = float(p.get("profitLoss") or p.get("unrealizedPL") or 0)
+        prev["profitLoss"] = prev_pl + cur_pl
+        # quantity может быть float или {"value": ...}
+        q_prev = prev.get("quantity")
+        q_cur = p.get("quantity")
+        try:
+            q_prev_v = float(q_prev.get("value") if isinstance(q_prev, dict) else (q_prev or 0))
+        except (TypeError, ValueError):
+            q_prev_v = 0.0
+        try:
+            q_cur_v = float(q_cur.get("value") if isinstance(q_cur, dict) else (q_cur or 0))
+        except (TypeError, ValueError):
+            q_cur_v = 0.0
+        prev["quantity"] = q_prev_v + q_cur_v
     return list(by_key.values())
 
 
@@ -104,7 +137,15 @@ def _flatten_portfolio_list(raw: list) -> list[dict]:
         if isinstance(first.get("positions"), list):
             return _merge_bcs_positions(first["positions"])
     if isinstance(first, dict) and _is_position_dict(first):
-        return _merge_bcs_positions([p for p in raw if isinstance(p, dict)])
+        rows = [p for p in raw if isinstance(p, dict)]
+        # Новый bff-portfolio отдаёт одинаковые позиции по term (T0/T1/T2/T365).
+        # Для отображения портфеля берём один "срез": предпочтительно T0, иначе T365.
+        terms = {str(p.get("term") or "") for p in rows}
+        if "T0" in terms:
+            rows = [p for p in rows if str(p.get("term") or "") == "T0"]
+        elif "T365" in terms:
+            rows = [p for p in rows if str(p.get("term") or "") == "T365"]
+        return _merge_bcs_positions(rows)
     return []
 
 
@@ -121,8 +162,18 @@ def _normalize_portfolio_raw(raw) -> tuple[list, dict]:
         first = raw[0]
         flat = _flatten_portfolio_list(raw)
         if flat:
-            total = sum(float(p.get("marketValue") or 0) for p in flat)
-            pl = sum(float(p.get("profitLoss") or 0) for p in flat)
+            total = sum(
+                float(
+                    p.get("marketValue")
+                    or p.get("currentValueRub")
+                    or p.get("currentValue")
+                    or p.get("balanceValueRub")
+                    or p.get("balanceValue")
+                    or 0
+                )
+                for p in flat
+            )
+            pl = sum(float(p.get("profitLoss") or p.get("unrealizedPL") or 0) for p in flat)
             summary: dict = {"totalValue": total, "profitLoss": pl}
             if isinstance(first, dict) and isinstance(first.get("summary"), dict):
                 summary = {**summary, **first["summary"]}
@@ -137,7 +188,7 @@ def _normalize_portfolio_raw(raw) -> tuple[list, dict]:
         if "positions" not in raw and "summary" not in raw and _is_position_dict(raw):
             positions = [raw]
             total = float(raw.get("marketValue") or 0)
-            pl = float(raw.get("profitLoss") or 0)
+            pl = float(raw.get("profitLoss") or raw.get("unrealizedPL") or 0)
             return positions, {"totalValue": total, "profitLoss": pl}
         return raw.get("positions") or [], raw.get("summary") or {}
 
@@ -221,8 +272,21 @@ def _bcs_position_value(p: dict, itype: str, qty) -> tuple[float, float]:
     Возвращает (цена_за_единицу_в_руб, стоимость_в_руб).
     У облигаций marketPrice — % от номинала, поэтому опираемся на marketValue.
     """
+    # Старый формат: marketValue/marketPrice
     market_value = float(p.get("marketValue") or 0)
     market_price = float(p.get("marketPrice") or 0)
+
+    # Новый формат bff-portfolio: currentValue/currentPrice (+ Rub/Usd/Eur variants)
+    if not market_value:
+        market_value = float(
+            p.get("currentValueRub")
+            or p.get("currentValue")
+            or p.get("balanceValueRub")
+            or p.get("balanceValue")
+            or 0
+        )
+    if not market_price:
+        market_price = float(p.get("currentPrice") or p.get("balancePrice") or 0)
     try:
         q = float(qty)
     except (TypeError, ValueError):
@@ -253,10 +317,11 @@ class BCSAPI:
         self._throttle_lock = threading.Lock()
         self._last_request_ts = 0.0
         self._instrument_cache: dict[str, dict] = {}
+        self._info_service_disabled = False
         self._account_name = label
         self._session = _build_http_session()
         log.info("API [%s] prod — BCS Trade API", label)
-        log.info("API [%s] дампы ответов BCS → %s", label, dump_dir())
+        # Дампы BCS выключены по умолчанию (включаются env BCS_API_DUMP=1)
 
     # ── OAuth2 ────────────────────────────────────────────────────────────────
 
@@ -469,11 +534,17 @@ class BCSAPI:
             sec = (row.get("secCode") or row.get("ticker") or "").upper()
             if not sec:
                 continue
+            # Старый формат: currentBalance/free
+            # Новый формат: quantity={type,value}
+            q_obj = row.get("quantity")
             bal = row.get("currentBalance")
             if bal is None:
                 bal = row.get("free")
             try:
-                qty = float(bal or 0)
+                if isinstance(q_obj, dict):
+                    qty = float(q_obj.get("value") or 0)
+                else:
+                    qty = float(bal or 0)
             except (TypeError, ValueError):
                 qty = 0.0
             if qty:
@@ -481,11 +552,15 @@ class BCSAPI:
         for row in limits.get("moneyLimits") or []:
             if not isinstance(row, dict):
                 continue
-            cur = (row.get("currency") or "").upper()
+            cur = (row.get("currency") or row.get("currencyCode") or "").upper()
             if not cur:
                 continue
             try:
-                bal = float(row.get("currentBalance") or 0)
+                q_obj = row.get("quantity")
+                if isinstance(q_obj, dict):
+                    bal = float(q_obj.get("value") or 0)
+                else:
+                    bal = float(row.get("currentBalance") or row.get("balance") or row.get("quantity") or 0)
             except (TypeError, ValueError):
                 bal = 0.0
             if bal:
@@ -543,9 +618,17 @@ class BCSAPI:
         seen_money: set[str] = set()
 
         for p in positions_raw:
-            class_code = p.get("classCode") or ""
+            # BCS может отдавать classCode (старый формат) или board (новый bff-portfolio)
+            class_code = p.get("classCode") or p.get("board") or ""
             ticker = p.get("ticker") or p.get("secCode") or ""
-            market_value = float(p.get("marketValue") or 0)
+            market_value = float(
+                p.get("marketValue")
+                or p.get("currentValueRub")
+                or p.get("currentValue")
+                or p.get("balanceValueRub")
+                or p.get("balanceValue")
+                or 0
+            )
             if not ticker:
                 if market_value > 0:
                     ticker = (p.get("currency") or "CASH").upper()
@@ -553,7 +636,11 @@ class BCSAPI:
                     continue
 
             try:
-                portfolio_qty = float(p.get("quantity", 0) or 0)
+                q_obj = p.get("quantity", 0)
+                if isinstance(q_obj, dict):
+                    portfolio_qty = float(q_obj.get("value") or 0)
+                else:
+                    portfolio_qty = float(q_obj or 0)
             except (TypeError, ValueError):
                 portfolio_qty = 0.0
 
@@ -561,14 +648,28 @@ class BCSAPI:
             if inst:
                 class_code = inst.get("classCode") or class_code
                 isin = p.get("isin") or inst.get("isin", "")
-                name = inst.get("shortName") or inst.get("name") or p.get("name") or ticker
+                name = inst.get("shortName") or inst.get("name") or p.get("displayName") or p.get("name") or ticker
                 itype = _class_to_itype(class_code, inst.get("type", ""))
             else:
                 isin = p.get("isin") or ""
-                name = p.get("name") or p.get("shortName") or ticker
+                name = p.get("displayName") or p.get("name") or p.get("shortName") or ticker
                 itype = _class_to_itype(class_code, p.get("type", ""))
                 if _is_currency_ticker(ticker):
                     itype = "currency"
+                # Новый bff-portfolio отдаёт instrumentType=STOCK/BOND/CURRENCY
+                it_raw = (p.get("instrumentType") or "").upper()
+                if it_raw in ("STOCK", "SHARE"):
+                    itype = "share"
+                elif it_raw == "BOND":
+                    itype = "bond"
+                elif it_raw in ("ETF", "FUND"):
+                    itype = "etf"
+                elif it_raw in ("CURRENCY", "MONEY"):
+                    itype = "currency"
+
+            # Для валюты, когда class_code пустой — даём дефолт (нужно для figi)
+            if not class_code and itype == "currency":
+                class_code = "CETS"
 
             qty_units = self._qty_from_limits(depo_map, class_code, ticker, portfolio_qty)
             if qty_units != portfolio_qty:
@@ -584,9 +685,9 @@ class BCSAPI:
                 if cur_code:
                     seen_money.add(cur_code)
 
-            pos_pl = float(p.get("profitLoss") or 0)
+            pos_pl = float(p.get("profitLoss") or p.get("unrealizedPL") or 0)
             pos_day = float(
-                p.get("dailyProfitLoss") or p.get("profitLossDaily") or 0
+                p.get("dailyProfitLoss") or p.get("profitLossDaily") or p.get("dailyPL") or 0
             )
             figi = bcs_figi(class_code, ticker)
 
@@ -597,6 +698,8 @@ class BCSAPI:
                 "isin":           isin,
                 "name":           name,
                 "ticker":         ticker,
+                # BCS bff-portfolio отдаёт прямую ссылку на лого
+                "logo_url":       p.get("logoLink") or "",
                 "quantity":       _float_to_money(qty_units),
                 "currentPrice":   _float_to_money(unit_price),
                 "currentValue":   _float_to_money(pos_value),
@@ -639,6 +742,8 @@ class BCSAPI:
         }
 
     def _fetch_instrument(self, class_code: str, ticker: str) -> dict | None:
+        if self._info_service_disabled:
+            return None
         for cc in _class_codes_to_try(class_code, ticker):
             key = f"{cc}:{ticker}"
             if key in self._instrument_cache:
@@ -654,6 +759,10 @@ class BCSAPI:
                     self._instrument_cache[key] = inst
                     return inst
             except BCSAPIError as e:
+                # Информационный сервис может быть недоступен/не включен.
+                # Чтобы не спамить 404-дампами на каждый тикер — отключаем после первого 404.
+                if "HTTP 404" in str(e):
+                    self._info_service_disabled = True
                 log.debug("instrument(%s/%s): %s", cc, ticker, e)
         return None
 
@@ -687,6 +796,16 @@ class BCSAPI:
             cc = info.get("classCode", "")
             if cc not in BOND_CLASS_CODES:
                 return None
+        # Догружаем статические поля облигации из MOEX ISS, чтобы работали события/аналитика.
+        secid = (info.get("ticker") or "").upper()
+        if secid:
+            moex = _moex_bond_static(secid)
+            if moex:
+                merged = dict(info)
+                merged.update({k: v for k, v in moex.items() if v is not None})
+                merged["instrumentType"] = "bond"
+                merged["type"] = "bond"
+                return merged
         return info
 
     def get_instrument_by_figi(self, figi: str) -> dict | None:
@@ -699,12 +818,26 @@ class BCSAPI:
         return None
 
     def get_bond_coupons(self, figi: str, from_dt: datetime, to_dt: datetime) -> list[dict]:
-        """BCS Trade API не предоставляет график купонов."""
-        return []
+        """
+        BCS Trade API не предоставляет график купонов.
+        Догружаем из MOEX ISS (для MOEX-бумаг).
+        """
+        parsed = parse_bcs_figi(figi)
+        if not parsed:
+            return []
+        _class_code, ticker = parsed
+        return _moex_bond_coupons(ticker, from_dt=from_dt, to_dt=to_dt)
 
     def get_dividends(self, figi: str, from_dt: datetime, to_dt: datetime) -> list[dict]:
-        """BCS Trade API не предоставляет календарь дивидендов."""
-        return []
+        """
+        BCS Trade API не предоставляет календарь дивидендов.
+        Догружаем из MOEX ISS (для MOEX-бумаг).
+        """
+        parsed = parse_bcs_figi(figi)
+        if not parsed:
+            return []
+        _class_code, ticker = parsed
+        return _moex_dividends(ticker, from_dt=from_dt, to_dt=to_dt)
 
     def ping(self) -> bool:
         """Проверка подключения (для визарда)."""

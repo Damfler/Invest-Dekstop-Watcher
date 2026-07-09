@@ -1,0 +1,91 @@
+{
+  "dumped_at": "2026-07-09T06:04:34.147567+00:00",
+  "broker": "bcsapi",
+  "connection": "БКС",
+  "op": "get_portfolio",
+  "args": {
+    "account_id": "bcs-main",
+    "account_name": "БКС"
+  },
+  "error": null,
+  "body": {
+    "totalAmountPortfolio": {
+      "units": 977,
+      "nano": 630000000
+    },
+    "dailyYield": {
+      "units": 0,
+      "nano": 0
+    },
+    "expectedYield": {
+      "units": -22,
+      "nano": -370000000
+    },
+    "positions": [
+      {
+        "instrumentType": "currency",
+        "figi": "bcs:CETS:RUB",
+        "isin": "",
+        "name": "RUB",
+        "ticker": "RUB",
+        "logo_url": "https://mybroker.storage.bcs.ru/FinInstrumentLogo/RUB.png",
+        "quantity": {
+          "units": 679,
+          "nano": 720000000
+        },
+        "currentPrice": {
+          "units": 1,
+          "nano": 0
+        },
+        "currentValue": {
+          "units": 679,
+          "nano": 720000000
+        },
+        "currentNkd": {
+          "units": 0,
+          "nano": 0
+        },
+        "expectedYield": {
+          "units": 0,
+          "nano": 0
+        },
+        "dailyYield": {
+          "units": 0,
+          "nano": 0
+        }
+      },
+      {
+        "instrumentType": "share",
+        "figi": "bcs:TQBR:SBER",
+        "isin": "",
+        "name": "Сбербанк",
+        "ticker": "SBER",
+        "logo_url": "https://mybroker.storage.bcs.ru/FinInstrumentLogo/RU0009029540.png",
+        "quantity": {
+          "units": 1,
+          "nano": 0
+        },
+        "currentPrice": {
+          "units": 297,
+          "nano": 910000000
+        },
+        "currentValue": {
+          "units": 297,
+          "nano": 910000000
+        },
+        "currentNkd": {
+          "units": 0,
+          "nano": 0
+        },
+        "expectedYield": {
+          "units": -22,
+          "nano": -370000000
+        },
+        "dailyYield": {
+          "units": 0,
+          "nano": 0
+        }
+      }
+    ]
+  }
+}
