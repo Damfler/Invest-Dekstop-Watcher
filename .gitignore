@@ -22,7 +22,10 @@ dismissed.json
 *.log
 *.log.*
 bcs_api_dump/
-api_dump/
+# Дампы содержат ID счетов и состав портфеля — в репозиторий не идут.
+# Исключаем содержимое, а не каталог: иначе git не даст ре-включить README.
+api_dump/*
+!api_dump/README.txt
 
 # IDE
 .vscode/
