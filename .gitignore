@@ -22,6 +22,7 @@ dismissed.json
 *.log
 *.log.*
 bcs_api_dump/
+api_dump/
 
 # IDE
 .vscode/

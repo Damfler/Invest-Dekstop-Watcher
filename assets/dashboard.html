@@ -14,7 +14,7 @@
   --bg:#0B0D0E;--bg2:#121417;--surface:#1A1D1F;--border:#2A2F33;--divider:#1F2428;
   --text:#F3F4F6;--muted:#9CA3AF;--muted2:#6B7280;
   --green:#4ADE80;--red:#F87171;
-  --accent:#B8F34A;--accent-h:#A3E635;--accent-p:#84CC16;--accent-ink:#0B0D0E;--accent-rgb:184,243,74;--accent-glow:0 0 20px rgba(184,243,74,.35);--logo-glow:drop-shadow(0 0 8px rgba(184,243,74,.35));
+  --accent:#B8F34A;--accent-h:#A3E635;--accent-p:#84CC16;--accent-ink:#0B0D0E;--accent-rgb:184,243,74;--accent-glow:0 0 20px rgba(var(--accent-rgb),.35);--logo-glow:drop-shadow(0 0 8px rgba(var(--accent-rgb),.35));
   --yellow:#FACC15;--orange:#FB923C;--blue:#60A5FA;--teal:#5EEAD4;--purple:#C084FC;
   --radius:16px;--radius-md:10px;--radius-sm:6px;
   --shadow-card:0 4px 20px rgba(0,0,0,.4);
@@ -26,7 +26,7 @@ body.light{
   --bg:#F5F7F9;--bg2:#FFFFFF;--surface:#EEF2F5;--border:#E5E7EB;--divider:#DCE3E8;
   --text:#0B0D0E;--muted:#6B7280;--muted2:#9CA3AF;
   --green:#22C55E;--red:#EF4444;
-  --accent-glow:0 0 18px rgba(184,243,74,.45);
+  --accent-glow:0 0 18px rgba(var(--accent-rgb),.45);
   --shadow-card:0 4px 20px rgba(0,0,0,.06);
   --blue:#3B82F6;--purple:#A855F7;--teal:#14B8A6;--orange:#F97316
 }
@@ -103,9 +103,9 @@ body.simple .overview-table-body.three-col .overview-row{grid-template-columns:1
 body.simple .overview-row{padding:11px 14px;border-radius:0;border-bottom:1px solid var(--divider);font-family:var(--font-mono);font-size:13px;gap:12px}
 body.simple .overview-row:nth-child(even){background:rgba(255,255,255,.015)}
 body.simple .overview-row:last-child{border-bottom:none}
-body.simple .overview-row:hover{background:rgba(184,243,74,.04);padding-left:14px;padding-right:14px}
+body.simple .overview-row:hover{background:rgba(var(--accent-rgb),.04);padding-left:14px;padding-right:14px}
 body.simple.light .overview-row:nth-child(even){background:rgba(0,0,0,.02)}
-body.simple.light .overview-row:hover{background:rgba(184,243,74,.08)}
+body.simple.light .overview-row:hover{background:rgba(var(--accent-rgb),.08)}
 
 /* Инструмент: убираем иконку, но подпись (кол-во) ОСТАВЛЯЕМ */
 body.simple .overview-instr-icon{display:none!important}
@@ -118,6 +118,28 @@ body.simple .overview-row .num{font-size:13px}
 body.simple .simple-pos-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 body.simple .simple-pos-controls .chips{margin:0;flex:1}
 body.simple .overview-pnl-pct{font-size:11px}
+
+/* ── Свободные средства в упрощённом дизайне ──────────────────────────────
+   • #tab-overview → flex column, чтобы можно было переставить блок наверх через order.
+   • #availableWrap перемещаем над списком бумаг (order:-1).
+   • Стилизация под таблицу simple: моно, uppercase, dense; без градиентов и hover-подскока. */
+body.simple #tab-overview.active{display:flex;flex-direction:column}
+body.simple #availableWrap{order:-1;margin:0 0 14px 0!important;padding:0!important;background:transparent!important;border:none!important;border-radius:0!important;display:flex!important;flex-direction:column}
+body.simple #availableWrap .overview-section-head{display:flex!important;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;margin:0;background:var(--bg2);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0}
+body.simple #availableWrap .overview-section-title{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:6px}
+body.simple #availableWrap .overview-section-title svg,body.simple #availableWrap .overview-section-title i{display:none}
+body.simple #availableWrap #availableTotal{font-family:var(--font-mono);font-size:11px;color:var(--text);text-transform:none;letter-spacing:0;gap:6px}
+body.simple #availableWrap #availableTotal .av-count{color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.5px;font-size:10px}
+body.simple #availableWrap #availableTotal .av-sum{color:var(--text);font-weight:700}
+body.simple #availableWrap #availableList{gap:0!important;padding:0!important;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 6px 6px;overflow:hidden}
+body.simple #availableWrap .avail-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:8px 14px;border:none;border-radius:0;background:transparent;position:relative;overflow:hidden;border-bottom:1px solid var(--divider);font-family:var(--font-mono);font-size:12px}
+body.simple #availableWrap .avail-row:nth-child(even){background:rgba(255,255,255,.015)}
+body.simple #availableWrap .avail-row:last-child{border-bottom:none}
+body.simple #availableWrap .avail-row:hover{transform:none;border-color:var(--divider);background:rgba(var(--accent-rgb),.05)}
+body.simple #availableWrap .avail-row::before{display:none}
+body.simple #availableWrap .avail-name{font-family:var(--font-mono);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.2px}
+body.simple #availableWrap .avail-pct{font-family:var(--font-mono);font-size:10px;color:var(--muted);font-weight:500;opacity:1;text-transform:none;letter-spacing:0}
+body.simple #availableWrap .avail-val{font-family:var(--font-mono);font-weight:600;font-size:12px;color:var(--text)}
 
 /* Footer статус */
 body.simple .simple-footer{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--font-mono)}
@@ -138,7 +160,7 @@ body.glass{
   --glass-blur: blur(24px) saturate(180%);
   /* Цветной "mesh"-фон — мягкие blob'ы за стеклом */
   background:
-    radial-gradient(900px circle at 12% 18%, rgba(184,243,74,0.10), transparent 45%),
+    radial-gradient(900px circle at 12% 18%, rgba(var(--accent-rgb),0.10), transparent 45%),
     radial-gradient(800px circle at 88% 12%, rgba(96,165,250,0.10), transparent 50%),
     radial-gradient(1000px circle at 50% 105%, rgba(192,132,252,0.10), transparent 55%),
     #0B0D0E !important;
@@ -152,7 +174,7 @@ body.glass.light{
   --glass-border-hi: rgba(255,255,255,0.70);
   --glass-shadow: 0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.40);
   background:
-    radial-gradient(900px circle at 12% 18%, rgba(184,243,74,0.22), transparent 45%),
+    radial-gradient(900px circle at 12% 18%, rgba(var(--accent-rgb),0.22), transparent 45%),
     radial-gradient(800px circle at 88% 12%, rgba(96,165,250,0.18), transparent 50%),
     radial-gradient(1000px circle at 50% 105%, rgba(192,132,252,0.14), transparent 55%),
     #F5F7F9 !important;
@@ -217,23 +239,23 @@ body.glass .up-filter-menu{
 /* Табы — пилюли с фростед фоном */
 body.glass .tabs{border-bottom:none;background:var(--glass-bg-soft);padding:4px;border-radius:var(--radius-md);gap:2px;border:1px solid var(--glass-border)}
 body.glass .tab{border-bottom:none;border-radius:8px;padding:8px 14px;color:var(--muted)}
-body.glass .tab.active{background:rgba(184,243,74,0.14);color:var(--accent);border-bottom:none}
+body.glass .tab.active{background:rgba(var(--accent-rgb),0.14);color:var(--accent);border-bottom:none}
 body.glass .tab:hover:not(.active){background:rgba(255,255,255,0.04)}
 
 /* Строки таблицы и пилюли событий — лёгкий контраст */
 body.glass .overview-row{background:transparent}
-body.glass .overview-row:hover{background:rgba(184,243,74,0.06)}
+body.glass .overview-row:hover{background:rgba(var(--accent-rgb),0.06)}
 body.glass .overview-instr-icon{background:rgba(255,255,255,0.06)}
 body.glass .pos-icon{background:rgba(255,255,255,0.06)}
 
 /* Календарные дни */
 body.glass .cal-day{background:var(--glass-bg-soft);border:1px solid var(--glass-border)}
-body.glass .cal-day.has-events:hover{background:rgba(184,243,74,0.10)}
-body.glass .cal-day.today{background:rgba(184,243,74,0.20);box-shadow:0 0 20px rgba(184,243,74,0.30)}
+body.glass .cal-day.has-events:hover{background:rgba(var(--accent-rgb),0.10)}
+body.glass .cal-day.today{background:rgba(var(--accent-rgb),0.20);box-shadow:0 0 20px rgba(var(--accent-rgb),0.30)}
 
 /* Скруглённый акцент: лаймовые элементы получают свечение */
 body.glass .hero-stat-value,
-body.glass .big-value{text-shadow:0 0 30px rgba(184,243,74,0.20)}
+body.glass .big-value{text-shadow:0 0 30px rgba(var(--accent-rgb),0.20)}
 
 /* Inputs/textareas */
 body.glass .conn-input,
@@ -247,7 +269,7 @@ body.glass input[type="password"]{
 
 /* Лёгкая правка скроллбара под стекло */
 body.glass ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:8px}
-body.glass ::-webkit-scrollbar-thumb:hover{background:rgba(184,243,74,0.30)}
+body.glass ::-webkit-scrollbar-thumb:hover{background:rgba(var(--accent-rgb),0.30)}
 body.glass ::-webkit-scrollbar-track{background:transparent}
 
 /* ── Glass: точечные правки UI ────────────────────────────────────────── */
@@ -261,11 +283,11 @@ body.glass .hero-stats{align-items:flex-start}
 
 /* Активная кнопка настроек — лаймовая, а не чёрная */
 body.glass .icon-btn.active-btn{
-  background:rgba(184,243,74,0.20) !important;
+  background:rgba(var(--accent-rgb),0.20) !important;
   border-color:var(--accent) !important;
   color:var(--accent) !important;
 }
-body.glass .icon-btn.active-btn:hover{background:rgba(184,243,74,0.28) !important}
+body.glass .icon-btn.active-btn:hover{background:rgba(var(--accent-rgb),0.28) !important}
 
 /* Меню дроп-даунов поверх всего (раньше уезжали под карточки) */
 body.glass .stack-dd-menu,
@@ -276,10 +298,10 @@ body.glass .up-filter-menu{z-index:9999}
 
 /* Сегодняшний день в календаре — заметный и в тёмной теме */
 body.glass .cal-day.today{
-  background:linear-gradient(135deg,rgba(184,243,74,0.28),rgba(184,243,74,0.16)) !important;
-  border:1px solid rgba(184,243,74,0.45) !important;
+  background:linear-gradient(135deg,rgba(var(--accent-rgb),0.28),rgba(var(--accent-rgb),0.16)) !important;
+  border:1px solid rgba(var(--accent-rgb),0.45) !important;
   color:var(--text) !important;
-  box-shadow:0 0 24px rgba(184,243,74,0.35), inset 0 0 0 1px rgba(184,243,74,0.20);
+  box-shadow:0 0 24px rgba(var(--accent-rgb),0.35), inset 0 0 0 1px rgba(var(--accent-rgb),0.20);
 }
 body.glass .cal-day.today .cal-dot{background:var(--accent) !important}
 
@@ -293,10 +315,10 @@ body.glass .chip{
 }
 body.glass .chip:hover:not(.active){border-color:var(--glass-border-hi) !important;color:var(--accent)}
 body.glass .chip.active{
-  background:rgba(184,243,74,0.22) !important;
-  border-color:rgba(184,243,74,0.45) !important;
+  background:rgba(var(--accent-rgb),0.22) !important;
+  border-color:rgba(var(--accent-rgb),0.45) !important;
   color:var(--accent) !important;
-  box-shadow:0 4px 16px rgba(184,243,74,0.15);
+  box-shadow:0 4px 16px rgba(var(--accent-rgb),0.15);
 }
 
 /* Пилюли типа событий тоже подкрашиваем под стекло (повышенный контраст) */
@@ -333,7 +355,7 @@ body.glass .pos-footer{
 .qty-filter{position:relative}
 .qty-filter-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:var(--radius-md);padding:6px 10px;font-size:12px;font-weight:500;font-family:var(--font);line-height:1.2;cursor:pointer;transition:all .15s}
 .qty-filter-btn:hover{background:var(--bg2);border-color:var(--border);color:var(--text)}
-.qty-filter.active .qty-filter-btn{background:rgba(184,243,74,.10);border-color:var(--accent);color:var(--accent)}
+.qty-filter.active .qty-filter-btn{background:rgba(var(--accent-rgb),.10);border-color:var(--accent);color:var(--accent)}
 .qty-filter-btn i,.qty-filter-btn svg{width:13px!important;height:13px!important;flex-shrink:0}
 /* В упрощённом дизайне фильтр-кнопку "Кол-во" убираем (остаётся чип сортировки) */
 body.simple #qtyFilter2{display:none!important}
@@ -350,7 +372,7 @@ body.simple #qtyFilter2{display:none!important}
 body.glass .qty-filter-btn,body.glass .qty-filter-menu{background:var(--glass-bg-soft)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-color:var(--glass-border)!important}
 .pos-row{padding:12px 18px;border-bottom:1px solid var(--divider);cursor:pointer;transition:background .12s}
 .pos-row:last-child{border-bottom:none}
-.pos-row:hover{background:rgba(184,243,74,.045)}
+.pos-row:hover{background:rgba(var(--accent-rgb),.045)}
 .pos-row .num{text-align:right;font-family:var(--font-mono);font-size:13px;color:var(--text)}
 .pos-row .num.up{color:var(--green)}
 .pos-row .num.dn{color:var(--red)}
@@ -399,9 +421,9 @@ body.glass .qty-filter-btn,body.glass .qty-filter-menu{background:var(--glass-bg
 .tgl-track::before{content:'';position:absolute;width:19px;height:19px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:transform .2s,background .2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
 .tgl input:checked + .tgl-track{background:var(--accent);border-color:var(--accent)}
 .tgl input:checked + .tgl-track::before{transform:translateX(19px);background:var(--accent-ink)}
-.tgl input:focus-visible + .tgl-track{box-shadow:0 0 0 3px rgba(184,243,74,.25)}
+.tgl input:focus-visible + .tgl-track{box-shadow:0 0 0 3px rgba(var(--accent-rgb),.25)}
 .settings-input{width:100%;padding:9px 12px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font);transition:all .15s}
-.settings-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(184,243,74,.15)}
+.settings-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15)}
 .color-reset-btn{padding:8px 12px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--font)}
 .color-reset-btn:hover{border-color:var(--accent);color:var(--accent)}
 .settings-about{text-align:center;padding:20px 18px}
@@ -464,7 +486,7 @@ body.light .logo-mark{color:var(--text);filter:none}
 .acc-dd.open .acc-dd-menu{display:block}
 .acc-dd-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .12s;color:var(--text);font-size:13px}
 .acc-dd-item:hover{background:var(--surface)}
-.acc-dd-item.active{background:rgba(184,243,74,.08)}
+.acc-dd-item.active{background:rgba(var(--accent-rgb),.08)}
 .acc-dd-item.active .acc-dd-name-row{color:var(--accent)}
 .acc-dd-item-avatar{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 .acc-dd-item-info{flex:1;min-width:0}
@@ -514,7 +536,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .overview-table-body{display:flex;flex-direction:column}
 .overview-row{display:grid;gap:10px;padding:10px 4px;border-bottom:1px solid var(--divider);align-items:center;cursor:pointer;transition:background .12s;border-radius:6px}
 .overview-row:last-child{border-bottom:none}
-.overview-row:hover{background:rgba(184,243,74,.04);padding-left:8px;padding-right:8px}
+.overview-row:hover{background:rgba(var(--accent-rgb),.04);padding-left:8px;padding-right:8px}
 .overview-table-body.three-col .overview-row{grid-template-columns:1fr 110px 110px}
 .overview-table-body.four-col .overview-row{grid-template-columns:96px 1fr 100px 90px}
 .overview-row .num{text-align:right;font-family:var(--font-mono);font-size:13px}
@@ -566,13 +588,19 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 #availableWrap{padding:12px 14px}
 #availableWrap .overview-section-head{margin-bottom:8px}
 #availableWrap .overview-section-title{font-size:13px}
-#availableWrap #availableTotal{font-size:11px}
+#availableWrap #availableTotal{font-size:11px;display:flex;align-items:center;gap:6px}
+#availableWrap #availableTotal .av-count{color:var(--muted);font-weight:500}
+#availableWrap #availableTotal .av-sum{color:var(--accent);font-family:var(--font-mono);font-weight:700}
 #availableWrap .acct-bars{gap:6px;padding-top:0}
-/* Однострочный ряд с баром-фоном */
-#availableWrap .avail-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:6px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--divider);position:relative;overflow:hidden}
-#availableWrap .avail-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--w,0%);background:var(--c,rgba(184,243,74,.22));opacity:.55}
-#availableWrap .avail-name{position:relative;z-index:1;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-#availableWrap .avail-val{position:relative;z-index:1;font-family:var(--font-mono);font-weight:700;font-size:12px;white-space:nowrap}
+/* Ряд с прогресс-баром-фоном (доля счёта в кэше) */
+#availableWrap .avail-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:7px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--divider);position:relative;overflow:hidden;transition:transform .12s,border-color .12s}
+#availableWrap .avail-row:hover{transform:translateX(2px);border-color:rgba(var(--accent-rgb),.35)}
+#availableWrap .avail-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--w,0%);background:linear-gradient(90deg,rgba(var(--accent-rgb),.28),rgba(var(--accent-rgb),.06) 90%,transparent);border-radius:10px 0 0 10px;opacity:.8;transition:width .5s cubic-bezier(.2,.9,.3,1)}
+#availableWrap .avail-name{position:relative;z-index:1;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;display:flex;align-items:center;gap:6px}
+#availableWrap .avail-pct{font-size:10px;color:var(--accent);font-weight:700;font-family:var(--font-mono);opacity:.9}
+#availableWrap .avail-val{position:relative;z-index:1;font-family:var(--font-mono);font-weight:700;font-size:12px;white-space:nowrap;color:var(--text)}
+#availableWrap .avail-empty{padding:10px 4px;font-size:11px;color:var(--muted);text-align:center;font-style:italic}
+.streamer #availableWrap .avail-val,.streamer #availableWrap .av-sum{filter:blur(9px)}
 
 /* Узкие окна: удерживаем P&L в одну строку */
 @media(max-width:560px){
@@ -631,7 +659,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .ct-month{color:var(--muted);text-transform:capitalize;white-space:nowrap}
 .ct-bar{height:8px;background:var(--surface);border-radius:5px;overflow:hidden}
 .ct-bar>span{display:block;height:100%;border-radius:5px;background:var(--accent-bar, rgba(96,165,250,.6))}
-.coupon-trow.peak .ct-bar>span{background:var(--accent-bar-peak, rgba(184,243,74,.85))}
+.coupon-trow.peak .ct-bar>span{background:var(--accent-bar-peak, rgba(var(--accent-rgb),.85))}
 .ct-val{font-family:var(--font-mono);font-weight:600;text-align:right;white-space:nowrap}
 /* Сравнение счетов — HTML-бары (читаемо, без углов) */
 .acct-bars{display:flex;flex-direction:column;gap:13px;padding-top:4px}
@@ -704,7 +732,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .conn-add-form{background:var(--surface);border-radius:10px;padding:14px;margin-top:10px;display:none}
 .conn-add-form.open{display:block}
 .conn-input{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;font-family:var(--font);margin-bottom:8px}
-.conn-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(184,243,74,.18)}
+.conn-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
 .event-alert-body{flex:1;min-width:0}
 .event-alert-title{font-weight:600;font-size:13px}
 .event-alert-sub{font-size:11px;opacity:.7;margin-top:1px}
@@ -732,7 +760,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .cal-legend-item{display:flex;align-items:center;gap:6px}
 .cal-legend-dot{width:8px;height:8px;border-radius:50%}
 .cal-day-today-btn{display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 12px;line-height:1;white-space:nowrap;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .15s;box-sizing:border-box;flex:0 0 auto}
-.cal-day-today-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(184,243,74,.06)}
+.cal-day-today-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(var(--accent-rgb),.06)}
 
 /* Кастомный дропдаун (как .acc-dd, но переиспользуемый). Не нативный <select>:
    нативный select не позволяет стилизовать раскрытое меню — это ограничение ОС. */
@@ -745,7 +773,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
   transition:all .15s;outline:none;min-width:140px;user-select:none;
 }
 .stack-dd-btn:hover{border-color:var(--accent);background:var(--surface)}
-.stack-dd-btn:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px rgba(184,243,74,.15)}
+.stack-dd-btn:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15)}
 .stack-dd-label{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stack-dd-chev{color:var(--muted);transition:transform .15s;flex-shrink:0}
 .stack-dd.open .stack-dd-chev{transform:rotate(180deg)}
@@ -765,7 +793,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
   white-space:nowrap;transition:background .12s;
 }
 .stack-dd-item:hover{background:var(--surface)}
-.stack-dd-item.active{background:rgba(184,243,74,.10);color:var(--accent)}
+.stack-dd-item.active{background:rgba(var(--accent-rgb),.10);color:var(--accent)}
 .stack-dd-item.active::after{content:'';width:14px;height:14px;
   background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B8F34A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center/contain no-repeat}
 /* Компактный размер для control-bar */
@@ -782,16 +810,16 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .cal-nav-group .cal-nav-arrow{width:30px;padding:0}
 .cal-nav-group .cal-nav-today{padding:0 12px;font-size:12px;font-weight:600;white-space:nowrap}
 .cal-nav-group .cal-nav-arrow:hover,
-.cal-nav-group .cal-nav-today:hover{background:rgba(184,243,74,.12);color:var(--accent)}
+.cal-nav-group .cal-nav-today:hover{background:rgba(var(--accent-rgb),.12);color:var(--accent)}
 .cal-nav-group .cal-nav-arrow:active,
-.cal-nav-group .cal-nav-today:active{background:rgba(184,243,74,.20)}
+.cal-nav-group .cal-nav-today:active{background:rgba(var(--accent-rgb),.20)}
 /* Группировка событий по датам */
 .evt-group-head{display:flex;align-items:baseline;justify-content:space-between;padding:14px 4px 8px;font-size:13px;border-bottom:1px solid var(--divider);margin-top:14px}
 .evt-group-head:first-child{margin-top:6px}
 .evt-group-head-date{font-weight:700;color:var(--text)}
 .evt-group-head-meta{font-size:11px;color:var(--muted);font-family:var(--font-mono)}
 .evt-row{display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:14px;padding:12px 6px;border-bottom:1px solid var(--divider);align-items:center;cursor:pointer;border-radius:6px;transition:background .12s}
-.evt-row:hover{background:rgba(184,243,74,.04);padding-left:10px;padding-right:10px}
+.evt-row:hover{background:rgba(var(--accent-rgb),.04);padding-left:10px;padding-right:10px}
 .evt-row-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .evt-row-info{display:flex;flex-direction:column;line-height:1.3;min-width:0}
 .evt-row-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -818,7 +846,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .cal-popup{background:var(--bg2);border-radius:var(--radius-md);padding:0;margin-top:16px;display:none;border:1px solid var(--border);box-shadow:var(--shadow-card);overflow:hidden}
 .cal-popup.show{display:block;animation:cal-pop .18s ease-out}
 @keyframes cal-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.cal-popup-title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(180deg,rgba(184,243,74,.06),transparent);border-bottom:1px solid var(--divider)}
+.cal-popup-title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(180deg,rgba(var(--accent-rgb),.06),transparent);border-bottom:1px solid var(--divider)}
 .cal-popup-title::before{content:'';width:3px;height:18px;background:var(--accent);border-radius:2px;flex-shrink:0}
 .cal-popup-events{padding:6px 18px 14px}
 .cal-popup-event{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--divider);font-size:13px}
@@ -861,7 +889,7 @@ body.light .hero-stat{box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .lb-group.open{background:rgba(255,255,255,.02)}
 body.light .lb-group.open{background:rgba(0,0,0,.02)}
 .lb-row{cursor:pointer;padding:4px 6px;border-radius:8px}
-.lb-row:hover{background:rgba(184,243,74,.05)}
+.lb-row:hover{background:rgba(var(--accent-rgb),.05)}
 .lb-label{display:flex;align-items:center;gap:5px}
 .lb-chev{width:13px;height:13px;color:var(--muted);transition:transform .2s;flex-shrink:0}
 .lb-group.open .lb-chev{transform:rotate(90deg)}
@@ -869,7 +897,7 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
 .lb-group.open .lb-items{display:flex}
 .lb-item{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:8px 8px 8px 24px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--divider);border-radius:6px;transition:background .12s}
 .lb-item:last-child{border-bottom:none}
-.lb-item:hover{background:rgba(184,243,74,.05)}
+.lb-item:hover{background:rgba(var(--accent-rgb),.05)}
 .lb-item-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .lb-item-meta{font-family:var(--font-mono);color:var(--muted);font-size:11px;white-space:nowrap;flex-shrink:0}
 .lb-offer-dot{color:var(--orange);font-size:9px;vertical-align:middle}
@@ -885,7 +913,7 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
 .lt-head .num{text-align:right}
 .lt-row{display:grid;grid-template-columns:1fr 116px 66px 78px;gap:12px;padding:11px 4px;border-bottom:1px solid var(--divider);align-items:center;cursor:pointer;font-size:13px;transition:background .12s}
 .lt-row:last-child{border-bottom:none}
-.lt-row:hover{background:rgba(184,243,74,.045);padding-left:8px;padding-right:8px}
+.lt-row:hover{background:rgba(var(--accent-rgb),.045);padding-left:8px;padding-right:8px}
 .lt-row .num{text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--text)}
 .lt-name{min-width:0}
 .lt-name-t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1368,7 +1396,7 @@ body.light .lb-group.open{background:rgba(0,0,0,.02)}
             Установить v<span id="settingsUpdateVer">?</span>
           </button>
         </div>
-        <div style="margin-top:12px"><a href="#" onclick="try{pywebview.api.open_url('https://pay.cloudtips.ru/p/789f174f')}catch(e){};return false" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);text-decoration:none;padding:7px 16px;border:1px solid var(--border);border-radius:var(--radius-md);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(184,243,74,.08)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">&#x2764; Поддержать проект</a></div>
+        <div style="margin-top:12px"><a href="#" onclick="try{pywebview.api.open_url('https://pay.cloudtips.ru/p/789f174f')}catch(e){};return false" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);text-decoration:none;padding:7px 16px;border:1px solid var(--border);border-radius:var(--radius-md);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(var(--accent-rgb),.08)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">&#x2764; Поддержать проект</a></div>
       </div>
     </div>
   </div>
@@ -1419,7 +1447,7 @@ var _chartsFresh=false; // true = графики Аналитики уже от�
 var couponView='chart'; // 'chart' | 'table' — режим карточки "Купоны за 12 мес."
 var activeTab='overview';
 var useLogos=false;
-var plMode='alltime'; // 'alltime' | 'day'
+var plMode='alltime'; // 'alltime' | 'day' — общий режим P&L и плашки "Доходность" в hero-блоке
 var showHints=false;
 var streamerMode=false;
 var posSearchQuery='';
@@ -1917,9 +1945,39 @@ document.getElementById('mainTabs').addEventListener('click',function(e){var t=e
   if(activeTab==='analytics'&&D){reCharts();_chartsFresh=true;lucide.createIcons();}
   else if(activeTab!=='analytics'){_chartsFresh=false;}
 });
-function setActiveTab(tab){document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')===tab)});document.querySelectorAll('.tab-content').forEach(function(x){x.classList.toggle('active',x.id==='tab-'+tab)});var bs=document.getElementById('btnSettings');if(bs)bs.classList.toggle('active-btn',tab==='settings');if(tab==='settings')loadConnections();}
+// Сброс всех фильтров вкладки "Позиции" (поиск, чипы типа, фильтр количества).
+// Сортировка (posSortBy/Dir) считается пользовательской настройкой — её оставляем.
+function resetPosFilters(){
+  posSearchQuery=''; posTypeFilter='all'; posQtyMin=null; posQtyMax=null;
+  // UI: поисковый инпут
+  var se=document.getElementById('posSearch');if(se)se.value='';
+  // Чипы — Все активный
+  document.querySelectorAll('#posChips .chip').forEach(function(x){
+    x.classList.toggle('active',x.getAttribute('data-type')==='all');
+  });
+  // Кнопка/попап qty-фильтра
+  var qmin=document.getElementById('qtyMin');if(qmin)qmin.value='';
+  var qmax=document.getElementById('qtyMax');if(qmax)qmax.value='';
+  var qfw=document.getElementById('qtyFilter');
+  if(qfw){qfw.classList.remove('active','open');
+    var lbl=document.getElementById('qtyFilterLabel');if(lbl)lbl.textContent='Кол-во';
+  }
+  // Пере-применение фильтра, если данные уже загружены
+  if(D&&D._lastPosArgs)applyPosFilter(D._lastPosArgs[0],D._lastPosArgs[1],D._lastPosArgs[2]);
+}
+function setActiveTab(tab){
+  // Предыдущую активную вкладку берём из DOM, а не из глобальной activeTab —
+  // обработчики клика переустанавливают activeTab ДО вызова setActiveTab.
+  var prevEl=document.querySelector('#mainTabs .tab.active');
+  var prev=prevEl?prevEl.getAttribute('data-tab'):null;
+  if(tab!=='positions'&&prev==='positions')resetPosFilters();
+  document.querySelectorAll('#mainTabs .tab').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-tab')===tab)});
+  document.querySelectorAll('.tab-content').forEach(function(x){x.classList.toggle('active',x.id==='tab-'+tab)});
+  var bs=document.getElementById('btnSettings');if(bs)bs.classList.toggle('active-btn',tab==='settings');
+  if(tab==='settings')loadConnections();
+}
 // Возврат на главную вкладку (Обзор) — вызывается из Python при показе окна из трея.
-function goOverview(){activeTab='overview';setActiveTab('overview');try{window.scrollTo(0,0)}catch(e){}}
+function goOverview(){resetPosFilters();activeTab='overview';setActiveTab('overview');try{window.scrollTo(0,0)}catch(e){}}
 document.getElementById('allocChips').addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;allocMode=c.getAttribute('data-mode');document.querySelectorAll('#allocChips .chip').forEach(function(x){x.classList.remove('active')});c.classList.add('active');renderAllocChart()});
 document.getElementById('historyChips').addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;historyRange=c.getAttribute('data-range');document.querySelectorAll('#historyChips .chip').forEach(function(x){x.classList.remove('active')});c.classList.add('active');renderHistoryChart()});
 (function(){var lc=document.getElementById('ladderModeChips');if(lc)lc.addEventListener('click',function(e){var c=e.target.closest('.chip');if(!c)return;ladderMode=c.getAttribute('data-lmode');renderBondLadder();lucide.createIcons();});})();
@@ -2131,7 +2189,7 @@ function render(data){
   var mh='';
   // "Все счета" — первая строка
   mh+='<div class="acc-dd-item'+(selAcc==='all'?' active':'')+'" data-acc="all">'+
-      '<div class="acc-dd-item-avatar" style="background:rgba(184,243,74,.14);color:var(--accent)">'+
+      '<div class="acc-dd-item-avatar" style="background:rgba(var(--accent-rgb),.14);color:var(--accent)">'+
         ic('layers',14)+
       '</div>'+
       '<div class="acc-dd-item-info">'+
@@ -2148,7 +2206,7 @@ function render(data){
     // onerror: если SVG не загрузился (нет файла в .exe-сборке, оффлайн и т.п.) —
     // <img> убираем, родительский div теряет класс .bank и показывает букву-инициал.
     mh+='<div class="acc-dd-item'+(selAcc===p.account_id?' active':'')+'" data-acc="'+esc(p.account_id)+'">'+
-        '<div class="acc-dd-item-avatar bank" style="background:rgba(184,243,74,.14);color:var(--accent);font-weight:700">'+
+        '<div class="acc-dd-item-avatar bank" style="background:rgba(var(--accent-rgb),.14);color:var(--accent);font-weight:700">'+
           '<img src="'+iconSrc+'" alt="'+esc(broker)+'" onerror="this.parentElement.classList.remove(\'bank\');this.remove();this.parentElement.textContent=\''+brokerInit+'\'">'+
         '</div>'+
         '<div class="acc-dd-item-info">'+
@@ -2209,11 +2267,25 @@ function render(data){
   var ytm=calcYTM(ba);
   var dayPct=invested>0?(dayDelta/totAll*100).toFixed(2):'0.00';
   var availTotal=fPorts.reduce(function(s,p){return s+(p.available||0)},0);
-  // Hero-stats: правые плашки (Доступно, YTM, НКД)
+  // Hero-stats: правые плашки (Доходность / YTM / НКД)
   var heroEl=document.getElementById('heroStats');
   if(heroEl){
+    // Плашка "Доходность" синхронизирована с plMode (переключатель "Сегодня / Всё время"
+    // под общей суммой). Клик здесь ничего не делает — свою обводку не рисует.
+    var yLabel, yVal, yCl;
+    if(plMode==='alltime'){
+      var atPct = invested>0?(atDelta/invested*100):0;
+      yLabel = 'Доходность за всё время';
+      yVal = (atPct>0?'+':'')+atPct.toFixed(2)+'%';
+      yCl = atPct>0?'up':atPct<0?'dn':'';
+    }else{
+      var dPct = totAll>0?(dayDelta/totAll*100):0;
+      yLabel = 'Доходность сегодня';
+      yVal = (dPct>0?'+':'')+dPct.toFixed(2)+'%';
+      yCl = dPct>0?'up':dPct<0?'dn':'';
+    }
     heroEl.innerHTML=
-      '<div class="hero-stat"><div class="hero-stat-label">Доступно</div><div class="hero-stat-value">'+(fPorts.length?fmt(availTotal):'—')+'</div></div>'+
+      '<div class="hero-stat"><div class="hero-stat-label">'+yLabel+'</div><div class="hero-stat-value '+yCl+'">'+(fPorts.length?yVal:'—')+'</div></div>'+
       '<div class="hero-stat"><div class="hero-stat-label">YTM</div><div class="hero-stat-value">'+(ytm!=null?ytm.toFixed(2)+'%':'—')+'</div></div>'+
       '<div class="hero-stat"><div class="hero-stat-label">НКД</div><div class="hero-stat-value">'+(tNkd>0?fmt(tNkd,2):'—')+'</div></div>';
   }
@@ -2254,17 +2326,24 @@ function render(data){
   var avList=document.getElementById('availableList');
   var avTotal=document.getElementById('availableTotal');
   if(avWrap && avList){
-    var avPorts=fPorts.slice().sort(function(a,b){return (b.available||0)-(a.available||0)});
+    var avPortsAll=fPorts.slice().sort(function(a,b){return (b.available||0)-(a.available||0)});
+    var avPorts=avPortsAll.filter(function(p){return (p.available||0)>0.5}); // прячем счета без кэша
+    var totAv=avPortsAll.reduce(function(s,p){return s+(p.available||0)},0);
     if(avPorts.length){
       avWrap.style.display='';
-      if(avTotal) avTotal.textContent=fmt(availTotal);
+      if(avTotal){
+        var nA=avPorts.length;
+        var word=(nA%10===1&&nA%100!==11)?'счёт':((nA%10>=2&&nA%10<=4&&(nA%100<10||nA%100>=20))?'счёта':'счетов');
+        avTotal.innerHTML='<span class="av-count">'+nA+' '+word+'</span>· <span class="av-sum">'+fmt(totAv)+'</span>';
+      }
       var avMx=Math.max.apply(null,avPorts.map(function(p){return p.available||0}).concat([1]));
       var avh='';
-      avPorts.forEach(function(p,i){
+      avPorts.forEach(function(p){
         var av=p.available||0;
         var w=Math.max(4,av/avMx*100);
-        avh+='<div class="avail-row" style="--w:'+w.toFixed(1)+'%;--c:var(--accent)">'+
-          '<span class="avail-name" title="'+esc(p.name)+'">'+esc(p.name)+'</span>'+
+        var pct=totAv>0?(av/totAv*100):0;
+        avh+='<div class="avail-row" style="--w:'+w.toFixed(1)+'%">'+
+          '<span class="avail-name" title="'+esc(p.name)+'">'+esc(p.name)+' <span class="avail-pct">'+pct.toFixed(0)+'%</span></span>'+
           '<span class="avail-val">'+fmt(av)+'</span>'+
           '</div>';
       });
@@ -2459,18 +2538,61 @@ function renderSimpleStatus(data){
   if(fc)fc.style.color=data.error?'var(--red)':'var(--green)';
 }
 
+// Нормализованный ключ для склейки одинаковых бумаг разных брокеров.
+// - валюты: RUB000UTSTOM (Т-Банк) и RUB (БКС) → одинаковый ключ CUR:RUB
+// - акции/ETF: SBER у Т-Банк и SBER у БКС → одинаковый ключ TICK:SBER (даже если названия разные)
+// - облигации: одинаковый ISIN → одинаковый ключ ISIN:XXX
+function posMergeKey(p){
+  var it=(p.instrumentType||'').toLowerCase();
+  var ticker=(p.ticker||'').toUpperCase().trim();
+  var isin=(p.isin||'').toUpperCase().trim();
+  var figi=(p.figi||'').toUpperCase().trim();
+  var name=(p.name||'').toLowerCase().trim();
+  if(it==='currency'){
+    if(ticker==='RUB'||ticker==='SUR'||ticker==='RUR'||isin==='RUB000UTSTOM'||figi==='RUB000UTSTOM'||isin.indexOf('RUB000')===0||figi.indexOf('RUB000')===0||name==='российский рубль'||name==='рубль'||name==='rub')return 'CUR:RUB';
+    if(ticker==='USD'||isin.indexOf('USD000')===0||figi.indexOf('USD000')===0||name==='доллар сша'||name==='usd')return 'CUR:USD';
+    if(ticker==='EUR'||isin.indexOf('EUR')===0||figi.indexOf('EUR_')===0||name==='евро'||name==='eur')return 'CUR:EUR';
+    if(ticker==='CNY'||isin.indexOf('CNY')===0||name==='китайский юань'||name==='cny')return 'CUR:CNY';
+    if(ticker==='HKD'||name==='гонконгский доллар'||name==='hkd')return 'CUR:HKD';
+    return 'CUR:'+(ticker||isin||name);
+  }
+  // Не-валюта: тикер важнее (SBER=SBER независимо от isin), затем ISIN, затем FIGI
+  if(ticker)return 'TICK:'+ticker;
+  if(isin)return 'ISIN:'+isin;
+  if(figi)return 'FIGI:'+figi;
+  return 'N:'+name;
+}
+// Русское название валюты для UI (когда мержим RUB000UTSTOM + RUB → показываем «Рубли»).
+var _CUR_NAMES={RUB:'Рубли',USD:'Доллары США',EUR:'Евро',CNY:'Юани',HKD:'Гонконгский доллар'};
 function mergePositions(positions){
   var byKey={};
   positions.forEach(function(p){
-    var key=p.isin||p.figi||p.name;
+    var key=posMergeKey(p);
     if(!byKey[key]){
-      byKey[key]={instrumentType:p.instrumentType,name:p.name,isin:p.isin,figi:p.figi,ticker:p.ticker,logo_url:p.logo_url,qty:0,current_price:p.current_price,current_value:0,day_delta:0,alltime_delta:0,accounts:[]};
+      byKey[key]={instrumentType:p.instrumentType,name:p.name,isin:p.isin,figi:p.figi,ticker:p.ticker,logo_url:p.logo_url,qty:0,current_price:p.current_price,current_value:0,day_delta:0,alltime_delta:0,accounts:[],_key:key};
     }
-    byKey[key].qty+=p.qty||0;
-    byKey[key].current_value+=(p.current_value||0);
-    byKey[key].day_delta+=(p.day_delta||0);
-    byKey[key].alltime_delta+=(p.alltime_delta||0);
-    if(p.account_name&&byKey[key].accounts.indexOf(p.account_name)<0)byKey[key].accounts.push(p.account_name);
+    var b=byKey[key];
+    b.qty+=p.qty||0;
+    b.current_value+=(p.current_value||0);
+    b.day_delta+=(p.day_delta||0);
+    b.alltime_delta+=(p.alltime_delta||0);
+    // Выбираем "лучшее" имя: если у первой позиции длинное клиентское имя ("Российский рубль")
+    // и есть более короткое — предпочтём короткое (устойчивее к разнице брокеров).
+    if(p.name && (!b.name || (p.name.length<b.name.length && p.name.length>=2))) b.name=p.name;
+    // Заполняем недостающие идентификаторы из других брокеров
+    if(!b.ticker && p.ticker) b.ticker=p.ticker;
+    if(!b.isin && p.isin) b.isin=p.isin;
+    if(!b.figi && p.figi) b.figi=p.figi;
+    if(!b.logo_url && p.logo_url) b.logo_url=p.logo_url;
+    if(p.account_name&&b.accounts.indexOf(p.account_name)<0)b.accounts.push(p.account_name);
+  });
+  // Пост-обработка: для валют показываем русское имя, для акций/etf — короткий тикер как fallback.
+  Object.values(byKey).forEach(function(b){
+    if((b.instrumentType||'').toLowerCase()==='currency'){
+      var code=(b._key||'').replace('CUR:','');
+      if(_CUR_NAMES[code]) b.name=_CUR_NAMES[code];
+      if(!b.ticker) b.ticker=code;
+    }
   });
   return Object.values(byKey);
 }

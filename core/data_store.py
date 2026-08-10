@@ -40,16 +40,37 @@ def _event_on_or_after_today(dt: datetime) -> bool:
     return days_until(dt) >= 0
 
 
-def _portfolio_available(portfolio: dict, currency_cash: float = 0.0) -> float:
-    """Доступные средства на счёте (валютные позиции портфеля, ₽)."""
-    total = money_value(portfolio.get("totalAmountCurrencies"))
-    if total > 0:
-        return total
-    if currency_cash > 0:
-        return currency_cash
+_RUB_ALIASES = {"RUB", "SUR", "RUR", "РУБ", "RUB000UTSTOM"}
+
+
+def _is_rub_currency(pos: dict) -> bool:
+    """True если позиция — рублёвый остаток (T-Bank RUB000UTSTOM, БКС RUB и т.п.)."""
+    if (pos.get("instrumentType") or "").lower() != "currency":
+        return False
+    for f in ("ticker", "figi", "isin"):
+        v = (pos.get(f) or "").upper()
+        if v in _RUB_ALIASES or v.startswith("RUB000"):
+            return True
+    name = (pos.get("name") or "").strip().lower()
+    if name in ("rub", "рубль", "рубли", "российский рубль"):
+        return True
+    cp = pos.get("currentPrice")
+    if isinstance(cp, dict) and (cp.get("currency") or "").lower() == "rub":
+        return True
+    return False
+
+
+def _portfolio_available(portfolio: dict, currency_cash_rub: float = 0.0) -> float:
+    """Доступные РУБЛЁВЫЕ средства на счёте (₽).
+
+    В отличие от totalAmountCurrencies (сумма ВСЕХ валют в ₽), берём только RUB —
+    чтобы блок «Свободно на счетах» не смешивал USD/EUR/CNY.
+    """
+    if currency_cash_rub > 0:
+        return currency_cash_rub
     amount = 0.0
     for pos in portfolio.get("positions", []):
-        if pos.get("instrumentType", "").lower() != "currency":
+        if not _is_rub_currency(pos):
             continue
         value = money_value(pos.get("currentValue"))
         if value <= 0:
@@ -121,6 +142,24 @@ class DataStore:
             self.positions_extra = data.get("positions_extra", [])
             self.bond_analytics  = data.get("bond_analytics", [])
             self.last_update     = "из кэша"
+            # Пересчёт `available` по новой формуле (только RUB) из
+            # positions_extra — старый кэш мог хранить сумму ВСЕХ валют.
+            # Так пользователь не увидит USD/EUR в блоке «Доступно» до
+            # первого свежего refresh.
+            by_acc: dict[str, float] = {}
+            for pos in self.positions_extra:
+                if _is_rub_currency(pos):
+                    acc = pos.get("account_id")
+                    if acc:
+                        by_acc[acc] = by_acc.get(acc, 0.0) + (pos.get("current_value") or 0.0)
+            for port in self.portfolios:
+                acc = port.get("account_id")
+                if acc in by_acc:
+                    port["available"] = by_acc[acc]
+                elif self.positions_extra:
+                    # Нашли какие-то позиции, но нет RUB на этом счёте — точно 0.
+                    port["available"] = 0.0
+                # если positions_extra пуст (совсем старый кэш) — не трогаем.
         log.info("Данные загружены из кэша")
 
     def save_to_cache(self):
@@ -195,6 +234,7 @@ class DataStore:
                     day_delta     = money_value(p.get("dailyYield"))
                     alltime_delta = 0.0
                     currency_cash = 0.0
+                    currency_cash_rub = 0.0
 
                     for pos in p.get("positions", []):
                         itype  = pos.get("instrumentType", "").lower()
@@ -218,7 +258,10 @@ class DataStore:
                         if not pos_value and cur_p:
                             pos_value = cur_p * qty
                         if itype == "currency":
-                            currency_cash += pos_value if pos_value > 0 else qty * (cur_p or 1.0)
+                            add = pos_value if pos_value > 0 else qty * (cur_p or 1.0)
+                            currency_cash += add
+                            if _is_rub_currency(pos):
+                                currency_cash_rub += add
                         alltime_delta += pos_pnl
 
                         positions_all.append({
@@ -264,7 +307,7 @@ class DataStore:
                     result.append({
                         "name":            acc_name,
                         "total":           total,
-                        "available":       _portfolio_available(p, currency_cash),
+                        "available":       _portfolio_available(p, currency_cash_rub),
                         "day_delta":       day_delta,
                         "alltime_delta":   alltime_delta,
                         "account_id":      acc_id,

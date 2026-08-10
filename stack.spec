@@ -57,6 +57,11 @@ if os.path.isdir(_banks_dir):
 # HTML-дашборд
 datas.append((os.path.join(BASE, 'assets', 'dashboard.html'), 'assets'))
 
+# Корневой CA Минцифры — Т-Банк отдаёт цепочку, которой нет в certifi
+_ca_pem = os.path.join(BASE, 'assets', 'certs', 'russian_trusted_ca.pem')
+if os.path.exists(_ca_pem):
+    datas.append((_ca_pem, os.path.join('assets', 'certs')))
+
 # plyer — toast-уведомления
 datas += collect_data_files('plyer', include_py_files=True)
 

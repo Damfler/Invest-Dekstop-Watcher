@@ -17,6 +17,7 @@ from api.endpoints import (
     BOND_BY, SHARE_BY, GET_INSTRUMENT_BY, GET_BOND_COUPONS, GET_DIVIDENDS,
     ID_TYPE_FIGI,
 )
+from api.tls import ca_bundle
 from constants import (
     API_MIN_INTERVAL_SEC, API_MAX_ATTEMPTS,
     API_RATE_LIMIT_BASE, API_RATE_LIMIT_MAX, API_BOND_FAIL_COOLDOWN,
@@ -57,6 +58,7 @@ class TBankAPI:
         self._label = label
         self._env = "sandbox" if use_sandbox else "prod"
         self.session = requests.Session()
+        self.session.verify = ca_bundle()
         self.session.headers.update({
             "Authorization": f"Bearer {token}",
             "Content-Type":  "application/json",

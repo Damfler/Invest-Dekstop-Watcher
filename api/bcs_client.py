@@ -13,6 +13,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from api.tls import ca_bundle
 from api.bcs_endpoints import (
     AUTH_URL, PORTFOLIO_BASE, LIMITS_BASE, INFO_BASE,
     CLIENT_ID_READ, CLIENT_ID_WRITE,
@@ -197,6 +198,7 @@ def _normalize_portfolio_raw(raw) -> tuple[list, dict]:
 
 def _build_http_session() -> requests.Session:
     session = requests.Session()
+    session.verify = ca_bundle()
     session.headers.update({"User-Agent": _USER_AGENT, "Accept": "application/json"})
     retry = Retry(
         total=2,
