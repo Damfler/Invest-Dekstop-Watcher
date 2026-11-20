@@ -29,15 +29,22 @@ def _annual_coupon_from_bond(bond: dict) -> float:
     rate = bond.get("couponRate")
     if nominal > 0 and rate is not None:
         r = money_value(rate) if isinstance(rate, dict) else float(rate)
-        if r > 1:
-            r /= 100.0
-        return nominal * r * (per_year or 1.0)
+        return nominal * r / 100.0
     return 0.0
 
 
 def _event_on_or_after_today(dt: datetime) -> bool:
     """Событие сегодня или в будущем (локальный календарь, как days_until)."""
     return days_until(dt) >= 0
+
+
+def _calendar_holdings(positions: list[dict]) -> dict:
+    holdings = {}
+    for pos in positions:
+        if pos.get("instrumentType") in ("bond", "share") and pos.get("figi"):
+            key = (pos.get("connection_name", ""), pos["instrumentType"], pos["figi"])
+            holdings[key] = holdings.get(key, 0) + pos.get("qty", 0)
+    return holdings
 
 
 _RUB_ALIASES = {"RUB", "SUR", "RUR", "РУБ", "RUB000UTSTOM"}
@@ -170,7 +177,9 @@ class DataStore:
             pe  = list(self.positions_extra)
             ba  = list(self.bond_analytics)
             ph  = list(self.portfolio_history)
-        save_cache(p, be, bn, pe, ba)
+            error = self.error
+        if not error:
+            save_cache(p, be, bn, pe, ba)
         save_history(ph)
 
     # ──────────────────────────────────────────
@@ -351,6 +360,8 @@ class DataStore:
                 log.exception("fetch_portfolio [%s] unexpected:", conn_name)
 
         with self._lock:
+            if _calendar_holdings(self.positions_extra) != _calendar_holdings(positions_all):
+                self.last_bond_update = None
             self.portfolios      = result
             self.bond_positions  = bond_pos
             self.bond_nkd        = bond_nkd
@@ -361,7 +372,7 @@ class DataStore:
             # Записываем точку истории (раз в 5 минут)
             total_val = sum(p["total"] for p in result)
             now_ts = _time.time()
-            if total_val > 0 and now_ts - self._last_history_ts >= 300:
+            if not errors and total_val > 0 and now_ts - self._last_history_ts >= 300:
                 self.portfolio_history.append({
                     "ts": datetime.now(timezone.utc).isoformat(),
                     "value": total_val,
@@ -442,9 +453,6 @@ class DataStore:
             bond_nkd = dict(self.bond_nkd)
             horizon  = self.bond_horizon
 
-        if not bond_pos:
-            return
-
         now = datetime.now(timezone.utc)
         # Начало текущего дня (чтобы не пропустить сегодняшние купоны)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -518,12 +526,15 @@ class DataStore:
                                        ("offer",    "putDate"),
                                        ("call",     "callDate")]:
                     dt = parse_ts(bond.get(field))
-                    if dt and now < dt <= horizon_dt:
+                    if dt and _event_on_or_after_today(dt) and dt <= horizon_dt:
                         events.append({
                             "type": ev_type, "name": name,
+                            "connection_name": conn_name,
                             "isin": isin, "figi": figi,
                             "ticker": bond_ticker,
-                            "date": dt, "amount": None,
+                            "date": dt,
+                            "amount": (face_val or None) if ev_type == "maturity" else None,
+                            "currency": (bond.get("nominal") or {}).get("currency", ""),
                             "amount_est": None, "qty": qty,
                         })
 
@@ -541,12 +552,14 @@ class DataStore:
                     amount_est = typical_pay
                 events.append({
                     "type":       "coupon",
+                    "connection_name": conn_name,
                     "name":       name,
                     "isin":       isin,
                     "figi":       figi,
                     "ticker":     bond_ticker,
                     "date":       dt,
                     "amount":     amount or None,
+                    "currency":   (c.get("payOneBond") or {}).get("currency", ""),
                     "amount_est": amount_est,
                     "qty":        qty,
                 })
@@ -556,33 +569,34 @@ class DataStore:
             share_positions = [p for p in self.positions_extra
                                if p.get("instrumentType") == "share" and p.get("figi")]
 
-        seen_shares = set()
+        shares = {}
         for pos in share_positions:
-            figi = pos["figi"]
-            if figi in seen_shares:
-                continue
-            seen_shares.add(figi)
+            key = (pos.get("connection_name", ""), pos["figi"])
+            if key in shares:
+                shares[key]["qty"] += pos.get("qty", 0)
+            else:
+                shares[key] = dict(pos)
+        for (conn_name, figi), pos in shares.items():
             _time.sleep(0.2)
             if not self._apis:
                 break
-            conn_name = pos.get("connection_name", "")
             api = self._api_by_name.get(conn_name) or self._apis[0][1]
             try:
                 divs = api.get_dividends(figi, today_start, horizon_dt)
                 for d in divs:
                     dt = parse_ts(d.get("paymentDate"))
-                    if not dt:
-                        dt = parse_ts(d.get("recordDate"))
                     if dt and _event_on_or_after_today(dt):
                         amount = money_value(d.get("dividendNet"))
                         events.append({
                             "type":       "dividend",
+                            "connection_name": conn_name,
                             "name":       pos.get("name", figi),
                             "isin":       pos.get("isin", ""),
                             "figi":       figi,
                             "ticker":     pos.get("ticker", ""),
                             "date":       dt,
                             "amount":     amount,
+                            "currency":   (d.get("dividendNet") or {}).get("currency", ""),
                             "amount_est": None,
                             "qty":        pos.get("qty", 0),
                         })
@@ -641,22 +655,21 @@ class DataStore:
             self.show_mode = "alltime" if self.show_mode == "day" else "day"
 
     def set_horizon(self, days: int, cfg: dict):
+        from core.config import save_config
+        save_config({**cfg, "bond_horizon_days": days})
+        cfg["bond_horizon_days"] = days
         with self._lock:
             self.bond_horizon = days
-        cfg["bond_horizon_days"] = days
-        from core.config import save_config
-        save_config(cfg)
-        # Сбрасываем дату обновления чтобы перезагрузить события
-        with self._lock:
             self.last_bond_update = None
 
     def toggle_bond_sort(self, cfg: dict):
         with self._lock:
-            self.bond_sort = "amount" if self.bond_sort == "date" else "date"
-            new_sort = self.bond_sort
-        cfg["bond_sort"] = new_sort
+            new_sort = "amount" if self.bond_sort == "date" else "date"
         from core.config import save_config
-        save_config(cfg)
+        save_config({**cfg, "bond_sort": new_sort})
+        cfg["bond_sort"] = new_sort
+        with self._lock:
+            self.bond_sort = new_sort
 
     def dismiss_warnings(self):
         with self._lock:

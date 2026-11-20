@@ -5,6 +5,7 @@ wizard.py — мастер первого запуска.
 import os
 import sys
 import json
+from copy import deepcopy
 import logging
 import webbrowser
 import threading
@@ -362,6 +363,9 @@ def run_wizard() -> str | None:
     bf.pack(fill="x", pady=(10, 0))
 
     def _submit(event=None):
+        if spinner["active"]:
+            return
+        bro = broker_var.get()
         tok = token_var.get().strip()
         if not tok:
             status_var.set("Введите или вставьте токен")
@@ -384,37 +388,35 @@ def run_wizard() -> str | None:
         def _check():
             try:
                 from api.factory import verify_connection
-                bro = broker_var.get()
                 n = verify_connection(
                     bro,
-                    token_var.get().strip(),
+                    tok,
                     use_sandbox=bro == "tbank" and False,
                 )
                 spinner["active"] = False
-                root.after(0, lambda: _save(token_var.get().strip(), n))
+                root.after(0, lambda: _save(tok, n, bro))
             except Exception as e:
                 spinner["active"] = False
-                root.after(0, lambda: (status_var.set(f"Ошибка: {str(e)[:80]}"),
+                root.after(0, lambda error=str(e): (status_var.set(f"Ошибка: {error[:80]}"),
                                        status_lbl.config(fg=RED),
                                        start_btn.config(text="Начать работу", bg=PINK, fg="#fff")))
 
         threading.Thread(target=_check, daemon=True).start()
 
-    def _save(tok, n_accounts):
+    def _save(tok, n_accounts, broker):
         status_var.set(f"\u2713 Найдено счетов: {n_accounts}")
         status_lbl.config(fg=GREEN)
         root.update()
-        result["token"] = tok
         try:
             if os.path.exists(CONFIG_FILE):
                 with open(CONFIG_FILE, encoding="utf-8") as f:
                     cfg = json.load(f)
             else:
                 from core.config import DEFAULT_CONFIG
-                cfg = dict(DEFAULT_CONFIG)
+                cfg = deepcopy(DEFAULT_CONFIG)
             conn = {
-                "name":   list(BROKERS.values())[list(BROKERS.keys()).index(broker_var.get())],
-                "broker": broker_var.get(), "token": tok, "enabled": True, "use_sandbox": False,
+                "name":   BROKERS.get(broker, broker),
+                "broker": broker, "token": tok, "enabled": True, "use_sandbox": False,
             }
             existing = cfg.get("connections", [])
             if existing:
@@ -424,13 +426,14 @@ def run_wizard() -> str | None:
             cfg["connections"] = existing
             cfg.pop("token", None)
             cfg.pop("broker", None)
-            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-                json.dump(cfg, f, indent=2, ensure_ascii=False)
+            from core.config import save_config
+            save_config(cfg)
         except Exception as e:
             status_var.set(f"Ошибка: {e}")
             status_lbl.config(fg=RED)
             start_btn.config(text="Начать работу", bg=PINK, fg="#fff")
             return
+        result["token"] = tok
         if auto_var.get():
             try:
                 from utils import autostart

@@ -19,8 +19,14 @@ def setup_logging():
     Ротирующий лог: макс 1 МБ, хранится 3 файла.
     INFO+ в файл, WARNING+ в консоль.
     """
-    root = logging.getLogger("tbank")
-    root.setLevel(logging.DEBUG)
+    loggers = [logging.getLogger(name) for name in ("tbank", "stack")]
+    old_handlers = {h for logger in loggers for h in logger.handlers}
+    for logger in loggers:
+        logger.handlers.clear()
+        logger.setLevel(logging.DEBUG)
+        logger.propagate = False
+    for handler in old_handlers:
+        handler.close()
 
     # Файл — ротирующий
     fh = logging.handlers.RotatingFileHandler(
@@ -31,13 +37,15 @@ def setup_logging():
         "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     ))
-    root.addHandler(fh)
+    for logger in loggers:
+        logger.addHandler(fh)
 
     # Консоль — только WARNING+
     ch = logging.StreamHandler(sys.stderr)
     ch.setLevel(logging.WARNING)
     ch.setFormatter(logging.Formatter("[%(levelname)s] %(name)s: %(message)s"))
-    root.addHandler(ch)
+    for logger in loggers:
+        logger.addHandler(ch)
 
     return logging.getLogger("tbank.main")
 

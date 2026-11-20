@@ -40,3 +40,6 @@ desktop.ini
 
 # Fonts downloaded by CI for social preview generation (not committed)
 assets/fonts/
+
+notifications.json
+notifications.json.tmp

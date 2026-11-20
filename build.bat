@@ -38,7 +38,7 @@ if errorlevel 1 (
 )
 
 :: Install PyInstaller
-python -m pip install -q pyinstaller>=6.0
+python -m pip install -q "pyinstaller>=6.0"
 if errorlevel 1 (
     echo [ERROR] Failed to install PyInstaller.
     pause & exit /b 1

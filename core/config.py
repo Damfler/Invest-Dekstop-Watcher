@@ -3,6 +3,8 @@ config.py — загрузка и сохранение конфигурации.
 Токен берётся из .env (для разработки) или config.json (для пользователя).
 """
 import json
+from copy import deepcopy
+import tempfile
 import os
 import sys
 
@@ -70,6 +72,11 @@ DEFAULT_CONFIG: dict = {
         "offer_warn":       True,
         "offer_crit":       True,
         "coupon_tomorrow":  True,
+        "coupon_today": True,
+        "dividend_tomorrow": True,
+        "dividend_today": True,
+        "maturity_tomorrow": True,
+        "maturity_today": True,
         "portfolio_move":   True,
     },
 
@@ -82,8 +89,6 @@ DEFAULT_CONFIG: dict = {
 def load_config() -> dict:
     if not os.path.exists(CONFIG_FILE):
         _write_default()
-        print("Создан config.json — вставьте токен и перезапустите.")
-        sys.exit(0)
 
     raw = ""
     try:
@@ -152,7 +157,7 @@ def load_config() -> dict:
             if k == "connections":
                 continue   # connections не мёрджим, только мигрируем
             if k not in dst:
-                dst[k] = v
+                dst[k] = deepcopy(v)
             elif isinstance(v, dict) and isinstance(dst.get(k), dict):
                 _merge(dst[k], v)
 
@@ -165,7 +170,7 @@ def load_config() -> dict:
     if cfg.get("bond_sort") not in ("date", "amount"):
         cfg["bond_sort"] = "date"
 
-    # .env — перезаписывает токен первого подключения (для разработки)
+    # .env — обновляет подключение соответствующего брокера (для разработки)
     _env_file = os.path.join(BASE_DIR, ".env")
     if os.path.exists(_env_file):
         try:
@@ -185,40 +190,43 @@ def load_config() -> dict:
 
 
 def _apply_env_token(cfg: dict, token: str, broker: str = "tbank"):
-    """Подставляет токен в connections (первое совпадение broker или [0])."""
-    conns = cfg.get("connections")
-    if not conns:
-        from constants import BROKERS
-        name = BROKERS.get(broker, broker)
-        cfg["connections"] = [{
-            "name": name, "broker": broker, "token": token,
-            "enabled": True, "use_sandbox": False,
-        }]
-        return
+    """Обновляет токен брокера или добавляет отдельное подключение."""
+    from constants import BROKERS
+    conns = cfg.setdefault("connections", [])
     for c in conns:
         if c.get("broker") == broker:
             c["token"] = token
             return
-    conns[0]["token"] = token
-    conns[0]["broker"] = broker
+    conns.append({
+        "name": BROKERS.get(broker, broker), "broker": broker, "token": token,
+        "enabled": True, "use_sandbox": False,
+    })
 
 
 def _write_default(token: str | None = None):
-    """Записывает дефолтный конфиг, опционально подставляя токен."""
-    cfg = dict(DEFAULT_CONFIG)
+    """Записывает независимый дефолтный конфиг, опционально с токеном."""
+    cfg = deepcopy(DEFAULT_CONFIG)
     if token:
         _apply_env_token(cfg, token)
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, indent=2, ensure_ascii=False)
+    save_config(cfg)
 
 
 def save_config(cfg: dict):
-    """Сохраняет только изменяемые пользователем поля."""
+    """Атомарно сохраняет конфиг; ошибка записи передаётся вызывающему коду."""
+    temp_path = None
     try:
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=os.path.dirname(CONFIG_FILE),
+            prefix=".config-", suffix=".tmp", delete=False,
+        ) as f:
+            temp_path = f.name
             json.dump(cfg, f, indent=2, ensure_ascii=False)
-    except Exception:
-        pass
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, CONFIG_FILE)
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
 
 
 def load_dismissed() -> set:
