@@ -31,6 +31,7 @@ class StackTrayApp:
         self._cfg        = cfg
         self._store      = store
         self._notif      = NotificationManager(cfg)
+        self._refresh_lock = threading.Lock()
 
         self._blink_state  = False
         self._blink_thread: threading.Thread | None = None
@@ -88,23 +89,33 @@ class StackTrayApp:
     def _download_and_apply_update(self):
         import os
         from utils.updater import download_update, apply_update
-        info = self._store.update_info
+        with self._store._lock:
+            info = dict(self._store.update_info)
         if not info or not info.get("available"):
             return
         log.info("Скачивание обновления v%s...", info.get("version", "?"))
-        path = download_update(info["url"], info.get("asset_name", "Stack.exe"))
+        path = download_update(info["url"], info.get("asset_name", "Stack.exe"),
+                               size=info.get("size"), digest=info.get("digest"))
         if path:
             log.info("Применение обновления, перезапуск...")
             self._store.save_to_cache()
-            apply_update(path)
             # os._exit завершает весь процесс из любого потока,
             # sys.exit работает только в главном потоке
-            os._exit(0)
+            if apply_update(path):
+                os._exit(0)
 
     # ──────────────────────────────────────────
     #  Обновление данных
     # ──────────────────────────────────────────
     def _do_refresh(self, force_bonds: bool = False):
+        if not self._refresh_lock.acquire(blocking=False):
+            return
+        try:
+            self._refresh_data(force_bonds)
+        finally:
+            self._refresh_lock.release()
+
+    def _refresh_data(self, force_bonds: bool = False):
         log.info("Обновление данных...")
         self._store.fetch_portfolio()
         log.info("Портфель обновлён: %s", self._store.last_update)
@@ -132,12 +143,13 @@ class StackTrayApp:
 
         # Уведомления
         s = self._store.snapshot()
-        self._notif.fire(
-            bond_events    = s["bond_events"],
-            dismissed      = s["dismissed"],
-            portfolios     = s["portfolios"],
-            offer_warn_days = self._cfg.get("notify_offer_days", 2),
-        )
+        if not s["error"]:
+            self._notif.fire(
+                bond_events    = s["bond_events"],
+                dismissed      = s["dismissed"],
+                portfolios     = s["portfolios"],
+                offer_warn_days = self._cfg.get("notify_offer_days", 2),
+            )
 
         self._update_icon_and_tooltip()
 
@@ -305,10 +317,12 @@ class StackTrayApp:
         try:
             from utils.updater import check_for_update
             info = check_for_update()
-            if info.get("available"):
+            with self._store._lock:
                 self._store.update_info = info
         except Exception as e:
             log.debug("Ошибка проверки обновлений: %s", e)
+            with self._store._lock:
+                self._store.update_info = {"available": False, "error": str(e)}
 
     def _on_left_click(self):
         self._dashboard.toggle()

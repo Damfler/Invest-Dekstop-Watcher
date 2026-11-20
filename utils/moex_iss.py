@@ -74,7 +74,8 @@ def bond_coupons(secid: str, *, from_dt: datetime, to_dt: datetime) -> list[dict
             continue
         units = int(v)
         nano = int(round((v - units) * 1_000_000_000))
-        out.append({"couponDate": f"{dt}T00:00:00Z", "payOneBond": {"units": units, "nano": nano}})
+        currency = c.get("CURRENCYID") or c.get("currencyid") or c.get("FACEUNIT") or c.get("faceunit") or ""
+        out.append({"couponDate": f"{dt}T00:00:00Z", "payOneBond": {"units": units, "nano": nano, "currency": currency}})
 
     # amortizations — добавим как отдельные выплаты (погашение части номинала)
     ams = _flatten(j.get("amortizations") or {})
@@ -89,7 +90,8 @@ def bond_coupons(secid: str, *, from_dt: datetime, to_dt: datetime) -> list[dict
             continue
         units = int(v)
         nano = int(round((v - units) * 1_000_000_000))
-        out.append({"couponDate": f"{dt}T00:00:00Z", "payOneBond": {"units": units, "nano": nano}})
+        currency = a.get("CURRENCYID") or a.get("currencyid") or a.get("FACEUNIT") or a.get("faceunit") or ""
+        out.append({"couponDate": f"{dt}T00:00:00Z", "payOneBond": {"units": units, "nano": nano, "currency": currency}})
 
     out.sort(key=lambda x: x.get("couponDate") or "")
     return out
@@ -117,8 +119,7 @@ def dividends(secid: str, *, from_dt: datetime, to_dt: datetime) -> list[dict]:
     d1 = to_dt.date()
     out: list[dict] = []
     for r in rows:
-        # MOEX: RegistryCloseDate / PaymentDate / Value
-        pay = r.get("PAYMENTDATE") or r.get("paymentdate") or r.get("REGISTERCLOSEDATE") or r.get("registryclosedate")
+        pay = r.get("PAYMENTDATE") or r.get("paymentdate")
         val = r.get("VALUE") or r.get("value")
         if not pay or not val:
             continue
@@ -134,7 +135,8 @@ def dividends(secid: str, *, from_dt: datetime, to_dt: datetime) -> list[dict]:
             continue
         units = int(v)
         nano = int(round((v - units) * 1_000_000_000))
-        out.append({"paymentDate": f"{pdate.isoformat()}T00:00:00Z", "dividendNet": {"units": units, "nano": nano}})
+        currency = r.get("CURRENCYID") or r.get("currencyid") or ""
+        out.append({"paymentDate": f"{pdate.isoformat()}T00:00:00Z", "dividendNet": {"units": units, "nano": nano, "currency": currency}})
 
     out.sort(key=lambda x: x.get("paymentDate") or "")
     return out
@@ -185,7 +187,7 @@ def bond_static(secid: str) -> dict | None:
     if fv:
         units = int(fv)
         nano = int(round((fv - units) * 1_000_000_000))
-        info["nominal"] = {"units": units, "nano": nano}
+        info["nominal"] = {"units": units, "nano": nano, "currency": r.get("FACEUNIT") or ""}
 
     try:
         cv = float(r.get("COUPONVALUE") or 0)
@@ -194,7 +196,7 @@ def bond_static(secid: str) -> dict | None:
     if cv:
         units = int(cv)
         nano = int(round((cv - units) * 1_000_000_000))
-        info["coupon"] = {"units": units, "nano": nano}
+        info["coupon"] = {"units": units, "nano": nano, "currency": r.get("FACEUNIT") or ""}
 
     try:
         cp = float(r.get("COUPONPERCENT") or 0)

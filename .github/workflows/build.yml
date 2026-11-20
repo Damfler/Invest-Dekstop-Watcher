@@ -40,6 +40,9 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller>=6.0
 
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
       - name: Generate version_info.txt
         run: python tools/gen_version_info.py
 

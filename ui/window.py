@@ -6,9 +6,11 @@ HTML загружается из файла dashboard.html через url=file:/
 интерактивности (inline html= блокирует JS-события в EdgeChromium).
 """
 import threading
+from copy import deepcopy
 import logging
 import json
 import os
+import math
 from datetime import datetime
 
 import webview as _webview
@@ -19,6 +21,10 @@ log = logging.getLogger("stack.window")
 import sys as _sys
 _BASE_DIR  = getattr(_sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _HTML_FILE = os.path.join(_BASE_DIR, "assets", "dashboard.html")
+_NOTIFICATION_KEYS = frozenset((
+    "coupon_today", "coupon_tomorrow", "dividend_today", "dividend_tomorrow",
+    "maturity_today", "maturity_tomorrow", "offer_warn", "offer_crit", "portfolio_move",
+))
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -29,6 +35,7 @@ class _DashboardAPI:
         self._store   = store
         self._refresh = refresh_callback
         self._cfg     = cfg
+        self._config_lock = threading.RLock()
 
     def get_data(self) -> str:
         s = self._store.snapshot()
@@ -38,6 +45,10 @@ class _DashboardAPI:
         s["app_name"] = self._cfg.get("app_name", "")
         s["show_hints"] = self._cfg.get("show_hints", False)
         s["auto_update"] = self._cfg.get("auto_update", True)
+        s["notifications"] = {key: bool(self._cfg.get("notifications", {}).get(key, False))
+                              for key in _NOTIFICATION_KEYS}
+        s["notify_offer_days"] = self._cfg.get("notify_offer_days", 2)
+        s["notify_move_pct"] = self._cfg.get("notify_move_pct", 1.0)
         s["design"] = self._cfg.get("design", "classic")
         s["primary_color"] = self._cfg.get("primary_color", "#B8F34A")
         # dev-режим = запуск из исходников (python main.py).
@@ -302,42 +313,69 @@ class _DashboardAPI:
         return fpath
 
 
-    def set_theme(self, theme: str):
+    def _save_settings(self, **changes):
         from core.config import save_config
-        self._cfg["theme"] = theme
-        save_config(self._cfg)
+        with self._config_lock:
+            candidate = dict(self._cfg, **changes)
+            try:
+                save_config(candidate)
+            except (OSError, TypeError, ValueError) as e:
+                log.exception("Не удалось сохранить настройки")
+                raise RuntimeError("Не удалось сохранить настройки. Проверьте доступ к файлу и свободное место.") from e
+            self._cfg.update(changes)
+
+    def set_theme(self, theme: str):
+        self._save_settings(theme=theme)
 
     def set_design(self, design: str):
-        from core.config import save_config
-        self._cfg["design"] = design
-        save_config(self._cfg)
+        self._save_settings(design=design)
 
     def set_primary_color(self, color: str):
         """Меняет базовый акцент приложения (используется в dashboard.html)."""
-        from core.config import save_config
         color = (color or "").strip()
         # Ожидаем формат #RRGGBB
         if not color.startswith("#"):
             return
         if len(color) not in (4, 7):
             return
-        self._cfg["primary_color"] = color
-        save_config(self._cfg)
+        self._save_settings(primary_color=color)
 
     def set_use_logos(self, val: bool):
-        from core.config import save_config
-        self._cfg["use_logos"] = val
-        save_config(self._cfg)
+        self._save_settings(use_logos=val)
 
     def set_show_hints(self, val: bool):
-        from core.config import save_config
-        self._cfg["show_hints"] = val
-        save_config(self._cfg)
+        self._save_settings(show_hints=val)
 
     def set_app_name(self, name: str):
-        from core.config import save_config
-        self._cfg["app_name"] = name
-        save_config(self._cfg)
+        self._save_settings(app_name=name)
+
+    def set_notification(self, key: str, val: bool):
+        if key not in _NOTIFICATION_KEYS or not isinstance(val, bool):
+            raise ValueError("Неизвестное уведомление или неверное значение переключателя.")
+        with self._config_lock:
+            settings = dict(self._cfg.get("notifications", {}))
+            settings[key] = val
+            self._save_settings(notifications=settings)
+
+    def set_notification_thresholds(self, offer_days, move_pct):
+        if isinstance(offer_days, bool) or not isinstance(offer_days, int) or offer_days < 0:
+            raise ValueError("Срок предупреждения об оферте: целое число дней от 0.")
+        if (isinstance(move_pct, bool) or not isinstance(move_pct, (int, float))
+                or not math.isfinite(move_pct) or move_pct < 0.1):
+            raise ValueError("Порог движения портфеля: число от 0,1%.")
+        self._save_settings(notify_offer_days=offer_days, notify_move_pct=move_pct)
+
+    def check_update(self) -> dict:
+        from utils.updater import check_for_update
+        try:
+            info = check_for_update()
+        except Exception:
+            log.exception("Не удалось проверить обновления")
+            return {"available": False, "error": "Не удалось проверить обновления. Проверьте сеть и журнал приложения."}
+        if not info.get("error"):
+            with self._store._lock:
+                self._store.update_info = info
+        return dict(info, dev_mode=not getattr(_sys, "frozen", False))
 
     def apply_update(self):
         """Скачать и применить обновление. Возвращает статус для JS."""
@@ -347,18 +385,18 @@ class _DashboardAPI:
         if not info or not info.get("available"):
             return "no_update"
         log.info("Скачивание обновления v%s...", info.get("version", "?"))
-        exe_path = download_update(info["url"], info.get("asset_name", "Stack.exe"))
+        exe_path = download_update(info["url"], info.get("asset_name", "Stack.exe"),
+                                   size=info.get("size"), digest=info.get("digest"))
         if not exe_path:
             return "download_failed"
         log.info("Применение обновления, перезапуск...")
         self._store.save_to_cache()
-        do_apply(exe_path)
+        if not do_apply(exe_path):
+            return "apply_failed"
         os._exit(0)
 
     def set_auto_update(self, val: bool):
-        from core.config import save_config
-        self._cfg["auto_update"] = val
-        save_config(self._cfg)
+        self._save_settings(auto_update=val)
 
     def save_screenshot(self, base64_data: str, name: str) -> str:
         """
@@ -395,10 +433,12 @@ class _DashboardAPI:
         return out_path
 
     def set_horizon(self, days: int):
-        from core.config import save_config
-        self._cfg["bond_horizon_days"] = days
-        save_config(self._cfg)
-        self._store.set_horizon(days, self._cfg)
+        if isinstance(days, bool) or not isinstance(days, int) or days <= 0:
+            raise ValueError("Горизонт событий: положительное целое число дней.")
+        try:
+            self._store.set_horizon(days, self._cfg)
+        except (OSError, ValueError, TypeError) as e:
+            raise RuntimeError("Не удалось сохранить горизонт событий. Проверьте права и свободное место.") from e
         threading.Thread(target=self._refresh, daemon=True).start()
 
     # ── Управление подключениями ──────────────────────────────────────────────
@@ -421,7 +461,6 @@ class _DashboardAPI:
     def add_connection(self, name: str, broker: str, token: str,
                        use_sandbox: bool = False) -> dict:
         """Добавляет новое подключение. Требует перезапуска."""
-        from core.config import save_config
         from api.factory import verify_connection
         from constants import BROKERS
         broker = (broker or "tbank").strip().lower()
@@ -436,7 +475,7 @@ class _DashboardAPI:
         except Exception as e:
             log.warning("add_connection verify failed [%s]: %s", broker, e)
             return {"ok": False, "error": str(e)[:160]}
-        conns = self._cfg.get("connections", [])
+        conns = deepcopy(self._cfg.get("connections", []))
         conns.append({
             "name":        name.strip() or BROKERS.get(broker, broker),
             "broker":      broker,
@@ -444,31 +483,29 @@ class _DashboardAPI:
             "enabled":     True,
             "use_sandbox": bool(use_sandbox) and broker == "tbank",
         })
-        self._cfg["connections"] = conns
-        save_config(self._cfg)
+        try:
+            self._save_settings(connections=conns)
+        except RuntimeError as e:
+            return {"ok": False, "error": str(e)}
         return {"ok": True}
 
     def remove_connection(self, index: int) -> bool:
         """Удаляет подключение по индексу. Требует перезапуска."""
-        from core.config import save_config
-        conns = self._cfg.get("connections", [])
+        conns = deepcopy(self._cfg.get("connections", []))
         if len(conns) <= 1:
             return False  # нельзя удалить последнее
         if 0 <= index < len(conns):
             conns.pop(index)
-            self._cfg["connections"] = conns
-            save_config(self._cfg)
+            self._save_settings(connections=conns)
             return True
         return False
 
     def toggle_connection(self, index: int) -> bool:
         """Включает/выключает подключение. Требует перезапуска."""
-        from core.config import save_config
-        conns = self._cfg.get("connections", [])
+        conns = deepcopy(self._cfg.get("connections", []))
         if 0 <= index < len(conns):
             conns[index]["enabled"] = not conns[index].get("enabled", True)
-            self._cfg["connections"] = conns
-            save_config(self._cfg)
+            self._save_settings(connections=conns)
             return conns[index]["enabled"]
         return False
 

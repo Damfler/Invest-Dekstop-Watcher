@@ -58,7 +58,7 @@
 | 🏦 **Multi-account** | Compare accounts, filter, per-account totals |
 | 🔍 **Search & filters** | Position search, 6 sort modes, filters by instrument type |
 | 📤 **Export** | Excel (.xlsx with formulas) and XML, 2 sheets |
-| 🔔 **Notifications** | Windows toasts: offers, coupons, portfolio moves |
+| 🔔 **Notifications** | Windows toasts: coupons, dividends, maturities, offers and portfolio moves; grouped reminders with persistent deduplication |
 | 🔄 **Auto-update** | Via GitHub Releases — one click, automatic restart |
 | 🎬 **Streamer mode** | Blur balances with one click |
 | ⌨️ **Hotkeys** | `Ctrl+R` refresh, `Esc` close, `1-4` switch tabs |
@@ -103,6 +103,16 @@ TBANK_TOKEN=t.your_token_here
 | `notify_move_pct` | Portfolio move threshold (%) for notifications |
 | `auto_update` | Check for updates on startup |
 | `use_logos` | Instrument logos from T-Bank CDN |
+
+Notifications describe **scheduled** events reported by the broker, not confirmed credits. Coupon, dividend and maturity reminders are available for today and tomorrow; each reminder includes the date, quantity and expected amount where known. Estimated amounts are marked `≈`; missing amounts or currencies are stated explicitly. Several events are grouped into one digest; full details remain in the dashboard. Dividends depend on eligibility at the record date, and actual payment dates may differ.
+
+The `notifications` object controls `coupon_today`, `coupon_tomorrow`, `dividend_today`, `dividend_tomorrow`, `maturity_today`, `maturity_tomorrow`, `offer_warn`, `offer_crit` and `portfolio_move`. Portfolio movement alerts fire at most once per direction per day. `notifications.json` remembers delivered reminders across restarts (90 days, up to 1,000 entries); deleting it resets that history.
+
+## Updates
+
+Updates work in the packaged `.exe` only. A GitHub Release must contain `Stack.exe` and have a version greater than the installed version. Commits pushed to the repository, or replacing an asset on the same version, do not trigger an update. Use **Settings → Check for updates** to check manually; the startup check follows `auto_update`.
+
+Keep `Stack.exe` in a folder your Windows account can write to. The updater validates the download, replaces the executable and restarts the app. Diagnostics are written to `%APPDATA%\Stack\update\update.log`; the previous executable is kept beside `Stack.exe` as `Stack.exe.bak` after a successful update. If manual recovery is needed, close Stack and restore that backup.
 
 ## Architecture
 
@@ -256,7 +266,7 @@ Broker list lives in `constants.BROKERS` + `wizard.py`. To add one: implement an
 | 🏦 **Мультисчета** | Сравнение, фильтрация, итоги по каждому счёту |
 | 🔍 **Поиск и фильтры** | Поиск позиций, сортировка по 6 критериям, фильтры по типу |
 | 📤 **Экспорт** | Excel (.xlsx с формулами) и XML, 2 листа |
-| 🔔 **Уведомления** | Toast: оферты, купоны, движения портфеля |
+| 🔔 **Уведомления** | Toast: купоны, дивиденды, погашения, оферты и движения портфеля; группировка событий и защита от повторов после перезапуска |
 | 🔄 **Автообновление** | Через GitHub Releases — одна кнопка, перезапуск автоматически |
 | 🎬 **Режим стримера** | Размытие балансов одним кликом |
 | ⌨️ **Горячие клавиши** | `Ctrl+R` обновить, `Esc` закрыть, `1-4` табы |
@@ -301,6 +311,16 @@ TBANK_TOKEN=t.твой_токен
 | `notify_move_pct` | Порог % движения портфеля для уведомления |
 | `auto_update` | Проверять обновления при старте |
 | `use_logos` | Логотипы бумаг из CDN T-Bank |
+
+Уведомления показывают **плановые** события по данным брокера, а не подтверждают зачисление денег. Напоминания о купонах, дивидендах и погашениях доступны на сегодня и завтра: дата, количество бумаг и ожидаемая сумма, если известна. Расчётные суммы отмечены `≈`; отсутствие суммы или валюты указано явно. Несколько событий объединяются в дайджест, подробности остаются в дашборде. Право на дивиденды зависит от владения на дату реестра; фактическая дата выплаты может отличаться.
+
+Объект `notifications` управляет переключателями `coupon_today`, `coupon_tomorrow`, `dividend_today`, `dividend_tomorrow`, `maturity_today`, `maturity_tomorrow`, `offer_warn`, `offer_crit` и `portfolio_move`. Уведомление о движении портфеля приходит максимум один раз на направление в день. `notifications.json` сохраняет историю напоминаний между перезапусками (90 дней, до 1 000 записей); удаление файла сбрасывает историю.
+
+## Обновления
+
+Обновление работает только в готовом `.exe`. В GitHub Releases должен быть опубликован `Stack.exe` с версией выше установленной. Коммиты в репозитории и замена файла в релизе с прежним номером не запускают обновление. Ручная проверка доступна в **Настройки → Проверить обновления**; проверка при старте зависит от `auto_update`.
+
+Храни `Stack.exe` в папке, доступной твоей учётной записи Windows для записи. Обновление проверяет скачанный файл, заменяет приложение и перезапускает его. Диагностика сохраняется в `%APPDATA%\Stack\update\update.log`; после успешного обновления предыдущая версия лежит рядом с `Stack.exe` в файле `Stack.exe.bak`. Для ручного восстановления закрой Stack и восстанови этот файл.
 
 ## Архитектура
 
